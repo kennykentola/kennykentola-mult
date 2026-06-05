@@ -22,6 +22,14 @@ web-build/
 .env.production.local
 .env*.local
 
+# App-specific env files
+apps/api/.env
+apps/api/.env.*
+apps/web/.env
+apps/web/.env.*
+apps/mobile/.env
+apps/mobile/.env.*
+
 # Logs
 npm-debug.log*
 yarn-debug.log*
