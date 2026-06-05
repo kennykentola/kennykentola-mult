@@ -66,3 +66,13 @@ pnpm-lock.yaml
 # Next.js
 .next
 .next/cache
+
+# React Native / Expo
+.expo
+.expo-shared
+web-build/
+*.expo
+
+# Misc
+*.log
+*.tmp
