@@ -69,6 +69,7 @@ export default function AdminLayout({
     { name: 'Admin Overview', href: '/admin', icon: Shield },
     { name: 'Configure Users', href: '/admin/users', icon: Users },
     { name: 'Course Manager', href: '/admin/courses', icon: BookOpen },
+    { name: 'Academy Review', href: '/admin/assignments', icon: FileCheck },
     { name: 'Project Board', href: '/admin/projects', icon: Layers },
     { name: 'Print Orders', href: '/admin/printing', icon: Printer },
     { name: 'Verify Payments', href: '/admin/payments', icon: FileCheck },

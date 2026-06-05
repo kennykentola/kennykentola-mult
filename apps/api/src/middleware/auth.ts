@@ -1,11 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
-import { Client, Account } from 'node-appwrite';
+import { Client, Account, Query } from 'node-appwrite';
+import { databases } from '../services/appwrite';
 
 export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     email: string;
     name: string;
+    role?: string;
   };
 }
 
@@ -29,11 +31,25 @@ export const authenticateJWT = async (
 
     const account = new Account(client);
     const user = await account.get();
+    let role: string | undefined;
+
+    try {
+      const profiles = await databases.listDocuments(
+        process.env.APPWRITE_DATABASE_ID || 'multicompany',
+        'users_profile',
+        [Query.equal('userId', user.$id), Query.limit(1)]
+      );
+
+      role = (profiles.documents[0] as any)?.role;
+    } catch {
+      role = undefined;
+    }
 
     req.user = {
       id: user.$id,
       email: user.email,
-      name: user.name
+      name: user.name,
+      role
     };
 
     next();

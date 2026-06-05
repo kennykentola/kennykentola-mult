@@ -83,6 +83,11 @@ This checklist tracks the development phases:
 
 Use this section to track new features and configuration adjustments made during the execution cycle:
 
+### [2026-06-05] Portal Split and Appwrite Init Update
+- Added a root-level `npm run init:appwrite` script for Appwrite database setup.
+- Linked Appwrite initialization into API startup so Academy collections and seed content are ensured on launch.
+- Added clearer portal entry points for Academy, Printing, and Project/App Build workflows.
+
 ### [2026-06-05] initial Blueprint Commit
 - Designed schemas for MongoDB Atlas, Upstash Redis, Express controllers, and Next.js/Expo routers.
 - Defined manual bank receipt approval states.

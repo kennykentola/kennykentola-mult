@@ -114,7 +114,7 @@ router.get('/orders/:orderId', authenticateJWT, async (req: AuthenticatedRequest
       DATABASE_ID,
       PRINT_ORDERS_COLLECTION,
       orderId
-    );
+    ) as any;
 
     // Ensure user can only view their own orders (unless Admin)
     if (order.userId !== req.user?.id && req.user?.role !== 'Admin') {

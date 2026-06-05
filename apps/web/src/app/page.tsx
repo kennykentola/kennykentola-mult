@@ -4,13 +4,37 @@ import { BookOpen, Code, Settings, Printer, GraduationCap, Sun, ArrowRight } fro
 import { academyOverview } from '../features/academy/content';
 
 export default function Home() {
+  const portalLinks = [
+    {
+      title: 'Academy Portal',
+      desc: 'Your student space for lessons, assignments, live classes, and progress tracking.',
+      href: '/register?portal=academy',
+      badge: 'Education First',
+      accent: 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300'
+    },
+    {
+      title: 'Printing Portal',
+      desc: 'Use this when you need documents, IDs, flyers, or book printing handled separately.',
+      href: '/register?portal=printing',
+      badge: 'Print Services',
+      accent: 'border-rose-500/30 bg-rose-500/10 text-rose-300'
+    },
+    {
+      title: 'Project / App Build Portal',
+      desc: 'For project write-ups, software builds, and custom app development requests.',
+      href: '/register?portal=projects',
+      badge: 'Build Requests',
+      accent: 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300'
+    }
+  ];
+
   const services = [
     {
       title: academyOverview.title,
       desc: academyOverview.description,
       icon: BookOpen,
       color: 'from-violet-500/20 to-purple-500/20 border-purple-500/30 text-purple-400',
-      link: '/dashboard/courses',
+      link: '/student/dashboard/courses',
       linkLabel: 'Enter Academy'
     },
     {
@@ -112,6 +136,29 @@ export default function Home() {
           <Link href="/register" className="rounded-full border border-slate-800 bg-slate-900/50 px-6 py-3 text-sm font-semibold text-white backdrop-blur-sm hover:bg-slate-900 transition-colors">
             Learn More
           </Link>
+        </div>
+
+        <div className="mt-14 grid gap-4 md:grid-cols-3 text-left">
+          {portalLinks.map((portal) => (
+            <Link
+              key={portal.title}
+              href={portal.href}
+              className={`group rounded-2xl border p-5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${portal.accent}`}
+            >
+              <span className="inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.2em]">
+                {portal.badge}
+              </span>
+              <h3 className="mt-4 text-lg font-bold text-white group-hover:text-white">
+                {portal.title}
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-slate-300">
+                {portal.desc}
+              </p>
+              <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white">
+                Open portal <ArrowRight className="h-4 w-4" />
+              </span>
+            </Link>
+          ))}
         </div>
       </section>
 

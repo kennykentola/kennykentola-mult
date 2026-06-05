@@ -3,6 +3,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { account } from '../../lib/appwrite';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+
 export interface User {
   id: string;
   email: string;
@@ -27,9 +29,9 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<Profile | null>;
   logout: () => Promise<void>;
-  refreshProfile: () => Promise<void>;
+  refreshProfile: () => Promise<Profile | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -45,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const jwtSession = await account.createJWT();
       const jwt = jwtSession.jwt;
 
-      const res = await fetch('http://localhost:5000/api/v1/auth/profile', {
+      const res = await fetch(`${API_BASE}/auth/profile`, {
         headers: {
           Authorization: `Bearer ${jwt}`,
         },
@@ -58,10 +60,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json();
       setUser(data.user);
       setProfile(data.profile);
+      return data.profile as Profile;
     } catch (err: any) {
       console.error('Error fetching profile:', err);
       setUser(null);
       setProfile(null);
+      return null;
     }
   };
 
@@ -92,7 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     try {
       await account.createEmailPasswordSession(email, password);
-      await fetchProfile();
+      return await fetchProfile();
     } catch (err: any) {
       setError(err.message || 'Login failed');
       throw err;

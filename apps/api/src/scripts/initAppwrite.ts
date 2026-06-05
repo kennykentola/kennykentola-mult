@@ -46,9 +46,15 @@ const collections: CollectionDef[] = [
       { key: 'title', type: 'string', size: 255, required: true },
       { key: 'description', type: 'string', size: 5000, required: true },
       { key: 'instructorId', type: 'string', size: 50, required: true },
+      { key: 'instructorName', type: 'string', size: 100, required: false },
+      { key: 'slug', type: 'string', size: 120, required: false },
+      { key: 'category', type: 'string', size: 100, required: false },
+      { key: 'level', type: 'string', size: 50, required: false },
+      { key: 'summary', type: 'string', size: 1000, required: false },
       { key: 'coverImage', type: 'string', size: 500, required: false },
       { key: 'price', type: 'float', required: true, defaultValue: 0 },
-      { key: 'isPublished', type: 'boolean', required: true, defaultValue: false }
+      { key: 'isPublished', type: 'boolean', required: true, defaultValue: false },
+      { key: 'lessonCount', type: 'integer', required: false, defaultValue: 0 }
     ]
   },
   {
@@ -59,7 +65,23 @@ const collections: CollectionDef[] = [
       { key: 'title', type: 'string', size: 255, required: true },
       { key: 'content', type: 'string', size: 10000, required: false },
       { key: 'videoUrl', type: 'string', size: 500, required: false },
-      { key: 'order', type: 'integer', required: true }
+      { key: 'order', type: 'integer', required: true },
+      { key: 'durationMinutes', type: 'integer', required: false, defaultValue: 0 },
+      { key: 'isPreview', type: 'boolean', required: false, defaultValue: false }
+    ]
+  },
+  {
+    id: 'course_enrollments',
+    name: 'Course Enrollments',
+    attributes: [
+      { key: 'userId', type: 'string', size: 50, required: true },
+      { key: 'courseId', type: 'string', size: 50, required: true },
+      { key: 'progress', type: 'integer', required: false, defaultValue: 0 },
+      { key: 'completedLessons', type: 'integer', required: false, defaultValue: 0 },
+      { key: 'lastLessonId', type: 'string', size: 50, required: false },
+      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'active' },
+      { key: 'enrolledAt', type: 'datetime', required: false },
+      { key: 'updatedAt', type: 'datetime', required: false }
     ]
   },
   {
@@ -95,7 +117,9 @@ const collections: CollectionDef[] = [
       { key: 'studentNote', type: 'string', size: 1000, required: false },
       { key: 'pointsAwarded', type: 'integer', required: false },
       { key: 'feedback', type: 'string', size: 2000, required: false },
-      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'pending' }
+      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'pending' },
+      { key: 'submittedAt', type: 'datetime', required: false },
+      { key: 'updatedAt', type: 'datetime', required: false }
     ]
   },
   {
@@ -137,6 +161,236 @@ const collections: CollectionDef[] = [
 // Sleep Helper
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const academySeedCourses = [
+  {
+    id: 'nextjs-15',
+    title: 'Full-Stack React and Next.js 15',
+    description:
+      'Master the App Router, Server Components, Server Actions, Suspense, and middleware with Appwrite integration.',
+    instructorId: 'kenny-kentola',
+    instructorName: 'Kenny Kentola',
+    slug: 'full-stack-react-nextjs-15',
+    category: 'Frontend',
+    level: 'Intermediate',
+    summary: 'Build modern production React applications with the App Router and Appwrite-backed workflows.',
+    coverImage: '',
+    price: 0,
+    isPublished: true,
+    lessonCount: 3
+  },
+  {
+    id: 'python-django',
+    title: 'Python and Django Backend Masterclass',
+    description:
+      'Build scalable APIs, configure Docker containers, and implement secure JWT authentication systems.',
+    instructorId: 'sarah-jenkins',
+    instructorName: 'Sarah Jenkins',
+    slug: 'python-django-backend-masterclass',
+    category: 'Backend',
+    level: 'Intermediate',
+    summary: 'Learn API architecture, authentication, and deployment-friendly backend patterns.',
+    coverImage: '',
+    price: 0,
+    isPublished: true,
+    lessonCount: 3
+  },
+  {
+    id: 'mobile-expo',
+    title: 'React Native and Expo Go Mobile Development',
+    description:
+      'Design native iOS and Android apps with shared code, offline storage, and push notifications.',
+    instructorId: 'kenny-kentola',
+    instructorName: 'Kenny Kentola',
+    slug: 'react-native-expo-go-mobile-development',
+    category: 'Mobile',
+    level: 'Beginner',
+    summary: 'Create polished cross-platform mobile apps with Expo and React Native.',
+    coverImage: '',
+    price: 199,
+    isPublished: true,
+    lessonCount: 3
+  }
+];
+
+const academySeedLessons = [
+  {
+    id: 'nextjs-15-lesson-1',
+    courseId: 'nextjs-15',
+    title: 'App Router Foundation and Project Setup',
+    content: 'Set up the project structure, app routing layout, and shared workspace patterns.',
+    videoUrl: '',
+    order: 1,
+    durationMinutes: 32,
+    isPreview: true
+  },
+  {
+    id: 'nextjs-15-lesson-2',
+    courseId: 'nextjs-15',
+    title: 'Server Components and Data Fetching',
+    content: 'Understand server components, async data fetching, and rendering patterns.',
+    videoUrl: '',
+    order: 2,
+    durationMinutes: 38,
+    isPreview: false
+  },
+  {
+    id: 'nextjs-15-lesson-3',
+    courseId: 'nextjs-15',
+    title: 'Server Actions and Mutations',
+    content: 'Wire form submissions and mutations through server actions and Appwrite.',
+    videoUrl: '',
+    order: 3,
+    durationMinutes: 41,
+    isPreview: false
+  },
+  {
+    id: 'python-django-lesson-1',
+    courseId: 'python-django',
+    title: 'Backend Planning and Environment Setup',
+    content: 'Define the backend architecture, install dependencies, and configure Docker.',
+    videoUrl: '',
+    order: 1,
+    durationMinutes: 30,
+    isPreview: true
+  },
+  {
+    id: 'python-django-lesson-2',
+    courseId: 'python-django',
+    title: 'Building REST APIs with Django',
+    content: 'Create reusable serializers, routers, and secure API endpoints.',
+    videoUrl: '',
+    order: 2,
+    durationMinutes: 36,
+    isPreview: false
+  },
+  {
+    id: 'python-django-lesson-3',
+    courseId: 'python-django',
+    title: 'JWT Authentication and Deployment',
+    content: 'Implement JWT login flows and prep the service for deployment.',
+    videoUrl: '',
+    order: 3,
+    durationMinutes: 44,
+    isPreview: false
+  },
+  {
+    id: 'mobile-expo-lesson-1',
+    courseId: 'mobile-expo',
+    title: 'Expo Project Foundation',
+    content: 'Set up a cross-platform workspace and mobile navigation structure.',
+    videoUrl: '',
+    order: 1,
+    durationMinutes: 28,
+    isPreview: true
+  },
+  {
+    id: 'mobile-expo-lesson-2',
+    courseId: 'mobile-expo',
+    title: 'Shared UI Components and State',
+    content: 'Build reusable mobile screens, state containers, and form patterns.',
+    videoUrl: '',
+    order: 2,
+    durationMinutes: 34,
+    isPreview: false
+  },
+  {
+    id: 'mobile-expo-lesson-3',
+    courseId: 'mobile-expo',
+    title: 'Offline Storage and Push Notifications',
+    content: 'Wire up offline persistence and notification hooks for production apps.',
+    videoUrl: '',
+    order: 3,
+    durationMinutes: 40,
+    isPreview: false
+  }
+];
+
+const academySeedAssignments = [
+  {
+    id: 'nextjs-15-assignment-1',
+    courseId: 'nextjs-15',
+    title: 'Build a Student Dashboard',
+    instructions:
+      'Create a dashboard that includes profile details, progress cards, and a responsive lesson sidebar. Focus on accessibility and component reuse.',
+    dueDate: '2026-06-12T18:00:00.000Z',
+    maxPoints: 100
+  },
+  {
+    id: 'python-django-assignment-1',
+    courseId: 'python-django',
+    title: 'Design a Secure API Auth Flow',
+    instructions:
+      'Implement login, JWT refresh handling, and protected routes for a Django REST API. Document the request/response flow.',
+    dueDate: '2026-06-14T18:00:00.000Z',
+    maxPoints: 100
+  },
+  {
+    id: 'mobile-expo-assignment-1',
+    courseId: 'mobile-expo',
+    title: 'Create a Mobile Lesson Player',
+    instructions:
+      'Build a simple mobile lesson player with tabs for lesson notes, progress tracking, and offline-ready UI states.',
+    dueDate: '2026-06-15T18:00:00.000Z',
+    maxPoints: 100
+  }
+];
+
+const academySeedLiveClasses = [
+  {
+    id: 'nextjs-15-live-1',
+    courseId: 'nextjs-15',
+    title: 'Next.js App Router Live Review',
+    scheduledAt: '2026-06-09T16:00:00.000Z',
+    durationMinutes: 90,
+    meetingUrl: 'https://meet.google.com/nextjs-15-review',
+    status: 'scheduled'
+  },
+  {
+    id: 'python-django-live-1',
+    courseId: 'python-django',
+    title: 'Django API Debug Lab',
+    scheduledAt: '2026-06-11T16:00:00.000Z',
+    durationMinutes: 75,
+    meetingUrl: 'https://meet.google.com/python-django-lab',
+    status: 'scheduled'
+  },
+  {
+    id: 'mobile-expo-live-1',
+    courseId: 'mobile-expo',
+    title: 'Mobile UI Build Along',
+    scheduledAt: '2026-06-13T16:00:00.000Z',
+    durationMinutes: 80,
+    meetingUrl: 'https://meet.google.com/mobile-expo-build',
+    status: 'scheduled'
+  }
+];
+
+async function ensureDocument(collectionId: string, documentId: string, payload: Record<string, any>) {
+  try {
+    await databases.getDocument(DATABASE_ID, collectionId, documentId);
+  } catch (err) {
+    await databases.createDocument(DATABASE_ID, collectionId, documentId, payload);
+  }
+}
+
+async function seedAcademyContent() {
+  for (const course of academySeedCourses) {
+    await ensureDocument('courses', course.id, course);
+  }
+
+  for (const lesson of academySeedLessons) {
+    await ensureDocument('lessons', lesson.id, lesson);
+  }
+
+  for (const assignment of academySeedAssignments) {
+    await ensureDocument('assignments', assignment.id, assignment);
+  }
+
+  for (const liveClass of academySeedLiveClasses) {
+    await ensureDocument('live_classes', liveClass.id, liveClass);
+  }
+}
+
 async function waitForAttribute(collectionId: string, attributeKey: string) {
   let attempts = 0;
   while (attempts < 30) {
@@ -155,6 +409,10 @@ async function waitForAttribute(collectionId: string, attributeKey: string) {
     attempts++;
   }
   throw new Error(`Timed out waiting for attribute '${attributeKey}' in collection '${collectionId}'`);
+}
+
+function getAttributeDefaultValue(attr: AttributeDef) {
+  return attr.required ? undefined : attr.defaultValue;
 }
 
 export async function initializeDatabase() {
@@ -195,21 +453,24 @@ export async function initializeDatabase() {
       } catch (err) {
         console.log(`  [Attribute] Creating "${attr.key}" (Type: ${attr.type}, Array: ${!!attr.array})...`);
         if (attr.type === 'string') {
-          await databases.createStringAttribute(DATABASE_ID, colDef.id, attr.key, attr.size || 255, attr.required, attr.defaultValue, attr.array);
+          await databases.createStringAttribute(DATABASE_ID, colDef.id, attr.key, attr.size || 255, attr.required, getAttributeDefaultValue(attr), attr.array);
         } else if (attr.type === 'integer') {
-          await databases.createIntegerAttribute(DATABASE_ID, colDef.id, attr.key, attr.required, undefined, undefined, attr.defaultValue, attr.array);
+          await databases.createIntegerAttribute(DATABASE_ID, colDef.id, attr.key, attr.required, undefined, undefined, getAttributeDefaultValue(attr), attr.array);
         } else if (attr.type === 'float') {
-          await databases.createFloatAttribute(DATABASE_ID, colDef.id, attr.key, attr.required, undefined, undefined, attr.defaultValue, attr.array);
+          await databases.createFloatAttribute(DATABASE_ID, colDef.id, attr.key, attr.required, undefined, undefined, getAttributeDefaultValue(attr), attr.array);
         } else if (attr.type === 'boolean') {
-          await databases.createBooleanAttribute(DATABASE_ID, colDef.id, attr.key, attr.required, attr.defaultValue, attr.array);
+          await databases.createBooleanAttribute(DATABASE_ID, colDef.id, attr.key, attr.required, getAttributeDefaultValue(attr), attr.array);
         } else if (attr.type === 'datetime') {
-          await databases.createDatetimeAttribute(DATABASE_ID, colDef.id, attr.key, attr.required, attr.defaultValue, attr.array);
+          await databases.createDatetimeAttribute(DATABASE_ID, colDef.id, attr.key, attr.required, getAttributeDefaultValue(attr), attr.array);
         }
         await waitForAttribute(colDef.id, attr.key);
       }
     }
     console.log(`[Collection] "${colDef.id}" processing completed.`);
   }
+
+  await seedAcademyContent();
+  console.log('[Appwrite Init] Academy seed content ensured.');
 }
 
 if (require.main === module) {

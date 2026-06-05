@@ -1,23 +1,147 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { BookOpen, Play, Search, Sparkles } from 'lucide-react';
-import { academyOverview, catalogCourses, enrolledCourses } from '../../../features/academy/content';
+import { usePathname } from 'next/navigation';
+import { BookOpen, Play, Search, Sparkles, Loader2 } from 'lucide-react';
+import { useAuth } from '../../../features/auth/AuthContext';
+import {
+  academyOverview,
+  catalogCourses as fallbackCatalogCourses,
+  enrolledCourses as fallbackEnrolledCourses
+} from '../../../features/academy/content';
+import {
+  AcademyCatalogResponse,
+  AcademyProgressResponse,
+  enrollInAcademyCourse,
+  fetchAcademyCatalog,
+  fetchAcademyProgress
+} from '../../../features/academy/api';
+
+const coverColors = [
+  'from-violet-600 to-indigo-600',
+  'from-blue-600 to-cyan-600',
+  'from-emerald-600 to-teal-600',
+  'from-rose-600 to-pink-600',
+  'from-amber-600 to-orange-600'
+];
+
+type CatalogCourse = AcademyCatalogResponse['courses'][number] | (typeof fallbackCatalogCourses)[number];
+
+const getCourseInstructor = (course: CatalogCourse) =>
+  'instructorName' in course ? course.instructorName : course.instructor;
+
+const getCoursePriceLabel = (course: CatalogCourse) => {
+  const price = course.price;
+  if (typeof price === 'number') {
+    return price === 0 ? 'Free' : `$${price}`;
+  }
+  return price;
+};
+
+const getCourseLessonCount = (course: CatalogCourse) =>
+  'lessonCount' in course ? course.lessonCount : course.lessons;
 
 export default function CoursesPage() {
+  const pathname = usePathname();
+  const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState<'my-courses' | 'browse'>('my-courses');
   const [searchQuery, setSearchQuery] = useState('');
+  const [catalog, setCatalog] = useState<AcademyCatalogResponse['courses'] | null>(null);
+  const [progress, setProgress] = useState<AcademyProgressResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [enrollingCourseId, setEnrollingCourseId] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const portalBasePath = pathname.startsWith('/student') ? '/student' : '/dashboard';
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAcademyData() {
+      if (!profile) return;
+
+      setLoading(true);
+      setError('');
+
+      try {
+        const [catalogData, progressData] = await Promise.all([
+          fetchAcademyCatalog(),
+          fetchAcademyProgress()
+        ]);
+
+        if (cancelled) return;
+
+        setCatalog(catalogData.courses);
+        setProgress(progressData);
+      } catch (err: any) {
+        if (cancelled) return;
+
+        setCatalog(null);
+        setProgress(null);
+        setError(err?.message || 'Unable to load academy data.');
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadAcademyData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profile?.userId]);
 
   const normalizedQuery = searchQuery.toLowerCase().trim();
+  const courseCatalog: CatalogCourse[] = catalog ?? fallbackCatalogCourses;
+  const enrolledCards = progress
+    ? progress.enrollments.map((enrollment, index) => ({
+        id: enrollment.id,
+        title: enrollment.course.title,
+        description: enrollment.course.description,
+        instructor: enrollment.course.instructorName,
+        progress: enrollment.progress || 0,
+        lessons: enrollment.course.lessonCount || 0,
+        completedLessons: enrollment.completedLessons || 0,
+        activeLesson: enrollment.nextLesson
+          ? `Lesson ${enrollment.nextLesson.order}: ${enrollment.nextLesson.title}`
+          : 'Next lesson unavailable',
+        coverColor: coverColors[index % coverColors.length],
+        category: enrollment.course.category || 'Academy'
+      }))
+    : fallbackEnrolledCourses;
 
-  const filteredEnrolled = enrolledCourses.filter((course) =>
+  const filteredEnrolled = enrolledCards.filter((course) =>
     `${course.title} ${course.description} ${course.instructor}`.toLowerCase().includes(normalizedQuery)
   );
 
-  const filteredCatalog = catalogCourses.filter((course) =>
-    `${course.title} ${course.description} ${course.instructor}`.toLowerCase().includes(normalizedQuery)
+  const filteredCatalog = courseCatalog.filter((course) =>
+    `${course.title} ${course.description} ${getCourseInstructor(course)}`.toLowerCase().includes(normalizedQuery)
   );
+
+  const enrolledIds = useMemo(() => {
+    return new Set((progress?.enrollments || []).map((enrollment) => enrollment.courseId));
+  }, [progress]);
+
+  const handleEnroll = async (courseId: string) => {
+    try {
+      setEnrollingCourseId(courseId);
+      setError('');
+      await enrollInAcademyCourse(courseId);
+      const updatedProgress = await fetchAcademyProgress();
+      setProgress(updatedProgress);
+      setActiveTab('my-courses');
+    } catch (err: any) {
+      setError(err?.message || 'Unable to enroll in the selected course.');
+    } finally {
+      setEnrollingCourseId(null);
+    }
+  };
+
+  if (!profile) {
+    return null;
+  }
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -58,7 +182,18 @@ export default function CoursesPage() {
         />
       </div>
 
-      {activeTab === 'my-courses' ? (
+      {error && (
+        <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="rounded-2xl border border-white/5 bg-slate-900/30 p-10 text-center">
+          <Loader2 className="mx-auto h-10 w-10 animate-spin text-indigo-400" />
+          <p className="mt-3 text-sm text-slate-400">Loading academy courses from the backend...</p>
+        </div>
+      ) : activeTab === 'my-courses' ? (
         <div className="grid gap-6 md:grid-cols-2">
           {filteredEnrolled.length > 0 ? (
             filteredEnrolled.map((course) => (
@@ -75,9 +210,11 @@ export default function CoursesPage() {
 
                 <div className="p-6 flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="text-lg font-bold text-white group-hover:text-indigo-300 transition-colors">
-                      {course.title}
-                    </h3>
+                    <Link href={`${portalBasePath}/courses/${course.id}`} className="block">
+                      <h3 className="text-lg font-bold text-white group-hover:text-indigo-300 transition-colors">
+                        {course.title}
+                      </h3>
+                    </Link>
                     <p className="text-slate-400 text-xs mt-2 leading-relaxed">
                       {course.description}
                     </p>
@@ -102,6 +239,12 @@ export default function CoursesPage() {
                     <button className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 py-3 text-xs font-bold text-white transition-colors">
                       <Play className="h-3.5 w-3.5 fill-current" /> Resume Class
                     </button>
+                    <Link
+                      href={`${portalBasePath}/courses/${course.id}`}
+                      className="block w-full rounded-xl border border-slate-800 bg-slate-950/70 hover:bg-slate-900 py-3 text-center text-xs font-bold text-slate-300 transition-colors"
+                    >
+                      Open Course
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -109,42 +252,44 @@ export default function CoursesPage() {
           ) : (
             <div className="col-span-2 text-center py-12 border border-dashed border-slate-800 rounded-2xl">
               <BookOpen className="mx-auto h-12 w-12 text-slate-700 mb-3" />
-              <p className="text-slate-400 text-sm">No courses matching your search.</p>
+              <p className="text-slate-400 text-sm">No enrolled courses yet. Browse the catalog and enroll in a course.</p>
             </div>
           )}
         </div>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filteredCatalog.length > 0 ? (
-            filteredCatalog.map((course) => (
+            filteredCatalog.map((course, index) => (
               <div
                 key={course.id}
                 className="group relative rounded-2xl border border-white/5 bg-slate-900/30 overflow-hidden flex flex-col justify-between hover:scale-[1.01] hover:border-indigo-500/30 transition-all duration-300"
               >
-                <div className={`h-28 bg-gradient-to-r ${course.coverColor} p-6 flex flex-col justify-between relative`}>
+                <div className={`h-28 bg-gradient-to-r ${coverColors[index % coverColors.length]} p-6 flex flex-col justify-between relative`}>
                   <div className="absolute inset-0 bg-slate-950/20" />
                   <div className="relative z-10 flex justify-between items-start">
-                    {course.tag ? (
+                    {course.category ? (
                       <span className="text-[9px] font-extrabold uppercase tracking-wide bg-indigo-500 text-white px-2 py-0.5 rounded-full flex items-center gap-0.5">
-                        <Sparkles className="h-2.5 w-2.5" /> {course.tag}
+                        <Sparkles className="h-2.5 w-2.5" /> {course.category}
                       </span>
                     ) : (
                       <span />
                     )}
                     <span className="text-xs font-extrabold text-white bg-slate-950/80 px-2.5 py-1 rounded-lg border border-white/5">
-                      {course.price}
+                      {getCoursePriceLabel(course)}
                     </span>
                   </div>
                   <span className="relative z-10 text-[10px] font-semibold text-white/80">
-                    Instructor: {course.instructor}
+                    Instructor: {getCourseInstructor(course)}
                   </span>
                 </div>
 
                 <div className="p-6 flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="text-base font-bold text-white group-hover:text-indigo-300 transition-colors">
-                      {course.title}
-                    </h3>
+                    <Link href={`${portalBasePath}/courses/${course.id}`} className="block">
+                      <h3 className="text-base font-bold text-white group-hover:text-indigo-300 transition-colors">
+                        {course.title}
+                      </h3>
+                    </Link>
                     <p className="text-slate-400 text-xs mt-2 leading-relaxed">
                       {course.description}
                     </p>
@@ -152,13 +297,28 @@ export default function CoursesPage() {
 
                   <div className="mt-6 space-y-3">
                     <div className="text-xs text-slate-500">
-                      <span>{course.lessons} lectures - Full Lifetime Access</span>
+                      <span>{getCourseLessonCount(course)} lessons - Full Lifetime Access</span>
                     </div>
-                    <Link
-                      href="/register"
-                      className="w-full rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 py-3 text-xs font-bold text-white transition-colors text-center"
+                    <button
+                      onClick={() => handleEnroll(course.id)}
+                      disabled={enrollingCourseId === course.id || enrolledIds.has(course.id)}
+                      className="w-full rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 py-3 text-xs font-bold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60 flex items-center justify-center gap-2"
                     >
-                      Enroll Course
+                      {enrollingCourseId === course.id ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Enrolling...
+                        </>
+                      ) : enrolledIds.has(course.id) ? (
+                        'Already Enrolled'
+                      ) : (
+                        'Enroll Course'
+                      )}
+                    </button>
+                    <Link
+                      href={`${portalBasePath}/courses/${course.id}`}
+                      className="block w-full rounded-xl border border-slate-800 bg-slate-950/70 hover:bg-slate-900 py-3 text-center text-xs font-bold text-slate-300 transition-colors"
+                    >
+                      View Lessons
                     </Link>
                   </div>
                 </div>

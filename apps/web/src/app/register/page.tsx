@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, UserPlus, Shield, User, Mail, Lock, Phone, Eye, EyeOff } from 'lucide-react';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
 export default function Register() {
   const router = useRouter();
@@ -20,13 +22,43 @@ export default function Register() {
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const portal = params.get('portal') || params.get('purpose');
+
+    if (!portal) {
+      return;
+    }
+
+    const portalPreset: Record<string, { role: string; purpose: 'learn' | 'hire' | 'print' | 'both' }> = {
+      academy: { role: 'Student', purpose: 'learn' },
+      learn: { role: 'Student', purpose: 'learn' },
+      print: { role: 'Printer Operator', purpose: 'print' },
+      printing: { role: 'Printer Operator', purpose: 'print' },
+      hire: { role: 'Client', purpose: 'hire' },
+      project: { role: 'Client', purpose: 'hire' },
+      projects: { role: 'Client', purpose: 'hire' },
+      app: { role: 'Client', purpose: 'hire' },
+      all: { role: 'Student', purpose: 'both' }
+    };
+
+    const preset = portalPreset[portal];
+    if (preset) {
+      setFormData((current) => ({
+        ...current,
+        role: preset.role,
+        purpose: preset.purpose
+      }));
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/v1/auth/register', {
+      const response = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -63,7 +95,9 @@ export default function Register() {
             <UserPlus className="h-6 w-6" />
           </div>
           <h2 className="text-2xl font-bold text-white">Create your Account</h2>
-          <p className="text-sm text-slate-400 mt-2">Join the KennyKentola Multi-Company Platform</p>
+          <p className="text-sm text-slate-400 mt-2">
+            Join the KennyKentola Multi-Company Platform and choose the portal you want first.
+          </p>
         </div>
 
         {error && (
@@ -174,10 +208,10 @@ export default function Register() {
                   setFormData({ ...formData, role, purpose });
                 }}
               >
-                <option value="Student">Student (Academy & CS Projects)</option>
+                <option value="Student">Student (Academy Portal)</option>
                 <option value="Client">Client (Agency & Solar Contracts)</option>
                 <option value="Electrician">Electrician / Technician</option>
-                <option value="Printer Operator">Printer Operator</option>
+                <option value="Printer Operator">Printer Operator (Printing Portal)</option>
               </select>
             </div>
             <div>
@@ -189,10 +223,10 @@ export default function Register() {
                 value={formData.purpose}
                 onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
               >
-                <option value="learn">Learn Programming</option>
-                <option value="hire">Hire Us for Projects</option>
-                <option value="print">Print &amp; Design Services</option>
-                <option value="both">All Services</option>
+                <option value="learn">Academy Portal</option>
+                <option value="hire">Project / App Build Portal</option>
+                <option value="print">Printing Portal</option>
+                <option value="both">All Services Portal</option>
               </select>
             </div>
           </div>

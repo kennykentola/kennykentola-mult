@@ -14,9 +14,25 @@ export default function Login() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  const getPostLoginRoute = (userPurpose?: string) => {
+    if (userPurpose === 'learn' || userPurpose === 'both') {
+      return '/student/dashboard';
+    }
+
+    if (userPurpose === 'print') {
+      return '/dashboard/printing';
+    }
+
+    if (userPurpose === 'hire') {
+      return '/dashboard/projects';
+    }
+
+    return '/dashboard';
+  };
+
   useEffect(() => {
     if (profile) {
-      router.push('/dashboard');
+      router.push(getPostLoginRoute(profile.purpose));
     }
   }, [profile, router]);
 
@@ -26,8 +42,8 @@ export default function Login() {
     setError('');
 
     try {
-      await login(email, password);
-      router.push('/dashboard');
+      const signedInProfile = await login(email, password);
+      router.push(getPostLoginRoute(signedInProfile?.purpose || profile?.purpose));
     } catch (err: any) {
       console.error('[Login Flow] Error:', err.message);
       setError(err.message || 'Authentication failed. Please check your credentials.');

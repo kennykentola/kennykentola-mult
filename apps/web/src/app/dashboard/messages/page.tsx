@@ -96,11 +96,10 @@ export default function MessagesPage() {
             <button
               key={ch.id}
               onClick={() => setActiveChat(idx)}
-              className={`w-full flex items-start gap-3 p-3 rounded-2xl text-left transition-all ${
-                activeChat === idx 
-                  ? 'bg-indigo-650/10 border border-indigo-500/10 text-indigo-400' 
+              className={`w-full flex items-start gap-3 p-3 rounded-2xl text-left transition-all ${activeChat === idx
+                  ? 'bg-indigo-650/10 border border-indigo-500/10 text-indigo-400'
                   : 'border border-transparent text-slate-400 hover:text-white hover:bg-slate-900/40'
-              }`}
+                }`}
             >
               <div className="h-10 w-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-sm text-indigo-400 uppercase shrink-0">
                 {ch.avatar}
@@ -133,11 +132,10 @@ export default function MessagesPage() {
             const isMe = m.sender === 'me';
             return (
               <div key={mIdx} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-md rounded-2xl p-4 text-xs ${
-                  isMe 
-                    ? 'bg-indigo-600 text-white rounded-tr-none' 
+                <div className={`max-w-md rounded-2xl p-4 text-xs ${isMe
+                    ? 'bg-indigo-600 text-white rounded-tr-none'
                     : 'bg-slate-900 border border-white/5 text-slate-200 rounded-tl-none'
-                }`}>
+                  }`}>
                   <p className="leading-relaxed whitespace-pre-wrap">{m.text}</p>
                   <span className={`text-[9px] block mt-1.5 text-right ${isMe ? 'text-indigo-200' : 'text-slate-500'}`}>
                     {m.time}
@@ -159,6 +157,7 @@ export default function MessagesPage() {
           />
           <button
             type="submit"
+            aria-label="Send message"
             className="h-10 w-10 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center transition-colors shrink-0"
           >
             <Send className="h-4 w-4" />

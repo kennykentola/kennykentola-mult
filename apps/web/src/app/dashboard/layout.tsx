@@ -27,6 +27,8 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const { profile, loading, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isStudentPortal = pathname.startsWith('/student');
+  const portalBasePath = isStudentPortal ? '/student' : '/dashboard';
 
   useEffect(() => {
     if (!loading && !profile) {
@@ -51,31 +53,38 @@ export default function DashboardLayout({
 
   const userPurpose = profile.purpose || 'learn';
   const userRole = profile.role || 'Student';
+  const portalLabel = userPurpose === 'learn'
+    ? (isStudentPortal ? 'Student Portal' : 'Academy Portal')
+    : userPurpose === 'hire'
+      ? 'Project / App Build Portal'
+      : userPurpose === 'print'
+        ? 'Printing Portal'
+        : 'Unified Portal';
 
   // Base navigation
   const allNavItems = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard, show: true },
     { 
       name: 'My Courses', 
-      href: '/dashboard/courses', 
+      href: `${portalBasePath}/courses`, 
       icon: GraduationCap, 
       show: userPurpose === 'learn' || userPurpose === 'both' 
     },
     { 
-      name: 'My Projects', 
-      href: '/dashboard/projects', 
+      name: 'Project / App Build', 
+      href: `${portalBasePath}/projects`, 
       icon: Briefcase, 
       show: userPurpose === 'hire' || userPurpose === 'both' 
     },
     { 
-      name: 'Print Orders', 
-      href: '/dashboard/printing', 
+      name: 'Printing Portal', 
+      href: `${portalBasePath}/printing`, 
       icon: Printer, 
       show: userPurpose === 'print' || userPurpose === 'both' 
     },
-    { name: 'Messages', href: '/dashboard/messages', icon: MessageSquare, show: true },
-    { name: 'Payments', href: '/dashboard/payments', icon: CreditCard, show: true },
-    { name: 'Profile', href: '/dashboard/profile', icon: User, show: true },
+    { name: 'Messages', href: `${portalBasePath}/messages`, icon: MessageSquare, show: true },
+    { name: 'Payments', href: `${portalBasePath}/payments`, icon: CreditCard, show: true },
+    { name: 'Profile', href: `${portalBasePath}/profile`, icon: User, show: true },
   ];
 
   const navItems = allNavItems.filter(item => item.show);
@@ -98,9 +107,14 @@ export default function DashboardLayout({
           <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center font-bold text-white shadow-md">
             K
           </div>
-          <span className="text-lg font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-            KennyKentola
-          </span>
+          <div className="min-w-0">
+            <span className="block text-lg font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+              KennyKentola
+            </span>
+            <span className="block text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
+              {portalLabel}
+            </span>
+          </div>
         </div>
 
         <nav className="flex-1 py-6 px-4 space-y-1">
@@ -209,10 +223,10 @@ export default function DashboardLayout({
                     Administration
                   </span>
                   <Link
-                    href="/admin"
-                    onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                      pathname.startsWith('/admin')
+                href="/admin"
+                onClick={() => setSidebarOpen(false)}
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  pathname.startsWith('/admin')
                         ? 'bg-rose-500/10 border border-rose-500/20 text-rose-400'
                         : 'border border-transparent text-slate-400 hover:text-white hover:bg-slate-900/50'
                     }`}
@@ -245,7 +259,12 @@ export default function DashboardLayout({
             <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white">
               K
             </div>
-            <span className="text-lg font-bold text-white">KennyKentola</span>
+            <div>
+              <span className="block text-lg font-bold text-white">KennyKentola</span>
+              <span className="block text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">
+                {portalLabel}
+              </span>
+            </div>
           </div>
           <button
             onClick={() => setSidebarOpen(true)}

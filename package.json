@@ -10,7 +10,8 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
-    "dev": "npm run dev --workspaces --parallel"
+    "dev": "npm run dev --workspaces --parallel",
+    "init:appwrite": "npm run init:appwrite --workspace api"
   },
   "devDependencies": {
     "typescript": "^5.0.0"
