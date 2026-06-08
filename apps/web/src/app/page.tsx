@@ -42,7 +42,7 @@ export default function Home() {
       desc: 'Get custom applications, MVP development, and web products engineered for your startups.',
       icon: Code,
       color: 'from-blue-500/20 to-cyan-500/20 border-cyan-500/30 text-cyan-400',
-      link: '/dashboard/projects',
+      link: '/projects',
       linkLabel: 'Start a Project'
     },
     {
@@ -50,7 +50,7 @@ export default function Home() {
       desc: 'Secure SLA-backed support, bug fixing, and scaling support for your active legacy codebases.',
       icon: Settings,
       color: 'from-emerald-500/20 to-teal-500/20 border-teal-500/30 text-teal-400',
-      link: '/dashboard/projects',
+      link: '/projects',
       linkLabel: 'Request Support'
     },
     {
@@ -58,7 +58,7 @@ export default function Home() {
       desc: 'Struggling with computer science thesis work? Get premium proposals, document reviews, and code builders.',
       icon: GraduationCap,
       color: 'from-amber-500/20 to-orange-500/20 border-orange-500/30 text-orange-400',
-      link: '/dashboard/projects',
+      link: '/projects',
       linkLabel: 'Submit Project Brief'
     },
     {
@@ -66,7 +66,7 @@ export default function Home() {
       desc: 'Upload files and place print, photocopy, invoice creation, custom flyer, and ID card orders.',
       icon: Printer,
       color: 'from-rose-500/20 to-pink-500/20 border-pink-500/30 text-pink-400',
-      link: '/dashboard/printing',
+      link: '/printing',
       linkLabel: 'Place Print Order'
     },
     {
@@ -74,7 +74,7 @@ export default function Home() {
       desc: 'Certified engineers for clean energy setup, solar panel installation, repairs, and home wiring.',
       icon: Sun,
       color: 'from-yellow-500/20 to-amber-600/20 border-yellow-500/30 text-yellow-400',
-      link: '/dashboard/projects',
+      link: '/projects',
       linkLabel: 'Request Installation'
     }
   ];

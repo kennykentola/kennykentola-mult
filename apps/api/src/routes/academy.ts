@@ -2,8 +2,10 @@ import { Router } from 'express';
 import { ID, Query } from 'node-appwrite';
 import { databases } from '../services/appwrite';
 import { authenticateJWT, AuthenticatedRequest } from '../middleware/auth';
+import communityRouter from './community';
 
 const router = Router();
+router.use('/community', communityRouter);
 
 const DATABASE_ID = process.env.APPWRITE_DATABASE_ID || 'multicompany';
 const COURSES_COLLECTION = 'courses';
@@ -186,6 +188,35 @@ async function listLiveClasses(courseId: string) {
   return liveClasses.documents as any[];
 }
 
+async function canViewCourse(courseId: string, user?: AuthenticatedRequest['user']) {
+  const course = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION, courseId);
+  const courseDoc = course as any;
+
+  if (courseDoc.isPublished) {
+    return courseDoc;
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  if (user.role === 'Admin' || user.role === 'Super Admin') {
+    return courseDoc;
+  }
+
+  if (user.role === 'Instructor' && courseDoc.instructorId === user.id) {
+    return courseDoc;
+  }
+
+  const enrollments = await databases.listDocuments(DATABASE_ID, ENROLLMENTS_COLLECTION, [
+    Query.equal('userId', user.id),
+    Query.equal('courseId', courseId),
+    Query.limit(1)
+  ]);
+
+  return enrollments.total > 0 ? courseDoc : null;
+}
+
 async function getUserAssignmentSubmission(assignmentId: string, userId: string) {
   const submissions = await databases.listDocuments(DATABASE_ID, SUBMISSIONS_COLLECTION, [
     Query.equal('assignmentId', assignmentId),
@@ -285,7 +316,10 @@ router.get('/courses/:courseId', async (req, res) => {
   const { courseId } = req.params;
 
   try {
-    const course = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION, courseId);
+    const course = await canViewCourse(courseId);
+    if (!course) {
+      return res.status(403).json({ error: 'Access denied.' });
+    }
     const lessons = await listCourseLessons(courseId);
 
     res.status(200).json({
@@ -302,6 +336,10 @@ router.get('/courses/:courseId/assignments', async (req, res) => {
   const { courseId } = req.params;
 
   try {
+    const course = await canViewCourse(courseId);
+    if (!course) {
+      return res.status(403).json({ error: 'Access denied.' });
+    }
     const assignments = await listAssignments(courseId);
     res.status(200).json({
       assignments: assignments.map((assignment: any) => ({
@@ -325,33 +363,42 @@ router.get('/courses/:courseId/assignments/me', authenticateJWT, async (req: Aut
 
   try {
     const assignments = await listAssignments(courseId);
-    const assignmentsWithSubmissions = await Promise.all(
-      assignments.map(async (assignment: any) => {
-        const submission = (await getUserAssignmentSubmission(assignment.$id, userId || '')) as any;
-        return {
-          id: assignment.$id,
-          courseId: assignment.courseId,
-          title: assignment.title,
-          instructions: assignment.instructions,
-          dueDate: assignment.dueDate,
-          maxPoints: Number(assignment.maxPoints || 100),
-          submission: submission
-            ? {
-                id: submission.$id,
-                assignmentId: submission.assignmentId,
-                studentId: submission.studentId,
-                fileUrls: submission.fileUrls || [],
-                studentNote: submission.studentNote,
-                pointsAwarded: submission.pointsAwarded,
-                feedback: submission.feedback,
-                status: submission.status,
-                submittedAt: submission.submittedAt,
-                updatedAt: submission.updatedAt
-              }
-            : null
-        };
-      })
+
+    // Batch fetch all user submissions for this course in one query instead of N queries
+    const allSubmissions = await databases.listDocuments(DATABASE_ID, SUBMISSIONS_COLLECTION, [
+      Query.equal('studentId', userId || ''),
+      Query.equal('courseId', courseId),
+      Query.limit(assignments.length + 10)
+    ]);
+    const submissionByAssignment = new Map(
+      allSubmissions.documents.map((s: any) => [s.assignmentId, s])
     );
+
+    const assignmentsWithSubmissions = assignments.map((assignment: any) => {
+      const submissionDoc = submissionByAssignment.get(assignment.$id) as any;
+      return {
+        id: assignment.$id,
+        courseId: assignment.courseId,
+        title: assignment.title,
+        instructions: assignment.instructions,
+        dueDate: assignment.dueDate,
+        maxPoints: Number(assignment.maxPoints || 100),
+        submission: submissionDoc
+          ? {
+              id: submissionDoc.$id,
+              assignmentId: submissionDoc.assignmentId,
+              studentId: submissionDoc.studentId,
+              fileUrls: submissionDoc.fileUrls || [],
+              studentNote: submissionDoc.studentNote,
+              pointsAwarded: submissionDoc.pointsAwarded,
+              feedback: submissionDoc.feedback,
+              status: submissionDoc.status,
+              submittedAt: submissionDoc.submittedAt,
+              updatedAt: submissionDoc.updatedAt
+            }
+          : null
+      };
+    });
 
     res.status(200).json({ assignments: assignmentsWithSubmissions });
   } catch (err: any) {
@@ -364,6 +411,10 @@ router.get('/courses/:courseId/live-classes', async (req, res) => {
   const { courseId } = req.params;
 
   try {
+    const course = await canViewCourse(courseId);
+    if (!course) {
+      return res.status(403).json({ error: 'Access denied.' });
+    }
     const liveClasses = await listLiveClasses(courseId);
     res.status(200).json({
       liveClasses: liveClasses.map((liveClass: any) => ({
@@ -444,29 +495,48 @@ router.get('/me/progress', authenticateJWT, async (req: AuthenticatedRequest, re
   try {
     const enrollmentDocs = await getEnrollmentDocs(userId || '');
 
-    const enrollments = await Promise.all(
-      enrollmentDocs.map(async (doc) => {
-        const enrollmentDoc = doc as any;
-        const course = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION, enrollmentDoc.courseId);
-        const lessons = await listCourseLessons(enrollmentDoc.courseId);
-        const nextLessonIndex = Math.min(Number(enrollmentDoc.completedLessons || 0), lessons.length - 1);
-        const nextLesson = lessons[nextLessonIndex] || null;
+    // Batch fetch all enrolled courses at once instead of N getDocument calls
+    const courseIds = enrollmentDocs.map((d: any) => d.courseId).filter(Boolean);
+    const courseMap = new Map<string, any>();
+    if (courseIds.length > 0) {
+      try {
+        const courseBatch = await databases.listDocuments(DATABASE_ID, COURSES_COLLECTION, [
+          Query.equal('$id', courseIds),
+          Query.limit(courseIds.length)
+        ]);
+        courseBatch.documents.forEach((c: any) => courseMap.set(c.$id, c));
+      } catch {}
+    }
 
-        return {
-          id: enrollmentDoc.$id,
-          userId: enrollmentDoc.userId,
-          courseId: enrollmentDoc.courseId,
-          progress: Number(enrollmentDoc.progress || 0),
-          completedLessons: Number(enrollmentDoc.completedLessons || 0),
-          lastLessonId: enrollmentDoc.lastLessonId,
-          status: enrollmentDoc.status,
-          enrolledAt: enrollmentDoc.enrolledAt,
-          updatedAt: enrollmentDoc.updatedAt,
-          course: mapCourse(course, lessons.length),
-          nextLesson
-        };
+    // Batch fetch lessons per course in parallel
+    const lessonsByCourseid = new Map<string, any[]>();
+    await Promise.all(
+      courseIds.map(async (cId: string) => {
+        const lessons = await listCourseLessons(cId);
+        lessonsByCourseid.set(cId, lessons);
       })
     );
+
+    const enrollments = enrollmentDocs.map((doc: any) => {
+      const enrollmentDoc = doc as any;
+      const course = courseMap.get(enrollmentDoc.courseId);
+      const lessons = lessonsByCourseid.get(enrollmentDoc.courseId) || [];
+      const nextLessonIndex = Math.min(Number(enrollmentDoc.completedLessons || 0), lessons.length - 1);
+      const nextLesson = lessons[nextLessonIndex] || null;
+      return {
+        id: enrollmentDoc.$id,
+        userId: enrollmentDoc.userId,
+        courseId: enrollmentDoc.courseId,
+        progress: Number(enrollmentDoc.progress || 0),
+        completedLessons: Number(enrollmentDoc.completedLessons || 0),
+        lastLessonId: enrollmentDoc.lastLessonId,
+        status: enrollmentDoc.status,
+        enrolledAt: enrollmentDoc.enrolledAt,
+        updatedAt: enrollmentDoc.updatedAt,
+        course: course ? mapCourse(course, lessons.length) : null,
+        nextLesson
+      };
+    });
 
     const summary = {
       enrolledCourses: enrollments.length,
@@ -556,12 +626,38 @@ router.patch('/courses/:courseId/progress', authenticateJWT, async (req: Authent
 
     const existingDoc = existing.documents[0] as any;
     const enrollmentId = existingDoc.$id;
+    const newProgress = typeof progress === 'number' ? progress : existingDoc.progress || 0;
+
     const enrollment = await databases.updateDocument(DATABASE_ID, ENROLLMENTS_COLLECTION, enrollmentId, {
-      progress: typeof progress === 'number' ? progress : existingDoc.progress || 0,
+      progress: newProgress,
       completedLessons: typeof completedLessons === 'number' ? completedLessons : existingDoc.completedLessons || 0,
       lastLessonId: lastLessonId || existingDoc.lastLessonId || '',
       updatedAt: new Date().toISOString()
     });
+
+    // Automatically queue certificate generation if progress is 100
+    if (newProgress >= 100 && (existingDoc.progress || 0) < 100) {
+      try {
+        const profile = await getProfileDoc(userId || '');
+        const studentName = profile ? `${(profile as any).firstName} ${(profile as any).lastName}` : req.user?.name || 'Student';
+        const course = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION, courseId);
+
+        // Check if certificate already exists
+        const existingCerts = await databases.listDocuments(DATABASE_ID, 'certificates', [
+          Query.equal('studentId', userId || ''),
+          Query.equal('courseId', courseId),
+          Query.limit(1)
+        ]);
+
+        if (existingCerts.total === 0) {
+          const { queueCertificateGeneration } = require('../services/queue');
+          await queueCertificateGeneration(userId, studentName, courseId, (course as any).title);
+          console.log(`[Academy] Automatically queued certificate generation for ${studentName} on completing course ${(course as any).title}`);
+        }
+      } catch (certErr: any) {
+        console.error('[Academy] Failed to automatically queue certificate:', certErr.message);
+      }
+    }
 
     res.status(200).json({ message: 'Progress updated', enrollment });
   } catch (err: any) {
@@ -614,6 +710,598 @@ router.post('/assignments/:assignmentId/submissions', authenticateJWT, async (re
     res.status(201).json({ message: 'Submission created', submission });
   } catch (err: any) {
     console.error('[Academy] Error creating submission:', err.message);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Fetch student assignments across all enrolled courses
+router.get('/student/assignments', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  try {
+    const enrollments = await getEnrollmentDocs(userId || '');
+    if (enrollments.length === 0) {
+      return res.status(200).json({ assignments: [] });
+    }
+
+    const courseIds = enrollments.map((e) => e.courseId);
+    
+    // Fetch all assignments for these courses
+    const allAssignments = [];
+    for (const courseId of courseIds) {
+      const courseAssignments = await listAssignments(courseId);
+      const course = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION, courseId);
+      
+      for (const assignment of courseAssignments) {
+        const submission = await getUserAssignmentSubmission(assignment.$id, userId || '');
+        const submissionDoc: any = submission;
+        allAssignments.push({
+          id: assignment.$id,
+          courseId,
+          courseTitle: (course as any).title,
+          instructorName: (course as any).instructorName || 'Kenny Kentola',
+          title: assignment.title,
+          instructions: assignment.instructions,
+          dueDate: assignment.dueDate,
+          maxPoints: Number(assignment.maxPoints || 100),
+          submission: submissionDoc ? {
+            id: submissionDoc.$id,
+            fileUrls: submissionDoc.fileUrls || [],
+            studentNote: submissionDoc.studentNote || '',
+            pointsAwarded: submissionDoc.pointsAwarded ?? null,
+            feedback: submissionDoc.feedback || '',
+            status: submissionDoc.status,
+            submittedAt: submissionDoc.submittedAt || submissionDoc.$createdAt,
+            updatedAt: submissionDoc.updatedAt || submissionDoc.$updatedAt
+          } : null
+        });
+      }
+    }
+
+    // Sort assignments by due date (closest first)
+    allAssignments.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
+    res.status(200).json({ assignments: allAssignments });
+  } catch (err: any) {
+    console.error('[Academy Student Assignments] Error fetching assignments:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Fetch user certificates
+router.get('/certificates', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+
+  try {
+    const certs = await databases.listDocuments(DATABASE_ID, 'certificates', [
+      Query.equal('studentId', userId || ''),
+      Query.orderDesc('issuedAt'),
+      Query.limit(100)
+    ]);
+    res.status(200).json({ certificates: certs.documents });
+  } catch (err: any) {
+    console.error('[Academy Certificates] Error fetching certificates:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Issue test certificate manually
+router.post('/courses/:courseId/issue-test-certificate', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { courseId } = req.params;
+  const userId = req.user?.id;
+
+  try {
+    const profile = await getProfileDoc(userId || '');
+    const studentName = profile ? `${(profile as any).firstName} ${(profile as any).lastName}` : req.user?.name || 'Student';
+    const course = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION, courseId);
+
+    const { queueCertificateGeneration } = require('../services/queue');
+    await queueCertificateGeneration(userId, studentName, courseId, (course as any).title);
+
+    res.status(200).json({ message: 'Certificate generation queued successfully.' });
+  } catch (err: any) {
+    console.error('[Academy Certificates] Error manually queueing certificate:', err.message);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ADMIN: Fetch all certificates
+router.get('/admin/certificates', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin' && req.user?.role !== 'Instructor') {
+    return res.status(403).json({ error: 'Access denied.' });
+  }
+
+  try {
+    const certs = await databases.listDocuments(DATABASE_ID, 'certificates', [
+      Query.orderDesc('issuedAt'),
+      Query.limit(100)
+    ]);
+
+    const certDocs = certs.documents as any[];
+
+    // Batch-fetch student profiles and courses
+    const uniqueStudentIds = [...new Set(certDocs.map(c => c.studentId))];
+    const uniqueCourseIds  = [...new Set(certDocs.map(c => c.courseId))];
+
+    const [profileBatch, courseBatch] = await Promise.all([
+      uniqueStudentIds.length > 0
+        ? databases.listDocuments(DATABASE_ID, 'users_profile', [
+            Query.equal('userId', uniqueStudentIds), Query.limit(uniqueStudentIds.length)
+          ]).catch(() => ({ documents: [] }))
+        : Promise.resolve({ documents: [] }),
+      uniqueCourseIds.length > 0
+        ? databases.listDocuments(DATABASE_ID, COURSES_COLLECTION, [
+            Query.equal('$id', uniqueCourseIds), Query.limit(uniqueCourseIds.length)
+          ]).catch(() => ({ documents: [] }))
+        : Promise.resolve({ documents: [] })
+    ]);
+
+    const profileMap = new Map(profileBatch.documents.map((p: any) => [p.userId, `${p.firstName} ${p.lastName}`]));
+    const courseTitleMap = new Map(courseBatch.documents.map((c: any) => [c.$id, c.title]));
+
+    const enriched = certDocs.map((cert: any) => ({
+      id: cert.$id,
+      studentId: cert.studentId,
+      studentName: profileMap.get(cert.studentId) || cert.studentId,
+      courseId: cert.courseId,
+      courseTitle: courseTitleMap.get(cert.courseId) || cert.courseId,
+      certificateNumber: cert.certificateNumber,
+      issuedAt: cert.issuedAt,
+      pdfUrl: cert.pdfUrl
+    }));
+
+    res.status(200).json({ certificates: enriched });
+  } catch (err: any) {
+    console.error('[Academy Certificates Admin] Error listing certificates:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// INSTRUCTOR: Get all courses managed/created by instructor
+router.get('/instructor/courses', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Instructor access required.' });
+  }
+
+  try {
+    const userId = req.user?.id;
+    // Admins can see all courses; Instructors see their own courses.
+    const queries: any[] = [Query.limit(100)];
+    if (req.user?.role === 'Instructor') {
+      queries.push(Query.equal('instructorId', userId || ''));
+    }
+
+    const courses = await databases.listDocuments(DATABASE_ID, COURSES_COLLECTION, queries);
+
+    // Batch-fetch lesson counts in parallel (one query per course, but all courses run at once)
+    const mapped = await Promise.all(
+      courses.documents.map(async (course) => {
+        const courseDoc = course as any;
+        return mapCourse(courseDoc, await getLessonCount(courseDoc.$id, Number(courseDoc.lessonCount || 0)));
+      })
+    );
+
+    res.status(200).json({ courses: mapped, total: mapped.length });
+  } catch (err: any) {
+    console.error('[Academy Instructor] Error fetching course catalogs:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// INSTRUCTOR: Get students enrolled in instructor's courses
+router.get('/instructor/students', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Instructor access required.' });
+  }
+
+  const userId = req.user?.id;
+
+  try {
+    // 1. Get instructor courses
+    const queries = [Query.limit(100)];
+    if (req.user?.role === 'Instructor') {
+      queries.push(Query.equal('instructorId', userId || ''));
+    }
+    const courses = await databases.listDocuments(DATABASE_ID, COURSES_COLLECTION, queries);
+    const courseMap = new Map(
+      courses.documents.map((c) => {
+        const courseDoc = c as any;
+        return [courseDoc.$id, courseDoc.title];
+      })
+    );
+
+    if (courses.total === 0) {
+      return res.status(200).json({ enrollments: [] });
+    }
+
+    // 2. Fetch all enrollments for these courses
+    const allEnrollments = [];
+    for (const courseId of courseMap.keys()) {
+      const courseEnrollments = await databases.listDocuments(DATABASE_ID, ENROLLMENTS_COLLECTION, [
+        Query.equal('courseId', courseId),
+        Query.limit(100)
+      ]);
+
+      for (const enc of courseEnrollments.documents) {
+        const encDoc = enc as any;
+        const profile = await getProfileDoc(encDoc.userId);
+        allEnrollments.push({
+          id: encDoc.$id,
+          userId: encDoc.userId,
+          studentName: profile ? `${(profile as any).firstName} ${(profile as any).lastName}` : encDoc.userId,
+          studentEmail: profile ? (profile as any).email || 'No email' : 'No email',
+          courseId: encDoc.courseId,
+          courseTitle: courseMap.get(encDoc.courseId) || 'Unknown Course',
+          progress: Number(encDoc.progress || 0),
+          completedLessons: Number(encDoc.completedLessons || 0),
+          status: encDoc.status,
+          updatedAt: encDoc.updatedAt || encDoc.$updatedAt
+        });
+      }
+    }
+
+    res.status(200).json({ enrollments: allEnrollments });
+  } catch (err: any) {
+    console.error('[Academy Instructor Students] Error listing students:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// INSTRUCTOR: Revenue summary
+router.get('/instructor/revenue', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Instructor access required.' });
+  }
+
+  const userId = req.user?.id;
+
+  try {
+    // 1. Get instructor's courses
+    const queries: any[] = [Query.limit(100)];
+    if (req.user?.role === 'Instructor') {
+      queries.push(Query.equal('instructorId', userId || ''));
+    }
+    const coursesResult = await databases.listDocuments(DATABASE_ID, COURSES_COLLECTION, queries);
+    const courses = coursesResult.documents as any[];
+
+    if (courses.length === 0) {
+      return res.status(200).json({
+        totalRevenue: 0,
+        instructorShare: 0,
+        totalStudents: 0,
+        totalCourses: 0,
+        courses: [],
+        monthlyRevenue: []
+      });
+    }
+
+    // 2. For each course, count enrollments and compute revenue
+    const PLATFORM_CUT = 0.30; // 30% platform fee
+    const courseStats = [];
+    const monthlyMap: Record<string, number> = {};
+    let totalStudents = 0;
+    let totalGross = 0;
+
+    for (const course of courses) {
+      const enrollments = await databases.listDocuments(DATABASE_ID, ENROLLMENTS_COLLECTION, [
+        Query.equal('courseId', course.$id),
+        Query.limit(1000)
+      ]);
+
+      const count = enrollments.total;
+      const price = Number(course.price || 0);
+      const gross = count * price;
+      const instructorEarning = gross * (1 - PLATFORM_CUT);
+
+      totalStudents += count;
+      totalGross += gross;
+
+      // Aggregate monthly revenue from enrollment timestamps
+      for (const enr of enrollments.documents as any[]) {
+        const date = new Date(enr.$createdAt);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        monthlyMap[monthKey] = (monthlyMap[monthKey] || 0) + price * (1 - PLATFORM_CUT);
+      }
+
+      courseStats.push({
+        courseId: course.$id,
+        title: course.title,
+        price,
+        enrollments: count,
+        gross,
+        instructorEarning,
+        isPublished: Boolean(course.isPublished),
+        category: course.category || 'General'
+      });
+    }
+
+    // 3. Sort monthly revenue chronologically, last 12 months
+    const monthlyRevenue = Object.entries(monthlyMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-12)
+      .map(([month, amount]) => ({
+        month,
+        label: new Date(month + '-01').toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+        amount: Math.round(amount)
+      }));
+
+    res.status(200).json({
+      totalRevenue: Math.round(totalGross),
+      instructorShare: Math.round(totalGross * (1 - PLATFORM_CUT)),
+      platformFee: Math.round(totalGross * PLATFORM_CUT),
+      totalStudents,
+      totalCourses: courses.length,
+      courses: courseStats,
+      monthlyRevenue
+    });
+  } catch (err: any) {
+    console.error('[Academy Instructor Revenue] Error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// INSTRUCTOR: Get lessons for a course
+router.get('/courses/:courseId/lessons', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Instructor access required.' });
+  }
+
+  const { courseId } = req.params;
+
+  try {
+    const lessons = await listCourseLessons(courseId);
+    res.status(200).json({ lessons });
+  } catch (err: any) {
+    console.error('[Academy Instructor Lessons] Error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// INSTRUCTOR: Create course
+router.post('/courses', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Instructor access required.' });
+  }
+
+  const { title, description, category, level, summary, coverImage, price, isPublished } = req.body;
+
+  if (!title || !description) {
+    return res.status(400).json({ error: 'Title and description are required.' });
+  }
+
+  try {
+    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const course = await databases.createDocument(DATABASE_ID, COURSES_COLLECTION, ID.unique(), {
+      title,
+      description,
+      instructorId: req.user.id,
+      instructorName: req.user.name || 'Instructor',
+      slug,
+      category: category || 'General',
+      level: level || 'Beginner',
+      summary: summary || '',
+      coverImage: coverImage || '',
+      price: price !== undefined ? Number(price) : 0,
+      isPublished: isPublished !== undefined ? Boolean(isPublished) : false,
+      lessonCount: 0
+    });
+
+    res.status(201).json({ message: 'Course created successfully', course });
+  } catch (err: any) {
+    console.error('[Academy Instructor] Error creating course:', err.message);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// INSTRUCTOR: Update course
+router.patch('/courses/:courseId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Instructor access required.' });
+  }
+
+  const { courseId } = req.params;
+  const updates = req.body;
+
+  try {
+    // Check ownership
+    const course = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION, courseId);
+    if (req.user.role === 'Instructor' && (course as any).instructorId !== req.user.id) {
+      return res.status(403).json({ error: 'You do not own this course.' });
+    }
+
+    const allowedFields = ['title', 'description', 'category', 'level', 'summary', 'coverImage', 'price', 'isPublished'];
+    const updateData: Record<string, any> = {};
+    for (const key of allowedFields) {
+      if (updates[key] !== undefined) {
+        if (key === 'price') updateData[key] = Number(updates[key]);
+        else if (key === 'isPublished') updateData[key] = Boolean(updates[key]);
+        else updateData[key] = updates[key];
+      }
+    }
+
+    if (updates.title) {
+      updateData.slug = updates.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    }
+
+    const updated = await databases.updateDocument(DATABASE_ID, COURSES_COLLECTION, courseId, updateData);
+
+    res.status(200).json({ message: 'Course updated successfully', course: updated });
+  } catch (err: any) {
+    console.error('[Academy Instructor] Error updating course:', err.message);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// INSTRUCTOR: Create lesson
+router.post('/courses/:courseId/lessons', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Instructor access required.' });
+  }
+
+  const { courseId } = req.params;
+  const { title, content, videoUrl, order, durationMinutes, isPreview } = req.body;
+
+  if (!title || order === undefined) {
+    return res.status(400).json({ error: 'Title and order are required.' });
+  }
+
+  try {
+    // Check ownership of course
+    const course = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION, courseId);
+    if (req.user.role === 'Instructor' && (course as any).instructorId !== req.user.id) {
+      return res.status(403).json({ error: 'You do not own this course.' });
+    }
+
+    const lesson = await databases.createDocument(DATABASE_ID, LESSONS_COLLECTION, ID.unique(), {
+      courseId,
+      title,
+      content: content || '',
+      videoUrl: videoUrl || '',
+      order: Number(order),
+      durationMinutes: durationMinutes !== undefined ? Number(durationMinutes) : 0,
+      isPreview: isPreview !== undefined ? Boolean(isPreview) : false
+    });
+
+    // Increment lessonCount on course
+    const currentCount = await getLessonCount(courseId, Number((course as any).lessonCount || 0));
+    await databases.updateDocument(DATABASE_ID, COURSES_COLLECTION, courseId, {
+      lessonCount: currentCount + 1
+    });
+
+    res.status(201).json({ message: 'Lesson created successfully', lesson });
+  } catch (err: any) {
+    console.error('[Academy Instructor] Error creating lesson:', err.message);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// INSTRUCTOR: Update lesson
+router.patch('/lessons/:lessonId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Instructor access required.' });
+  }
+
+  const { lessonId } = req.params;
+  const updates = req.body;
+
+  try {
+    const lesson = await databases.getDocument(DATABASE_ID, LESSONS_COLLECTION, lessonId);
+    // Check ownership of parent course
+    const course = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION, (lesson as any).courseId);
+    if (req.user.role === 'Instructor' && (course as any).instructorId !== req.user.id) {
+      return res.status(403).json({ error: 'You do not own this course.' });
+    }
+
+    const allowedFields = ['title', 'content', 'videoUrl', 'order', 'durationMinutes', 'isPreview'];
+    const updateData: Record<string, any> = {};
+    for (const key of allowedFields) {
+      if (updates[key] !== undefined) {
+        if (key === 'order' || key === 'durationMinutes') updateData[key] = Number(updates[key]);
+        else if (key === 'isPreview') updateData[key] = Boolean(updates[key]);
+        else updateData[key] = updates[key];
+      }
+    }
+
+    const updated = await databases.updateDocument(DATABASE_ID, LESSONS_COLLECTION, lessonId, updateData);
+
+    res.status(200).json({ message: 'Lesson updated successfully', lesson: updated });
+  } catch (err: any) {
+    console.error('[Academy Instructor] Error updating lesson:', err.message);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// INSTRUCTOR: Delete lesson
+router.delete('/lessons/:lessonId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Instructor access required.' });
+  }
+
+  const { lessonId } = req.params;
+
+  try {
+    const lesson = await databases.getDocument(DATABASE_ID, LESSONS_COLLECTION, lessonId);
+    const courseId = (lesson as any).courseId;
+
+    // Check ownership of parent course
+    const course = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION, courseId);
+    if (req.user.role === 'Instructor' && (course as any).instructorId !== req.user.id) {
+      return res.status(403).json({ error: 'You do not own this course.' });
+    }
+
+    await databases.deleteDocument(DATABASE_ID, LESSONS_COLLECTION, lessonId);
+
+    // Decrement lessonCount on course
+    const currentCount = await getLessonCount(courseId, Number((course as any).lessonCount || 0));
+    await databases.updateDocument(DATABASE_ID, COURSES_COLLECTION, courseId, {
+      lessonCount: Math.max(0, currentCount - 1)
+    });
+
+    res.status(200).json({ message: 'Lesson deleted successfully' });
+  } catch (err: any) {
+    console.error('[Academy Instructor] Error deleting lesson:', err.message);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// INSTRUCTOR: Create assignment
+router.post('/courses/:courseId/assignments', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Instructor access required.' });
+  }
+
+  const { courseId } = req.params;
+  const { title, instructions, dueDate, maxPoints } = req.body;
+
+  if (!title || !instructions || !dueDate) {
+    return res.status(400).json({ error: 'Title, instructions, and dueDate are required.' });
+  }
+
+  try {
+    // Check ownership of course
+    const course = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION, courseId);
+    if (req.user.role === 'Instructor' && (course as any).instructorId !== req.user.id) {
+      return res.status(403).json({ error: 'You do not own this course.' });
+    }
+
+    const assignment = await databases.createDocument(DATABASE_ID, ASSIGNMENTS_COLLECTION, ID.unique(), {
+      courseId,
+      title,
+      instructions,
+      dueDate: new Date(dueDate).toISOString(),
+      maxPoints: maxPoints !== undefined ? Number(maxPoints) : 100
+    });
+
+    res.status(201).json({ message: 'Assignment created successfully', assignment });
+  } catch (err: any) {
+    console.error('[Academy Instructor] Error creating assignment:', err.message);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ADMIN: Manually issue a certificate
+router.post('/admin/certificates/issue', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin' && req.user?.role !== 'Instructor') {
+    return res.status(403).json({ error: 'Access denied.' });
+  }
+
+  const { studentId, courseId } = req.body;
+
+  if (!studentId || !courseId) {
+    return res.status(400).json({ error: 'studentId and courseId are required.' });
+  }
+
+  try {
+    const profile = await getProfileDoc(studentId);
+    const studentName = profile ? `${(profile as any).firstName} ${(profile as any).lastName}` : 'Academy Student';
+    const course = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION, courseId);
+
+    const { queueCertificateGeneration } = require('../services/queue');
+    await queueCertificateGeneration(studentId, studentName, courseId, (course as any).title);
+
+    res.status(200).json({ message: `Certificate generation queued successfully for ${studentName}.` });
+  } catch (err: any) {
+    console.error('[Academy Certificates Admin] Error manually issuing certificate:', err.message);
     res.status(400).json({ error: err.message });
   }
 });

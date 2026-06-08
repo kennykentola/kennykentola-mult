@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '../../features/auth/AuthContext';
+import { getAdminPendingPayments } from '../../features/payments/paymentsService';
 import { 
   Shield, 
   Users, 
@@ -14,7 +15,8 @@ import {
   ArrowLeft,
   Menu,
   X,
-  ShieldAlert
+  ShieldAlert,
+  BarChart3
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -27,9 +29,29 @@ export default function AdminLayout({
   const pathname = usePathname();
   const { profile, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
-    if (!loading && (!profile || (profile.role !== 'Admin' && profile.role !== 'Printer Operator'))) {
+    if (!loading && profile && (profile.role === 'Admin' || profile.role === 'Super Admin')) {
+      const fetchPending = async () => {
+        try {
+          const data = await getAdminPendingPayments();
+          setPendingCount(data.length);
+        } catch (err) {
+          console.error('[AdminLayout] Failed to load pending payments:', err);
+        }
+      };
+      // Load initially
+      fetchPending();
+      
+      // Update count every 20 seconds
+      const interval = setInterval(fetchPending, 20000);
+      return () => clearInterval(interval);
+    }
+  }, [profile, loading]);
+
+  useEffect(() => {
+    if (!loading && (!profile || (profile.role !== 'Admin' && profile.role !== 'Printer Operator' && profile.role !== 'Instructor'))) {
       router.push('/dashboard');
     }
   }, [profile, loading, router]);
@@ -45,7 +67,7 @@ export default function AdminLayout({
     );
   }
 
-  if (!profile || (profile.role !== 'Admin' && profile.role !== 'Printer Operator')) {
+  if (!profile || (profile.role !== 'Admin' && profile.role !== 'Printer Operator' && profile.role !== 'Instructor')) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white p-6">
         <div className="max-w-md text-center space-y-4">
@@ -67,12 +89,13 @@ export default function AdminLayout({
 
   const navItems = [
     { name: 'Admin Overview', href: '/admin', icon: Shield },
+    { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
     { name: 'Configure Users', href: '/admin/users', icon: Users },
     { name: 'Course Manager', href: '/admin/courses', icon: BookOpen },
     { name: 'Academy Review', href: '/admin/assignments', icon: FileCheck },
     { name: 'Project Board', href: '/admin/projects', icon: Layers },
     { name: 'Print Orders', href: '/admin/printing', icon: Printer },
-    { name: 'Verify Payments', href: '/admin/payments', icon: FileCheck },
+    { name: 'Verify Payments', href: '/admin/payments', icon: FileCheck, badgeCount: pendingCount },
     { name: 'System Settings', href: '/admin/settings', icon: Settings },
   ];
 
@@ -103,14 +126,21 @@ export default function AdminLayout({
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                   active 
                     ? 'bg-rose-500/10 border border-rose-500/20 text-rose-450 shadow-sm shadow-rose-500/5' 
                     : 'border border-transparent text-slate-400 hover:text-white hover:bg-slate-900/50'
                 }`}
               >
-                <Icon className="h-4 w-4" />
-                {item.name}
+                <div className="flex items-center gap-3">
+                  <Icon className="h-4 w-4" />
+                  {item.name}
+                </div>
+                {item.badgeCount !== undefined && item.badgeCount > 0 && (
+                  <span className="bg-rose-650 text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">
+                    {item.badgeCount}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -154,14 +184,21 @@ export default function AdminLayout({
                     key={item.name}
                     href={item.href}
                     onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    className={`flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                       active 
                         ? 'bg-rose-500/10 border border-rose-500/20 text-rose-450' 
                         : 'border border-transparent text-slate-400 hover:text-white hover:bg-slate-900/50'
                     }`}
                   >
-                    <Icon className="h-4 w-4" />
-                    {item.name}
+                    <div className="flex items-center gap-3">
+                      <Icon className="h-4 w-4" />
+                      {item.name}
+                    </div>
+                    {item.badgeCount !== undefined && item.badgeCount > 0 && (
+                      <span className="bg-rose-650 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        {item.badgeCount}
+                      </span>
+                    )}
                   </Link>
                 );
               })}

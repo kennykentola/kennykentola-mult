@@ -3,6 +3,19 @@
 import React, { useState } from 'react';
 import { Layers, Calendar, DollarSign, User, Award, Plus, CheckCircle2, ChevronRight } from 'lucide-react';
 
+const getProgressWidthClass = (progress: number) => {
+  const rounded = Math.round((progress || 0) / 5) * 5;
+  switch (rounded) {
+    case 5: return 'w-[5%]';
+    case 20: return 'w-[20%]';
+    case 45: return 'w-[45%]';
+    case 50: return 'w-[50%]';
+    case 85: return 'w-[85%]';
+    case 100: return 'w-full';
+    default: return 'w-0';
+  }
+};
+
 export default function AdminProjectsPage() {
   const [activeProjects, setActiveProjects] = useState([
     {
@@ -184,8 +197,7 @@ export default function AdminProjectsPage() {
                   </div>
                   <div className="h-1.5 w-full bg-slate-850 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-rose-500 to-indigo-500 rounded-full" 
-                      style={{ width: `${project.progress}%` }}
+                      className={`h-full bg-gradient-to-r from-rose-500 to-indigo-500 rounded-full ${getProgressWidthClass(project.progress)}`}
                     />
                   </div>
                 </div>

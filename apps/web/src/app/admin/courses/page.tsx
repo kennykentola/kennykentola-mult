@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { BookOpen, Plus, Trash2, Edit2, Upload, FileText, ToggleLeft, ToggleRight } from 'lucide-react';
 
 export default function AdminCoursesPage() {
@@ -203,9 +204,9 @@ export default function AdminCoursesPage() {
                     </button>
                   </td>
                   <td className="py-4 px-4 text-right">
-                    <button className="text-rose-450 hover:underline font-bold text-[10px]">
+                    <Link href={`/admin/courses/${course.id}/curriculum`} className="text-rose-450 hover:underline font-bold text-[10px]">
                       Manage Curriculum
-                    </button>
+                    </Link>
                   </td>
                 </tr>
               ))}

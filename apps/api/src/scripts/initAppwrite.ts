@@ -1,4 +1,4 @@
-import { databases } from '../services/appwrite';
+import { databases, storage } from '../services/appwrite';
 import { AppwriteException } from 'node-appwrite';
 import dotenv from 'dotenv';
 
@@ -36,7 +36,8 @@ const collections: CollectionDef[] = [
       { key: 'purpose', type: 'string', size: 50, required: false, defaultValue: 'learn' },
       { key: 'enrollments', type: 'string', size: 50, required: false, array: true },
       { key: 'activeProjects', type: 'string', size: 50, required: false, array: true },
-      { key: 'printOrders', type: 'string', size: 50, required: false, array: true }
+      { key: 'printOrders', type: 'string', size: 50, required: false, array: true },
+      { key: 'clientType', type: 'string', size: 50, required: false, defaultValue: 'commercial' }
     ]
   },
   {
@@ -154,6 +155,105 @@ const collections: CollectionDef[] = [
       { key: 'colorMultiplier', type: 'float', required: false, defaultValue: 1.5 },
       { key: 'doubleSidedDiscount', type: 'float', required: false, defaultValue: 0.8 },
       { key: 'isActive', type: 'boolean', required: true, defaultValue: true }
+    ]
+  },
+  {
+    id: 'certificates',
+    name: 'Certificates',
+    attributes: [
+      { key: 'studentId', type: 'string', size: 50, required: true },
+      { key: 'courseId', type: 'string', size: 50, required: true },
+      { key: 'certificateNumber', type: 'string', size: 100, required: true },
+      { key: 'issuedAt', type: 'datetime', required: true },
+      { key: 'pdfUrl', type: 'string', size: 500, required: true }
+    ]
+  },
+  {
+    id: 'community_posts',
+    name: 'Community Posts',
+    attributes: [
+      { key: 'userId', type: 'string', size: 50, required: true },
+      { key: 'authorName', type: 'string', size: 150, required: true },
+      { key: 'content', type: 'string', size: 5000, required: true },
+      { key: 'likesCount', type: 'integer', required: false, defaultValue: 0 },
+      { key: 'commentsCount', type: 'integer', required: false, defaultValue: 0 },
+      { key: 'createdAt', type: 'datetime', required: true },
+      { key: 'likes', type: 'string', size: 50, required: false, array: true }
+    ]
+  },
+  {
+    id: 'community_comments',
+    name: 'Community Comments',
+    attributes: [
+      { key: 'postId', type: 'string', size: 50, required: true },
+      { key: 'userId', type: 'string', size: 50, required: true },
+      { key: 'authorName', type: 'string', size: 150, required: true },
+      { key: 'content', type: 'string', size: 2000, required: true },
+      { key: 'createdAt', type: 'datetime', required: true }
+    ]
+  },
+  {
+    id: 'bank_accounts',
+    name: 'Bank Accounts',
+    attributes: [
+      { key: 'bankName', type: 'string', size: 100, required: true },
+      { key: 'accountName', type: 'string', size: 100, required: true },
+      { key: 'accountNumber', type: 'string', size: 50, required: true },
+      { key: 'isActive', type: 'boolean', required: true, defaultValue: true }
+    ]
+  },
+  {
+    id: 'payments',
+    name: 'Payments',
+    attributes: [
+      { key: 'userId', type: 'string', size: 50, required: true },
+      { key: 'type', type: 'string', size: 50, required: true },
+      { key: 'referenceId', type: 'string', size: 50, required: true },
+      { key: 'bankAccountId', type: 'string', size: 50, required: true },
+      { key: 'amount', type: 'float', required: true },
+      { key: 'receiptImage', type: 'string', size: 500, required: true },
+      { key: 'referenceNumber', type: 'string', size: 100, required: true },
+      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'pending' },
+      { key: 'verifiedBy', type: 'string', size: 50, required: false },
+      { key: 'verifiedAt', type: 'datetime', required: false },
+      { key: 'rejectedReason', type: 'string', size: 1000, required: false },
+      { key: 'submittedAt', type: 'datetime', required: false }
+    ]
+  },
+  {
+    id: 'receipts',
+    name: 'Receipts',
+    attributes: [
+      { key: 'paymentId', type: 'string', size: 50, required: true },
+      { key: 'receiptNumber', type: 'string', size: 50, required: true },
+      { key: 'amount', type: 'float', required: true },
+      { key: 'paidBy', type: 'string', size: 255, required: true },
+      { key: 'paymentMethod', type: 'string', size: 50, required: true, defaultValue: 'Bank Transfer' },
+      { key: 'date', type: 'datetime', required: false },
+      { key: 'pdfUrl', type: 'string', size: 500, required: true }
+    ]
+  },
+  {
+    id: 'chat_rooms',
+    name: 'Chat Rooms',
+    attributes: [
+      { key: 'type', type: 'string', size: 50, required: true, defaultValue: 'direct' },
+      { key: 'participants', type: 'string', size: 50, required: true, array: true },
+      { key: 'lastMessageId', type: 'string', size: 50, required: false },
+      { key: 'lastMessageText', type: 'string', size: 500, required: false },
+      { key: 'lastMessageTime', type: 'datetime', required: false }
+    ]
+  },
+  {
+    id: 'chat_messages',
+    name: 'Chat Messages',
+    attributes: [
+      { key: 'roomId', type: 'string', size: 50, required: true },
+      { key: 'senderId', type: 'string', size: 50, required: true },
+      { key: 'type', type: 'string', size: 50, required: true, defaultValue: 'text' },
+      { key: 'content', type: 'string', size: 5000, required: true },
+      { key: 'fileId', type: 'string', size: 100, required: false },
+      { key: 'readBy', type: 'string', size: 50, required: false, array: true }
     ]
   }
 ];
@@ -369,7 +469,8 @@ async function ensureDocument(collectionId: string, documentId: string, payload:
   try {
     await databases.getDocument(DATABASE_ID, collectionId, documentId);
   } catch (err) {
-    await databases.createDocument(DATABASE_ID, collectionId, documentId, payload);
+    const { id, ...data } = payload;
+    await databases.createDocument(DATABASE_ID, collectionId, documentId, data);
   }
 }
 
@@ -388,6 +489,43 @@ async function seedAcademyContent() {
 
   for (const liveClass of academySeedLiveClasses) {
     await ensureDocument('live_classes', liveClass.id, liveClass);
+  }
+}
+
+const seedBankAccounts = [
+  {
+    id: 'uba-bank',
+    bankName: 'UBA Bank Nigeria',
+    accountName: 'Ademola Peter Kehinde',
+    accountNumber: '2241496332',
+    isActive: true
+  },
+  {
+    id: 'wema-bank',
+    bankName: 'Wema Bank Nigeria',
+    accountName: 'Ademola Peter Kehinde',
+    accountNumber: '04000538337',
+    isActive: true
+  }
+];
+
+async function seedBankAccountsData() {
+  for (const bank of seedBankAccounts) {
+    await ensureDocument('bank_accounts', bank.id, bank);
+  }
+}
+
+async function ensureBucket(bucketId: string, bucketName: string) {
+  try {
+    await storage.getBucket(bucketId);
+    console.log(`[Storage] Bucket '${bucketId}' found.`);
+  } catch (err) {
+    console.log(`[Storage] Bucket '${bucketId}' not found. Creating...`);
+    try {
+      await storage.createBucket(bucketId, bucketName);
+    } catch (createErr: any) {
+      console.warn(`[Storage] Failed to create bucket '${bucketId}':`, createErr.message);
+    }
   }
 }
 
@@ -452,18 +590,26 @@ export async function initializeDatabase() {
         console.log(`  [Attribute] "${attr.key}" already exists. Skipping.`);
       } catch (err) {
         console.log(`  [Attribute] Creating "${attr.key}" (Type: ${attr.type}, Array: ${!!attr.array})...`);
-        if (attr.type === 'string') {
-          await databases.createStringAttribute(DATABASE_ID, colDef.id, attr.key, attr.size || 255, attr.required, getAttributeDefaultValue(attr), attr.array);
-        } else if (attr.type === 'integer') {
-          await databases.createIntegerAttribute(DATABASE_ID, colDef.id, attr.key, attr.required, undefined, undefined, getAttributeDefaultValue(attr), attr.array);
-        } else if (attr.type === 'float') {
-          await databases.createFloatAttribute(DATABASE_ID, colDef.id, attr.key, attr.required, undefined, undefined, getAttributeDefaultValue(attr), attr.array);
-        } else if (attr.type === 'boolean') {
-          await databases.createBooleanAttribute(DATABASE_ID, colDef.id, attr.key, attr.required, getAttributeDefaultValue(attr), attr.array);
-        } else if (attr.type === 'datetime') {
-          await databases.createDatetimeAttribute(DATABASE_ID, colDef.id, attr.key, attr.required, getAttributeDefaultValue(attr), attr.array);
+        try {
+          if (attr.type === 'string') {
+            await databases.createStringAttribute(DATABASE_ID, colDef.id, attr.key, attr.size || 255, attr.required, getAttributeDefaultValue(attr), attr.array);
+          } else if (attr.type === 'integer') {
+            await databases.createIntegerAttribute(DATABASE_ID, colDef.id, attr.key, attr.required, undefined, undefined, getAttributeDefaultValue(attr), attr.array);
+          } else if (attr.type === 'float') {
+            await databases.createFloatAttribute(DATABASE_ID, colDef.id, attr.key, attr.required, undefined, undefined, getAttributeDefaultValue(attr), attr.array);
+          } else if (attr.type === 'boolean') {
+            await databases.createBooleanAttribute(DATABASE_ID, colDef.id, attr.key, attr.required, getAttributeDefaultValue(attr), attr.array);
+          } else if (attr.type === 'datetime') {
+            await databases.createDatetimeAttribute(DATABASE_ID, colDef.id, attr.key, attr.required, getAttributeDefaultValue(attr), attr.array);
+          }
+          await waitForAttribute(colDef.id, attr.key);
+        } catch (createErr: any) {
+          if (createErr.code === 409 || createErr.message?.includes('already exists') || createErr.type?.includes('already_exists')) {
+            console.log(`  [Attribute] "${attr.key}" already exists or is being created. Skipping.`);
+          } else {
+            throw createErr;
+          }
         }
-        await waitForAttribute(colDef.id, attr.key);
       }
     }
     console.log(`[Collection] "${colDef.id}" processing completed.`);
@@ -471,6 +617,12 @@ export async function initializeDatabase() {
 
   await seedAcademyContent();
   console.log('[Appwrite Init] Academy seed content ensured.');
+
+  await seedBankAccountsData();
+  console.log('[Appwrite Init] Bank accounts seed content ensured.');
+
+  await ensureBucket('certificates', 'Student Certificates');
+  console.log('[Appwrite Init] Single permitted storage bucket verified/created.');
 }
 
 if (require.main === module) {

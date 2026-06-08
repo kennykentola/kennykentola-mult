@@ -14,7 +14,10 @@ import {
   LogOut,
   Menu,
   X,
-  Shield
+  Shield,
+  FileText,
+  FileCheck,
+  Settings
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -27,14 +30,42 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const { profile, loading, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const isStudentPortal = pathname.startsWith('/student');
-  const portalBasePath = isStudentPortal ? '/student' : '/dashboard';
+  const isStudentPortal = pathname?.startsWith('/student');
+  const isPrintingPortal = pathname?.startsWith('/printing');
+  const isProjectsPortal = pathname?.startsWith('/projects');
+  
+  const portalBasePath = isStudentPortal 
+    ? '/student' 
+    : isPrintingPortal 
+      ? '/printing' 
+      : isProjectsPortal 
+        ? '/projects' 
+        : '/dashboard';
 
   useEffect(() => {
-    if (!loading && !profile) {
-      router.push('/login');
+    if (!loading) {
+      if (!profile) {
+        router.push('/login');
+      } else {
+        const purpose = profile.purpose || 'learn';
+        const currentPath = pathname || '';
+        
+        if (purpose === 'learn') {
+          if (!currentPath.startsWith('/student') && !currentPath.startsWith('/admin')) {
+            router.push('/student/dashboard');
+          }
+        } else if (purpose === 'print') {
+          if (!currentPath.startsWith('/printing') && !currentPath.startsWith('/admin')) {
+            router.push('/printing');
+          }
+        } else if (purpose === 'hire') {
+          if (!currentPath.startsWith('/projects') && !currentPath.startsWith('/admin')) {
+            router.push('/projects');
+          }
+        }
+      }
     }
-  }, [profile, loading, router]);
+  }, [profile, loading, pathname, router]);
 
   if (loading) {
     return (
@@ -61,34 +92,57 @@ export default function DashboardLayout({
         ? 'Printing Portal'
         : 'Unified Portal';
 
-  // Base navigation
-  const allNavItems = [
-    { name: 'Overview', href: '/dashboard', icon: LayoutDashboard, show: true },
-    { 
-      name: 'My Courses', 
-      href: `${portalBasePath}/courses`, 
-      icon: GraduationCap, 
-      show: userPurpose === 'learn' || userPurpose === 'both' 
-    },
-    { 
-      name: 'Project / App Build', 
-      href: `${portalBasePath}/projects`, 
-      icon: Briefcase, 
-      show: userPurpose === 'hire' || userPurpose === 'both' 
-    },
-    { 
-      name: 'Printing Portal', 
-      href: `${portalBasePath}/printing`, 
-      icon: Printer, 
-      show: userPurpose === 'print' || userPurpose === 'both' 
-    },
-    { name: 'Messages', href: `${portalBasePath}/messages`, icon: MessageSquare, show: true },
-    { name: 'Payments', href: `${portalBasePath}/payments`, icon: CreditCard, show: true },
-    { name: 'Profile', href: `${portalBasePath}/profile`, icon: User, show: true },
-  ];
+  // Base navigation constructed dynamically based on the current active route prefix
+  const navItems = [];
+  if (isStudentPortal) {
+    navItems.push(
+      { name: 'Overview', href: '/student/dashboard', icon: LayoutDashboard },
+      { name: 'My Courses', href: '/student/courses', icon: GraduationCap },
+      { name: 'Assignments', href: '/student/assignments', icon: FileCheck },
+      { name: 'Community Feed', href: '/student/community', icon: MessageSquare },
+      { name: 'Certificates', href: '/student/certificates', icon: FileText },
+      { name: 'Messages', href: '/student/messages', icon: MessageSquare },
+      { name: 'Payments', href: '/student/payments', icon: CreditCard },
+      { name: 'Profile', href: '/student/profile', icon: User },
+      { name: 'Settings', href: '/student/settings', icon: Settings }
+    );
+    if (userPurpose === 'both') {
+      navItems.push({ name: 'Unified Portal', href: '/dashboard', icon: Shield });
+    }
+  } else if (isPrintingPortal) {
+    navItems.push(
+      { name: 'Print Orders', href: '/printing', icon: Printer },
+      { name: 'Messages', href: '/printing/messages', icon: MessageSquare },
+      { name: 'Payments', href: '/printing/payments', icon: CreditCard },
+      { name: 'Profile', href: '/printing/profile', icon: User }
+    );
+    if (userPurpose === 'both') {
+      navItems.push({ name: 'Unified Portal', href: '/dashboard', icon: Shield });
+    }
+  } else if (isProjectsPortal) {
+    navItems.push(
+      { name: 'Projects', href: '/projects', icon: Briefcase },
+      { name: 'Messages', href: '/projects/messages', icon: MessageSquare },
+      { name: 'Payments', href: '/projects/payments', icon: CreditCard },
+      { name: 'Profile', href: '/projects/profile', icon: User }
+    );
+    if (userPurpose === 'both') {
+      navItems.push({ name: 'Unified Portal', href: '/dashboard', icon: Shield });
+    }
+  } else {
+    // Unified portal
+    navItems.push(
+      { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
+      { name: 'My Courses', href: '/student/courses', icon: GraduationCap },
+      { name: 'Projects', href: '/projects', icon: Briefcase },
+      { name: 'Printing', href: '/printing', icon: Printer },
+      { name: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
+      { name: 'Payments', href: '/dashboard/payments', icon: CreditCard },
+      { name: 'Profile', href: '/dashboard/profile', icon: User }
+    );
+  }
 
-  const navItems = allNavItems.filter(item => item.show);
-  const isAdmin = userRole === 'Admin' || userRole === 'Printer Operator';
+  const isAdmin = userRole === 'Admin' || userRole === 'Printer Operator' || userRole === 'Instructor';
 
   const handleSignOut = async () => {
     await logout();
@@ -145,7 +199,7 @@ export default function DashboardLayout({
               <Link
                 href="/admin"
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  pathname.startsWith('/admin')
+                  pathname?.startsWith('/admin')
                     ? 'bg-rose-500/10 border border-rose-500/20 text-rose-400'
                     : 'border border-transparent text-slate-400 hover:text-white hover:bg-slate-900/50'
                 }`}
@@ -223,10 +277,10 @@ export default function DashboardLayout({
                     Administration
                   </span>
                   <Link
-                href="/admin"
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  pathname.startsWith('/admin')
+                    href="/admin"
+                    onClick={() => setSidebarOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                      pathname?.startsWith('/admin')
                         ? 'bg-rose-500/10 border border-rose-500/20 text-rose-400'
                         : 'border border-transparent text-slate-400 hover:text-white hover:bg-slate-900/50'
                     }`}

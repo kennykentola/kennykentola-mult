@@ -74,6 +74,18 @@ This file is a handoff note for the KennyKentola multi-company project. It captu
 - `npm run build --workspace web` passes successfully.
 - `npm run build --workspace api` passes successfully.
 
+### Phase 8: Hard Split for Projects and Printing
+- Added dedicated top-level portal routes at `/projects` and `/printing`.
+- Updated the home page, dashboard cards, dashboard sidebar, and login flow to point to the new top-level service routes.
+- Kept the existing nested dashboard pages as compatibility aliases while the portal split settles.
+- Added a minimal Pages Router `_document` file to satisfy Next build compatibility in this workspace.
+- Added a minimal Pages Router `_app` file so the hybrid App Router / Pages Router setup stays stable in dev and build.
+
+### Phase 8 Validation
+- `npm run build --workspace web` passes successfully.
+- `npm run build --workspace api` passes successfully.
+- Cleared stale `apps/web/.next` output and verified the web build regenerates cleanly after the router shim update.
+
 ## Notes
 
 - The user referenced `docs/academy-plan.md`, but that file does not exist in this checkout.
@@ -83,6 +95,8 @@ This file is a handoff note for the KennyKentola multi-company project. It captu
 - The portal split is currently implemented as separate entry points and UI grouping, not yet as fully separate top-level apps or subdomains.
 - The student portal is now live at `/student/dashboard` and uses aliases for the existing Academy screens.
 - The Appwrite init script now handles required attributes without defaults so startup can complete cleanly on fresh environments.
+- The project and printing experiences now have their own top-level route entry points at `/projects` and `/printing`.
+- The web app currently uses a small Pages Router shim (`_app` and `_document`) alongside the App Router so Next.js build/dev stays healthy.
 
 ## Current Academy Structure
 
@@ -96,12 +110,14 @@ This file is a handoff note for the KennyKentola multi-company project. It captu
 - Portal-aware registration: `apps/web/src/app/register/page.tsx`
 - Dashboard layout labels: `apps/web/src/app/dashboard/layout.tsx`
 - Student route layer: `apps/web/src/app/student/`
+- Projects portal: `apps/web/src/app/projects/page.tsx`
+- Printing portal: `apps/web/src/app/printing/page.tsx`
 - Auth profile type: `apps/web/src/features/auth/AuthContext.tsx`
 
-## Phase 7 Recommended Next Steps
+## Phase 8 Recommended Next Steps
 
-1. Split the remaining project and printing experiences into their own dedicated route groups if you want full hard separation.
-2. Add student-only route shells for assignments, certificates, community, and settings.
+1. Add student-only route shells for assignments, certificates, community, and settings.
+2. Decide whether to keep the legacy `/dashboard/projects` and `/dashboard/printing` aliases long term or redirect them.
 3. Add instructor-facing assignment analytics and export.
 4. Show learner-side submission history and grading status.
 5. Add live class RSVP/attendance tracking if required.

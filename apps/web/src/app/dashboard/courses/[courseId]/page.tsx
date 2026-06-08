@@ -120,7 +120,7 @@ export default function CourseDetailPage() {
   const pathname = usePathname();
   const courseId = Array.isArray(params?.courseId) ? params?.courseId[0] : params?.courseId;
   const { profile } = useAuth();
-  const portalBasePath = pathname.startsWith('/student') ? '/student' : '/dashboard';
+  const portalBasePath = pathname?.startsWith('/student') ? '/student' : '/dashboard';
 
   const [courseData, setCourseData] = useState<AcademyCourseDetailResponse | null>(null);
   const [enrollment, setEnrollment] = useState<AcademyEnrollmentDto | null>(null);

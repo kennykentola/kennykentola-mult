@@ -22,6 +22,7 @@ export interface Profile {
   avatarUrl?: string;
   enrollments?: string[];
   activeProjects?: string[];
+  clientType?: 'academic' | 'commercial';
 }
 
 interface AuthContextType {
@@ -46,6 +47,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const jwtSession = await account.createJWT();
       const jwt = jwtSession.jwt;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('session_jwt', jwt);
+      }
 
       const res = await fetch(`${API_BASE}/auth/profile`, {
         headers: {
@@ -63,6 +67,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return data.profile as Profile;
     } catch (err: any) {
       console.error('Error fetching profile:', err);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('session_jwt');
+      }
       setUser(null);
       setProfile(null);
       return null;
@@ -95,7 +102,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      await account.createEmailPasswordSession(email, password);
+      try {
+        await account.createEmailPasswordSession(email, password);
+      } catch (err: any) {
+        if (err.code === 400 || err.message?.includes('active')) {
+          try {
+            await account.deleteSession('current');
+          } catch (deleteErr) {
+            // Ignore error from session deletion
+          }
+          await account.createEmailPasswordSession(email, password);
+        } else {
+          throw err;
+        }
+      }
       return await fetchProfile();
     } catch (err: any) {
       setError(err.message || 'Login failed');
@@ -109,6 +129,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       await account.deleteSession('current');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('session_jwt');
+      }
       setUser(null);
       setProfile(null);
     } catch (err: any) {

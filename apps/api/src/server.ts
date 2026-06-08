@@ -1,8 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import { createServer } from 'http';
 import { initializeDatabase } from './scripts/initAppwrite';
+import { initSocketServer } from './services/socket';
 
 dotenv.config();
 
@@ -18,6 +21,13 @@ const allowedOrigins = new Set(
 
 // Middleware
 app.use(helmet());
+app.set('trust proxy', 1);
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false
+}));
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) {
@@ -42,9 +52,18 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 import authRouter from './routes/auth';
 import printingRouter from './routes/printing';
 import academyRouter from './routes/academy';
+import paymentsRouter from './routes/payments';
+import adminRouter from './routes/admin';
+import superAdminRouter from './routes/super-admin';
+import chatRouter from './routes/chat';
+
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/printing', printingRouter);
 app.use('/api/v1/academy', academyRouter);
+app.use('/api/v1/payments', paymentsRouter);
+app.use('/api/v1/admin', adminRouter);
+app.use('/api/v1/super-admin', superAdminRouter);
+app.use('/api/v1/chat', chatRouter);
 
 // Basic Health Check Endpoint
 app.get('/api/health', (req, res) => {
@@ -55,15 +74,19 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+const httpServer = createServer(app);
+initSocketServer(httpServer);
+
 async function startServer() {
   try {
     await initializeDatabase();
     console.log('[API] Appwrite database initialization completed.');
   } catch (err) {
     console.error('[API] Appwrite database initialization failed:', err);
+    process.exit(1);
   }
 
-  app.listen(PORT, () => {
+  httpServer.listen(PORT, () => {
     console.log(`[API] Server initialized on port ${PORT}`);
   });
 }

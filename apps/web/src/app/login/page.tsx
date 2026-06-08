@@ -14,17 +14,34 @@ export default function Login() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const getPostLoginRoute = (userPurpose?: string) => {
-    if (userPurpose === 'learn' || userPurpose === 'both') {
+  const getPostLoginRoute = (profile: any) => {
+    if (!profile) return '/dashboard';
+
+    // Role-based routing first
+    if (profile.role === 'Super Admin') {
+      return '/super-admin/dashboard';
+    }
+    
+    if (['Admin', 'Printer Operator'].includes(profile.role)) {
+      return '/admin';
+    }
+    
+    if (profile.role === 'Instructor') {
+      return '/instructor';
+    }
+
+    // Fallback to purpose-based routing for regular users
+    const purpose = profile.purpose;
+    if (purpose === 'learn' || purpose === 'both') {
       return '/student/dashboard';
     }
 
-    if (userPurpose === 'print') {
-      return '/dashboard/printing';
+    if (purpose === 'print') {
+      return '/printing';
     }
 
-    if (userPurpose === 'hire') {
-      return '/dashboard/projects';
+    if (purpose === 'hire') {
+      return '/projects';
     }
 
     return '/dashboard';
@@ -32,18 +49,22 @@ export default function Login() {
 
   useEffect(() => {
     if (profile) {
-      router.push(getPostLoginRoute(profile.purpose));
+      router.push(getPostLoginRoute(profile));
     }
   }, [profile, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email || !password) return;
+
     setLoading(true);
     setError('');
 
     try {
-      const signedInProfile = await login(email, password);
-      router.push(getPostLoginRoute(signedInProfile?.purpose || profile?.purpose));
+      const profile = await login(email, password);
+      if (profile) {
+        router.push(getPostLoginRoute(profile));
+      }
     } catch (err: any) {
       console.error('[Login Flow] Error:', err.message);
       setError(err.message || 'Authentication failed. Please check your credentials.');

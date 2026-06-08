@@ -5,6 +5,24 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BookOpen, Play, Search, Sparkles, Loader2 } from 'lucide-react';
 import { useAuth } from '../../../features/auth/AuthContext';
+
+const getProgressWidthClass = (progress: number) => {
+  const rounded = Math.round((progress || 0) / 10) * 10;
+  switch (rounded) {
+    case 10: return 'w-[10%]';
+    case 20: return 'w-[20%]';
+    case 30: return 'w-[30%]';
+    case 40: return 'w-[40%]';
+    case 50: return 'w-[50%]';
+    case 60: return 'w-[60%]';
+    case 70: return 'w-[70%]';
+    case 75: return 'w-[75%]';
+    case 80: return 'w-[80%]';
+    case 90: return 'w-[90%]';
+    case 100: return 'w-full';
+    default: return 'w-0';
+  }
+};
 import {
   academyOverview,
   catalogCourses as fallbackCatalogCourses,
@@ -52,7 +70,7 @@ export default function CoursesPage() {
   const [loading, setLoading] = useState(true);
   const [enrollingCourseId, setEnrollingCourseId] = useState<string | null>(null);
   const [error, setError] = useState('');
-  const portalBasePath = pathname.startsWith('/student') ? '/student' : '/dashboard';
+  const portalBasePath = pathname?.startsWith('/student') ? '/student' : '/dashboard';
 
   useEffect(() => {
     let cancelled = false;
@@ -230,8 +248,7 @@ export default function CoursesPage() {
                       </div>
                       <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full"
-                          style={{ width: `${course.progress || 0}%` }}
+                          className={`h-full bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full ${getProgressWidthClass(course.progress || 0)}`}
                         />
                       </div>
                     </div>

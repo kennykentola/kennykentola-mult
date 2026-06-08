@@ -170,3 +170,32 @@ export interface Receipt {
   date: string;
   pdfUrl: string;
 }
+
+export interface Certificate {
+  $id?: string;
+  studentId: string;
+  courseId: string;
+  certificateNumber: string;
+  issuedAt: string;
+  pdfUrl: string;
+}
+
+export interface CommunityPost {
+  $id?: string;
+  userId: string;
+  authorName: string;
+  content: string;
+  likesCount: number;
+  commentsCount: number;
+  createdAt: string;
+  likes?: string[];
+}
+
+export interface CommunityComment {
+  $id?: string;
+  postId: string;
+  userId: string;
+  authorName: string;
+  content: string;
+  createdAt: string;
+}

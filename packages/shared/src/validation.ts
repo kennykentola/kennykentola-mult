@@ -61,3 +61,11 @@ export const CourseCreateValidation = z.object({
   price: z.number().min(0, 'Price must be 0 (free) or positive'),
   isPublished: z.boolean().default(false)
 });
+
+export const CreatePostValidation = z.object({
+  content: z.string().min(1, 'Post content cannot be empty').max(5000, 'Post content cannot exceed 5000 characters').trim()
+});
+
+export const CreateCommentValidation = z.object({
+  content: z.string().min(1, 'Comment content cannot be empty').max(2000, 'Comment content cannot exceed 2000 characters').trim()
+});

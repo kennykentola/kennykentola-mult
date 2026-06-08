@@ -4,6 +4,33 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../../features/auth/AuthContext';
+
+const getProgressWidthClass = (progress: number) => {
+  const rounded = Math.round((progress || 0) / 5) * 5;
+  switch (rounded) {
+    case 5: return 'w-[5%]';
+    case 10: return 'w-[10%]';
+    case 15: return 'w-[15%]';
+    case 20: return 'w-[20%]';
+    case 25: return 'w-[25%]';
+    case 30: return 'w-[30%]';
+    case 35: return 'w-[35%]';
+    case 40: return 'w-[40%]';
+    case 45: return 'w-[45%]';
+    case 50: return 'w-[50%]';
+    case 55: return 'w-[55%]';
+    case 60: return 'w-[60%]';
+    case 65: return 'w-[65%]';
+    case 70: return 'w-[70%]';
+    case 75: return 'w-[75%]';
+    case 80: return 'w-[80%]';
+    case 85: return 'w-[85%]';
+    case 90: return 'w-[90%]';
+    case 95: return 'w-[95%]';
+    case 100: return 'w-full';
+    default: return 'w-0';
+  }
+};
 import {
   BookOpen,
   Briefcase,
@@ -70,20 +97,20 @@ export default function DashboardHome() {
 
   const purpose = profile.purpose || 'learn';
   const name = profile.firstName || 'User';
-  const portalBasePath = pathname.startsWith('/student') ? '/student' : '/dashboard';
+  const portalBasePath = pathname?.startsWith('/student') ? '/student' : '/dashboard';
   const portalLinks = purpose === 'learn'
     ? [
         {
           title: 'Printing Portal',
           desc: 'Print documents, IDs, flyers, and other support files.',
-          href: `${portalBasePath}/printing`,
+          href: '/printing',
           icon: Printer,
           accent: 'from-rose-500/10 to-pink-500/10 border-rose-500/20 text-rose-300'
         },
         {
           title: 'Project / App Build Portal',
           desc: 'Send a brief for project write-up, code support, or app development.',
-          href: `${portalBasePath}/projects`,
+          href: '/projects',
           icon: Briefcase,
           accent: 'from-cyan-500/10 to-blue-500/10 border-cyan-500/20 text-cyan-300'
         }
@@ -100,7 +127,7 @@ export default function DashboardHome() {
         {
           title: 'Project / App Build Portal',
           desc: 'Request help with a thesis project, codebase, or software build.',
-          href: `${portalBasePath}/projects`,
+          href: '/projects',
           icon: Briefcase,
           accent: 'from-cyan-500/10 to-blue-500/10 border-cyan-500/20 text-cyan-300'
         }
@@ -117,7 +144,7 @@ export default function DashboardHome() {
             {
               title: 'Printing Portal',
               desc: 'Place document and design print requests whenever needed.',
-              href: `${portalBasePath}/printing`,
+              href: '/printing',
               icon: Printer,
               accent: 'from-rose-500/10 to-pink-500/10 border-rose-500/20 text-rose-300'
             }
@@ -133,14 +160,14 @@ export default function DashboardHome() {
             {
               title: 'Printing Portal',
               desc: 'Send print jobs for documents, flyers, and booklets.',
-              href: `${portalBasePath}/printing`,
+              href: '/printing',
               icon: Printer,
               accent: 'from-rose-500/10 to-pink-500/10 border-rose-500/20 text-rose-300'
             },
             {
               title: 'Project / App Build Portal',
               desc: 'Open a separate request for project writing or app development.',
-              href: `${portalBasePath}/projects`,
+              href: '/projects',
               icon: Briefcase,
               accent: 'from-cyan-500/10 to-blue-500/10 border-cyan-500/20 text-cyan-300'
             }
@@ -166,36 +193,38 @@ export default function DashboardHome() {
         </div>
       </div>
 
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">Need a different portal?</h2>
-          <span className="text-[11px] font-semibold text-slate-500">Your access is split by purpose</span>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {portalLinks.map((portal) => {
-            const Icon = portal.icon;
+      {purpose === 'both' && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">Need a different portal?</h2>
+            <span className="text-[11px] font-semibold text-slate-500">Your access is split by purpose</span>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {portalLinks.map((portal) => {
+              const Icon = portal.icon;
 
-            return (
-              <Link
-                key={portal.title}
-                href={portal.href}
-                className={`group rounded-2xl border bg-gradient-to-br p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${portal.accent}`}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="h-10 w-10 rounded-xl bg-slate-950/60 border border-white/5 flex items-center justify-center">
-                      <Icon className="h-5 w-5" />
+              return (
+                <Link
+                  key={portal.title}
+                  href={portal.href}
+                  className={`group rounded-2xl border bg-gradient-to-br p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${portal.accent}`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="h-10 w-10 rounded-xl bg-slate-950/60 border border-white/5 flex items-center justify-center">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <h3 className="mt-4 text-base font-bold text-white">{portal.title}</h3>
+                      <p className="mt-2 text-sm text-slate-300 leading-6">{portal.desc}</p>
                     </div>
-                    <h3 className="mt-4 text-base font-bold text-white">{portal.title}</h3>
-                    <p className="mt-2 text-sm text-slate-300 leading-6">{portal.desc}</p>
+                    <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-white group-hover:translate-x-1 transition-all" />
                   </div>
-                  <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-white group-hover:translate-x-1 transition-all" />
-                </div>
-              </Link>
-            );
-          })}
+                </Link>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {purpose === 'learn' && <AcademyOverview snapshot={academyProgress} portalBasePath={portalBasePath} />}
       {purpose === 'hire' && <AgencyOverview portalBasePath={portalBasePath} />}
@@ -323,8 +352,7 @@ function AcademyOverview({
                 </div>
                 <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden mb-3">
                   <div
-                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500"
-                    style={{ width: `${course.progress}%` }}
+                    className={`h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500 ${getProgressWidthClass(course.progress)}`}
                   />
                 </div>
                 <div className="flex items-center justify-between text-xs text-slate-500">
@@ -420,8 +448,7 @@ function AgencyOverview({ portalBasePath, isUnified = false }: { portalBasePath:
               </div>
               <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden mb-3">
                 <div
-                  className="h-full bg-gradient-to-r from-cyan-500 to-indigo-500 rounded-full transition-all duration-500"
-                  style={{ width: `${project.progress}%` }}
+                  className={`h-full bg-gradient-to-r from-cyan-500 to-indigo-500 rounded-full transition-all duration-500 ${getProgressWidthClass(project.progress)}`}
                 />
               </div>
               <div className="flex items-center justify-between text-xs text-slate-500">
@@ -436,7 +463,7 @@ function AgencyOverview({ portalBasePath, isUnified = false }: { portalBasePath:
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <Link href={`${portalBasePath}/projects`} className="flex items-center justify-between p-4 rounded-xl border border-white/5 bg-cyan-600/10 hover:bg-cyan-600/20 text-cyan-300 font-semibold text-xs transition-colors">
+        <Link href="/projects" className="flex items-center justify-between p-4 rounded-xl border border-white/5 bg-cyan-600/10 hover:bg-cyan-600/20 text-cyan-300 font-semibold text-xs transition-colors">
           <span className="flex items-center gap-2">
             <Plus className="h-4 w-4" /> Request New Service
           </span>
@@ -487,7 +514,7 @@ function PrintingOverview({ portalBasePath, isUnified = false }: { portalBasePat
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Recent Orders</h3>
-          <Link href={`${portalBasePath}/printing`} className="text-xs font-semibold text-rose-400 hover:underline flex items-center gap-1">
+          <Link href="/printing" className="text-xs font-semibold text-rose-400 hover:underline flex items-center gap-1">
             All Orders <ChevronRight className="h-3 w-3" />
           </Link>
         </div>
@@ -520,7 +547,7 @@ function PrintingOverview({ portalBasePath, isUnified = false }: { portalBasePat
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <Link href={`${portalBasePath}/printing`} className="flex items-center justify-between p-4 rounded-xl border border-white/5 bg-rose-600/10 hover:bg-rose-600/20 text-rose-300 font-semibold text-xs transition-colors">
+        <Link href="/printing" className="flex items-center justify-between p-4 rounded-xl border border-white/5 bg-rose-600/10 hover:bg-rose-600/20 text-rose-300 font-semibold text-xs transition-colors">
           <span className="flex items-center gap-2">
             <Plus className="h-4 w-4" /> Place New Order
           </span>

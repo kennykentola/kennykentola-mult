@@ -250,3 +250,24 @@ export function gradeAcademySubmission(
     true
   );
 }
+
+export type StudentAssignmentDto = {
+  id: string;
+  courseId: string;
+  courseTitle: string;
+  instructorName: string;
+  title: string;
+  instructions: string;
+  dueDate: string;
+  maxPoints: number;
+  submission: AcademySubmissionDto | null;
+};
+
+export type StudentAssignmentsResponse = {
+  assignments: StudentAssignmentDto[];
+};
+
+export function fetchStudentAssignments() {
+  return academyFetch<StudentAssignmentsResponse>('/student/assignments', undefined, true);
+}
+
