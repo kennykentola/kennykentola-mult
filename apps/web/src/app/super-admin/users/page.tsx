@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../../features/auth/AuthContext';
+import { getSessionJwt } from '../../../lib/sessionJwt';
 import { 
   Users, 
   ShieldAlert, 
@@ -20,6 +21,7 @@ type UserProfile = {
   userId: string;
   firstName: string;
   lastName: string;
+  email: string;
   role: string;
   $createdAt: string;
 };
@@ -39,7 +41,7 @@ export default function SuperAdminUsersPage() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const jwt = localStorage.getItem('session_jwt');
+      const jwt = await getSessionJwt();
       const res = await fetch(`${API_BASE}/super-admin/users`, {
         headers: { Authorization: `Bearer ${jwt}` }
       });
@@ -63,7 +65,7 @@ export default function SuperAdminUsersPage() {
     setError('');
     
     try {
-      const jwt = localStorage.getItem('session_jwt');
+      const jwt = await getSessionJwt();
       const res = await fetch(`${API_BASE}/super-admin/users/${selectedUser.userId}/role`, {
         method: 'PATCH',
         headers: { 
@@ -89,6 +91,7 @@ export default function SuperAdminUsersPage() {
 
   const filteredUsers = users.filter(u => 
     `${u.firstName} ${u.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
+    u.email.toLowerCase().includes(search.toLowerCase()) ||
     u.role.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -141,6 +144,7 @@ export default function SuperAdminUsersPage() {
             <thead className="bg-slate-900/80 text-xs font-bold uppercase text-slate-500">
               <tr>
                 <th className="px-6 py-4">User</th>
+                <th className="px-6 py-4">Email</th>
                 <th className="px-6 py-4">User ID</th>
                 <th className="px-6 py-4">Current Role</th>
                 <th className="px-6 py-4">Joined Date</th>
@@ -173,6 +177,9 @@ export default function SuperAdminUsersPage() {
                           <div className="font-bold text-white">{user.firstName} {user.lastName}</div>
                         </div>
                       </div>
+                    </td>
+                    <td className="px-6 py-4 font-mono text-xs text-slate-500">
+                      {user.email}
                     </td>
                     <td className="px-6 py-4 font-mono text-xs text-slate-500">
                       {user.userId}

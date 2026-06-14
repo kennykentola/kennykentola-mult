@@ -19,17 +19,8 @@ const allowedOrigins = new Set(
   ].filter((value): value is string => Boolean(value))
 );
 
-// Middleware
-app.use(helmet());
-app.set('trust proxy', 1);
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 300,
-  standardHeaders: true,
-  legacyHeaders: false
-}));
-app.use(cors({
-  origin: (origin, callback) => {
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
     if (!origin) {
       return callback(null, true);
     }
@@ -43,8 +34,22 @@ app.use(cors({
 
     return callback(new Error(`CORS blocked for origin: ${origin}`));
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+// Middleware
+app.use(helmet());
+app.set('trust proxy', 1);
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false
 }));
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
@@ -56,6 +61,7 @@ import paymentsRouter from './routes/payments';
 import adminRouter from './routes/admin';
 import superAdminRouter from './routes/super-admin';
 import chatRouter from './routes/chat';
+import uploadRouter from './routes/upload';
 
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/printing', printingRouter);
@@ -64,6 +70,7 @@ app.use('/api/v1/payments', paymentsRouter);
 app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/super-admin', superAdminRouter);
 app.use('/api/v1/chat', chatRouter);
+app.use('/api/v1/upload', uploadRouter);
 
 // Basic Health Check Endpoint
 app.get('/api/health', (req, res) => {

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '../../features/auth/AuthContext';
+import { getLandingRoute, isRouteAllowed } from '../../lib/routeAccess';
 import { getAdminPendingPayments } from '../../features/payments/paymentsService';
 import { 
   Shield, 
@@ -27,9 +28,13 @@ export default function AdminLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { profile, loading } = useAuth();
+  const { profile, loading, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const handleSignOut = async () => {
+    await logout();
+    router.replace('/login');
+  };
 
   useEffect(() => {
     if (!loading && profile && (profile.role === 'Admin' || profile.role === 'Super Admin')) {
@@ -51,10 +56,10 @@ export default function AdminLayout({
   }, [profile, loading]);
 
   useEffect(() => {
-    if (!loading && (!profile || (profile.role !== 'Admin' && profile.role !== 'Printer Operator' && profile.role !== 'Instructor'))) {
-      router.push('/dashboard');
+    if (!loading && (!profile || !isRouteAllowed(pathname || '', profile))) {
+      router.replace(profile ? getLandingRoute(profile) : '/login');
     }
-  }, [profile, loading, router]);
+  }, [profile, loading, router, pathname]);
 
   if (loading) {
     return (
@@ -67,20 +72,20 @@ export default function AdminLayout({
     );
   }
 
-  if (!profile || (profile.role !== 'Admin' && profile.role !== 'Printer Operator' && profile.role !== 'Instructor')) {
+  if (!profile || !isRouteAllowed(pathname || '', profile)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white p-6">
         <div className="max-w-md text-center space-y-4">
           <ShieldAlert className="mx-auto h-16 w-16 text-rose-500 animate-pulse" />
           <h2 className="text-2xl font-bold">Access Denied</h2>
           <p className="text-slate-400 text-sm">
-            Your account role ({profile?.role || 'Guest'}) does not have sufficient permissions to view the administration terminal.
+            Your account does not have access to the administration terminal.
           </p>
           <button
-            onClick={() => router.push('/dashboard')}
+            onClick={() => router.replace(profile ? getLandingRoute(profile) : '/login')}
             className="rounded-xl bg-slate-900 border border-slate-800 px-6 py-3 text-xs font-bold hover:bg-slate-800 transition-colors"
           >
-            Return to Dashboard
+            Return to your portal
           </button>
         </div>
       </div>
@@ -116,6 +121,14 @@ export default function AdminLayout({
               Admin Terminal
             </span>
           </div>
+          <button
+            onClick={handleSignOut}
+            className="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-1.5 text-[11px] font-semibold text-slate-400 hover:border-rose-500/30 hover:text-rose-400 hover:bg-rose-950/20 transition-all duration-200"
+            aria-label="Sign out"
+            title="Sign out"
+          >
+            Sign Out
+          </button>
         </div>
 
         <nav className="flex-1 py-6 px-4 space-y-1">
@@ -149,7 +162,7 @@ export default function AdminLayout({
         {/* Back to User Dashboard */}
         <div className="p-4 border-t border-slate-900">
           <button
-            onClick={() => router.push('/dashboard')}
+            onClick={() => router.replace(getLandingRoute(profile))}
             className="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 py-2.5 text-xs font-semibold text-slate-450 transition-all duration-200"
           >
             <ArrowLeft className="h-3 w-3" />
@@ -208,7 +221,7 @@ export default function AdminLayout({
               <button
                 onClick={() => {
                   setSidebarOpen(false);
-                  router.push('/dashboard');
+                  router.replace(getLandingRoute(profile));
                 }}
                 className="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-800 py-2.5 text-xs font-semibold text-slate-400 hover:text-white transition-all duration-200"
               >
@@ -230,14 +243,24 @@ export default function AdminLayout({
             </div>
             <span className="text-lg font-bold text-white">Admin Terminal</span>
           </div>
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 -mr-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-900"
-            title="Open menu"
-            aria-label="Open menu"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSignOut}
+              className="rounded-lg border border-slate-800 bg-slate-900 px-3 py-1.5 text-[11px] font-semibold text-slate-400 hover:border-rose-500/30 hover:text-rose-400 transition-all duration-200"
+              title="Sign out"
+              aria-label="Sign out"
+            >
+              Sign Out
+            </button>
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 -mr-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-900"
+              title="Open menu"
+              aria-label="Open menu"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+          </div>
         </header>
 
         {/* Dynamic Page Workspace */}

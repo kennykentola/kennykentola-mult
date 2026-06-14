@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { Query } from 'node-appwrite';
-import { databases } from '../services/appwrite';
+import { databases, users } from '../services/appwrite';
 import { authenticateJWT, AuthenticatedRequest } from '../middleware/auth';
 
 const router = Router();
@@ -92,6 +92,113 @@ router.get('/analytics', authenticateJWT, async (req: AuthenticatedRequest, res)
     });
   } catch (err: any) {
     console.error('[Admin Analytics] Error fetching metrics:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Users Management
+router.get('/users', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Admin access required.' });
+  }
+  try {
+    const authUsers = await users.list([Query.limit(100)]);
+    const profileUsers = await databases.listDocuments(DATABASE_ID, 'users_profile', [Query.limit(100)]);
+
+    const mapped = (profileUsers.documents as any[]).map((profile) => {
+      const authUser = authUsers.users.find(u => u.$id === profile.userId);
+      return {
+        ...profile,
+        status: authUser?.status ? 'active' : 'inactive' // appwrite returns boolean status for active/blocked
+      };
+    });
+
+    res.status(200).json({ users: mapped });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.patch('/users/:userId/status', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Admin access required.' });
+  }
+  const { userId } = req.params;
+  const { action } = req.body; // 'deactivate' or 'reactivate'
+
+  try {
+    const isActive = action !== 'deactivate';
+    await users.updateStatus(userId, isActive);
+
+    await databases.createDocument(DATABASE_ID, 'user_activity_logs', 'unique()', {
+      userId: req.user.id,
+      action: isActive ? 'reactivate_user' : 'deactivate_user',
+      resourceType: 'user',
+      resourceId: userId,
+      timestamp: new Date().toISOString()
+    });
+
+    res.status(200).json({ message: `User successfully ${isActive ? 'reactivated' : 'deactivated'}.` });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Refunds
+router.post('/payments/:paymentId/refund', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Admin access required.' });
+  }
+  const { paymentId } = req.params;
+
+  try {
+    await databases.updateDocument(DATABASE_ID, 'payments', paymentId, {
+      status: 'refunded',
+      updatedAt: new Date().toISOString()
+    });
+
+    await databases.createDocument(DATABASE_ID, 'user_activity_logs', 'unique()', {
+      userId: req.user.id,
+      action: 'process_refund',
+      resourceType: 'payment',
+      resourceId: paymentId,
+      timestamp: new Date().toISOString()
+    });
+
+    res.status(200).json({ message: 'Refund processed successfully.' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Activity Logs
+router.get('/activity-logs', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Admin access required.' });
+  }
+  try {
+    const logs = await databases.listDocuments(DATABASE_ID, 'user_activity_logs', [
+      Query.orderDesc('timestamp'),
+      Query.limit(100)
+    ]);
+    res.status(200).json({ logs: logs.documents });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Instructor Payouts
+router.get('/payouts', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Admin access required.' });
+  }
+  try {
+    const payouts = await databases.listDocuments(DATABASE_ID, 'instructor_payouts', [
+      Query.orderDesc('payoutDate'),
+      Query.limit(100)
+    ]);
+    res.status(200).json({ payouts: payouts.documents });
+  } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });

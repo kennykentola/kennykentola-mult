@@ -84,34 +84,38 @@ export default function InstructorSettingsPage() {
           <h2 className="text-lg font-bold text-white">Notification Preferences</h2>
         </div>
         <div className="space-y-3">
-          {[
+          {([
             { key: 'newEnrollment', label: 'New Student Enrollment', desc: 'When a student enrolls in your course' },
             { key: 'assignmentSubmitted', label: 'Assignment Submitted', desc: 'When a student submits an assignment for grading' },
             { key: 'courseReview', label: 'Course Review Request', desc: 'When admin requests changes to your course' },
             { key: 'payoutProcessed', label: 'Payout Processed', desc: 'When your monthly earnings are transferred' },
             { key: 'liveSessionReminder', label: 'Live Session Reminder', desc: '1 hour before a scheduled live class' },
-          ].map((item) => (
-            <div key={item.key} className="flex items-center justify-between py-3 border-b border-slate-900/60 last:border-0">
-              <div>
-                <p className="text-sm font-semibold text-white">{item.label}</p>
-                <p className="text-xs text-slate-500">{item.desc}</p>
+          ] as const).map((item) => {
+            const checked = notifications[item.key];
+            return (
+              <div key={item.key} className="flex items-center justify-between py-3 border-b border-slate-900/60 last:border-0">
+                <div>
+                  <p className="text-sm font-semibold text-white">{item.label}</p>
+                  <p className="text-xs text-slate-500">{item.desc}</p>
+                </div>
+                <button
+                  id={`toggle-${item.key}`}
+                  type="button"
+                  role="switch"
+                  aria-label={`Toggle ${item.label}`}
+                  aria-checked={checked ? 'true' : 'false'}
+                  onClick={() => setNotifications((n) => ({ ...n, [item.key]: !checked }))}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    checked ? 'bg-indigo-600' : 'bg-slate-700'
+                  }`}
+                >
+                  <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                    checked ? 'translate-x-6' : 'translate-x-1'
+                  }`} />
+                </button>
               </div>
-              <button
-                id={`toggle-${item.key}`}
-                role="switch"
-                aria-label={`Toggle ${item.label}`}
-                aria-checked={notifications[item.key as keyof typeof notifications] ? "true" : "false"}
-                onClick={() => setNotifications((n) => ({ ...n, [item.key]: !n[item.key as keyof typeof notifications] }))}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  notifications[item.key as keyof typeof notifications] ? 'bg-indigo-600' : 'bg-slate-700'
-                }`}
-              >
-                <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                  notifications[item.key as keyof typeof notifications] ? 'translate-x-6' : 'translate-x-1'
-                }`} />
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

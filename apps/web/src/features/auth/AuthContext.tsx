@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { account } from '../../lib/appwrite';
+import { clearSessionJwt, setSessionJwt } from '../../lib/sessionJwt';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
@@ -47,9 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const jwtSession = await account.createJWT();
       const jwt = jwtSession.jwt;
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('session_jwt', jwt);
-      }
+      setSessionJwt(jwt);
 
       const res = await fetch(`${API_BASE}/auth/profile`, {
         headers: {
@@ -67,9 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return data.profile as Profile;
     } catch (err: any) {
       console.error('Error fetching profile:', err);
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('session_jwt');
-      }
+      clearSessionJwt();
       setUser(null);
       setProfile(null);
       return null;
@@ -87,6 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (err: any) {
       // No active session
+      clearSessionJwt();
       setUser(null);
       setProfile(null);
     } finally {
@@ -129,9 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       await account.deleteSession('current');
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('session_jwt');
-      }
+      clearSessionJwt();
       setUser(null);
       setProfile(null);
     } catch (err: any) {

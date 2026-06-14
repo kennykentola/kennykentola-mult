@@ -10,6 +10,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useAuth } from '../../../features/auth/AuthContext';
+import { getSessionJwt } from '../../../lib/sessionJwt';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
@@ -35,13 +36,8 @@ export default function SuperAdminDashboard() {
   useEffect(() => {
     const loadOverview = async () => {
       try {
-        const jwt = typeof window !== 'undefined' ? localStorage.getItem('session_jwt') : null;
-        if (!jwt) {
-          throw new Error('Not authenticated');
-        }
-
         const res = await fetch(`${API_BASE}/super-admin/overview`, {
-          headers: { Authorization: `Bearer ${jwt}` }
+          headers: { Authorization: `Bearer ${await getSessionJwt()}` }
         });
         const payload = await res.json();
         if (!res.ok) {

@@ -19,6 +19,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import Link from 'next/link';
+import { getSessionJwt } from '../../../../../lib/sessionJwt';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
@@ -51,10 +52,6 @@ const emptyForm = (): LessonForm => ({
   isPreview: false,
 });
 
-function getJwt() {
-  return typeof window !== 'undefined' ? localStorage.getItem('session_jwt') || '' : '';
-}
-
 export default function AdminCurriculumPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = React.use(params);
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -74,17 +71,23 @@ export default function AdminCurriculumPage({ params }: { params: Promise<{ id: 
     if (!id) return;
     setLoadingLessons(true);
     setError('');
-    const jwt = getJwt();
-    fetch(`${API_BASE}/academy/courses/${id}/lessons`, {
-      headers: { Authorization: `Bearer ${jwt}` }
-    })
-      .then((r) => r.json())
-      .then((d) => {
+    const load = async () => {
+      try {
+        const jwt = await getSessionJwt();
+        const res = await fetch(`${API_BASE}/academy/courses/${id}/lessons`, {
+          headers: { Authorization: `Bearer ${jwt}` }
+        });
+        const d = await res.json();
         if (d.error) throw new Error(d.error);
         setLessons((d.lessons || []).sort((a: Lesson, b: Lesson) => a.order - b.order));
-      })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoadingLessons(false));
+      } catch (e: any) {
+        setError(e.message);
+      } finally {
+        setLoadingLessons(false);
+      }
+    };
+
+    load();
   }, [id]);
 
   useEffect(() => {
@@ -120,7 +123,7 @@ export default function AdminCurriculumPage({ params }: { params: Promise<{ id: 
     if (!form.title.trim()) { setError('Lesson title is required.'); return; }
     setSaving(true);
     setError('');
-    const jwt = getJwt();
+    const jwt = await getSessionJwt();
     const payload = {
       title: form.title.trim(),
       content: form.content.trim(),
@@ -164,7 +167,7 @@ export default function AdminCurriculumPage({ params }: { params: Promise<{ id: 
     if (!confirm('Delete this lesson? This cannot be undone.')) return;
     setDeletingId(lessonId);
     setError('');
-    const jwt = getJwt();
+    const jwt = await getSessionJwt();
     try {
       const res = await fetch(`${API_BASE}/academy/lessons/${lessonId}`, {
         method: 'DELETE',
@@ -187,7 +190,7 @@ export default function AdminCurriculumPage({ params }: { params: Promise<{ id: 
     const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
     if (swapIdx < 0 || swapIdx >= lessons.length) return;
 
-    const jwt = getJwt();
+    const jwt = await getSessionJwt();
     const newOrder = lessons[swapIdx].order;
     const swapOrder = lesson.order;
 

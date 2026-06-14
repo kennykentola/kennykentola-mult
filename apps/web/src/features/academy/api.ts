@@ -1,4 +1,4 @@
-import { account } from '../../lib/appwrite';
+import { getSessionJwt } from '../../lib/sessionJwt';
 
 const API_BASE = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/academy`;
 
@@ -136,8 +136,7 @@ export type AcademySubmissionReviewsResponse = {
 type AcademyResponse<T> = T;
 
 async function getJwt() {
-  const session = await account.createJWT();
-  return session.jwt;
+  return getSessionJwt();
 }
 
 async function academyFetch<T>(path: string, init?: RequestInit, requireAuth = false): Promise<AcademyResponse<T>> {
@@ -271,3 +270,111 @@ export function fetchStudentAssignments() {
   return academyFetch<StudentAssignmentsResponse>('/student/assignments', undefined, true);
 }
 
+export type LessonProgressDto = {
+  $id?: string;
+  studentId: string;
+  lessonId: string;
+  courseId: string;
+  isCompleted: boolean;
+  lastPosition?: number;
+  completedAt?: string;
+};
+
+export function fetchLessonProgress(courseId: string) {
+  return academyFetch<{ lessonProgress: LessonProgressDto[] }>(`/courses/${courseId}/lesson-progress`, undefined, true);
+}
+
+export function updateLessonProgress(
+  lessonId: string,
+  payload: { courseId: string; isCompleted?: boolean; lastPosition?: number }
+) {
+  return academyFetch<{ message: string; progress: LessonProgressDto }>(
+    `/lessons/${lessonId}/progress`,
+    {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    },
+    true
+  );
+}
+
+export type QuizDto = {
+  $id?: string;
+  courseId: string;
+  moduleId?: string;
+  title: string;
+  description: string;
+  timeLimitMinutes: number;
+  passingScore: number;
+  questions: string;
+};
+
+export type QuizAttemptDto = {
+  $id?: string;
+  quizId: string;
+  studentId: string;
+  courseId: string;
+  score: number;
+  passed: boolean;
+  startedAt: string;
+  completedAt?: string;
+  answers: string;
+};
+
+export function fetchCourseQuizzes(courseId: string) {
+  return academyFetch<{ quizzes: QuizDto[] }>(`/courses/${courseId}/quizzes`, undefined, true);
+}
+
+export function createQuiz(courseId: string, payload: Partial<QuizDto>) {
+  return academyFetch<{ message: string; quiz: QuizDto }>(`/courses/${courseId}/quizzes`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  }, true);
+}
+
+export function updateQuiz(quizId: string, payload: Partial<QuizDto>) {
+  return academyFetch<{ message: string; quiz: QuizDto }>(`/quizzes/${quizId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload)
+  }, true);
+}
+
+export function deleteQuiz(quizId: string) {
+  return academyFetch<{ message: string }>(`/quizzes/${quizId}`, {
+    method: 'DELETE'
+  }, true);
+}
+
+export function submitQuizAttempt(quizId: string, payload: Partial<QuizAttemptDto>) {
+  return academyFetch<{ message: string; attempt: QuizAttemptDto }>(`/quizzes/${quizId}/attempts`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  }, true);
+}
+
+export function fetchMyQuizAttempts(courseId: string) {
+  return academyFetch<{ attempts: QuizAttemptDto[] }>(`/courses/${courseId}/quiz-attempts/me`, undefined, true);
+}
+
+// Testimonials
+export type TestimonialDto = {
+  $id?: string;
+  userId: string;
+  authorName: string;
+  courseId?: string;
+  content: string;
+  rating: number;
+  isApproved: boolean;
+  createdAt: string;
+};
+
+export function fetchCourseTestimonials(courseId: string) {
+  return academyFetch<{ testimonials: TestimonialDto[] }>(`/courses/${courseId}/testimonials`);
+}
+
+export function submitTestimonial(courseId: string, payload: { content: string; rating: number }) {
+  return academyFetch<{ message: string; testimonial: TestimonialDto }>(`/courses/${courseId}/testimonials`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  }, true);
+}

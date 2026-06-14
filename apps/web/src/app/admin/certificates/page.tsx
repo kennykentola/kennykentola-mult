@@ -12,16 +12,17 @@ import {
   User,
   BookOpen
 } from 'lucide-react';
+import { getSessionJwt } from '../../../lib/sessionJwt';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('session_jwt') : null;
+  const token = await getSessionJwt();
   const res = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      Authorization: `Bearer ${token}`,
       ...options.headers,
     },
   });

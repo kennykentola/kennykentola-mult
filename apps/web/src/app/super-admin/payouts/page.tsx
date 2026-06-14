@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../../features/auth/AuthContext';
+import { getSessionJwt } from '../../../lib/sessionJwt';
 import { 
   DollarSign, 
   CheckCircle2, 
@@ -31,9 +32,8 @@ export default function SuperAdminPayoutsPage() {
   const fetchPayouts = async () => {
     setLoading(true);
     try {
-      const jwt = localStorage.getItem('session_jwt');
       const res = await fetch(`${API_BASE}/super-admin/payouts`, {
-        headers: { Authorization: `Bearer ${jwt}` }
+        headers: { Authorization: `Bearer ${await getSessionJwt()}` }
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -55,11 +55,10 @@ export default function SuperAdminPayoutsPage() {
     setError('');
     
     try {
-      const jwt = localStorage.getItem('session_jwt');
       const res = await fetch(`${API_BASE}/super-admin/payouts/${id}`, {
         method: 'PATCH',
         headers: { 
-          Authorization: `Bearer ${jwt}`,
+          Authorization: `Bearer ${await getSessionJwt()}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ status: 'paid' })

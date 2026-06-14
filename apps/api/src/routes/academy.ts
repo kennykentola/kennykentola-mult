@@ -15,6 +15,7 @@ const PROFILES_COLLECTION = 'users_profile';
 const ASSIGNMENTS_COLLECTION = 'assignments';
 const SUBMISSIONS_COLLECTION = 'submissions';
 const LIVE_CLASSES_COLLECTION = 'live_classes';
+const MODULES_COLLECTION = 'modules';
 
 type ApiCourse = {
   id: string;
@@ -322,9 +323,24 @@ router.get('/courses/:courseId', async (req, res) => {
     }
     const lessons = await listCourseLessons(courseId);
 
+    // Fetch modules
+    const modules = await databases.listDocuments(DATABASE_ID, MODULES_COLLECTION, [
+      Query.equal('courseId', courseId),
+      Query.orderAsc('order'),
+      Query.limit(100)
+    ]).catch(() => ({ documents: [] }));
+
     res.status(200).json({
       course: mapCourse(course, lessons.length),
-      lessons
+      lessons,
+      modules: modules.documents.map((m: any) => ({
+        id: m.$id,
+        courseId: m.courseId,
+        title: m.title,
+        description: m.description,
+        order: m.order,
+        isPublished: m.isPublished
+      }))
     });
   } catch (err: any) {
     console.error('[Academy] Error fetching course detail:', err.message);
@@ -364,12 +380,16 @@ router.get('/courses/:courseId/assignments/me', authenticateJWT, async (req: Aut
   try {
     const assignments = await listAssignments(courseId);
 
-    // Batch fetch all user submissions for this course in one query instead of N queries
-    const allSubmissions = await databases.listDocuments(DATABASE_ID, SUBMISSIONS_COLLECTION, [
-      Query.equal('studentId', userId || ''),
-      Query.equal('courseId', courseId),
-      Query.limit(assignments.length + 10)
-    ]);
+    const assignmentIds = assignments.map((a: any) => a.$id);
+    
+    let allSubmissions = { documents: [] };
+    if (assignmentIds.length > 0) {
+      allSubmissions = await databases.listDocuments(DATABASE_ID, SUBMISSIONS_COLLECTION, [
+        Query.equal('studentId', userId || ''),
+        Query.equal('assignmentId', assignmentIds),
+        Query.limit(assignmentIds.length + 10)
+      ]);
+    }
     const submissionByAssignment = new Map(
       allSubmissions.documents.map((s: any) => [s.assignmentId, s])
     );
@@ -662,6 +682,69 @@ router.patch('/courses/:courseId/progress', authenticateJWT, async (req: Authent
     res.status(200).json({ message: 'Progress updated', enrollment });
   } catch (err: any) {
     console.error('[Academy] Error updating progress:', err.message);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.get('/courses/:courseId/lesson-progress', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { courseId } = req.params;
+  const userId = req.user?.id;
+
+  try {
+    const progressList = await databases.listDocuments(DATABASE_ID, 'lesson_progress', [
+      Query.equal('studentId', userId || ''),
+      Query.equal('courseId', courseId),
+      Query.limit(500)
+    ]);
+
+    res.status(200).json({ lessonProgress: progressList.documents });
+  } catch (err: any) {
+    console.error('[Academy] Error fetching lesson progress:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/lessons/:lessonId/progress', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { lessonId } = req.params;
+  const { courseId, isCompleted, lastPosition } = req.body;
+  const userId = req.user?.id;
+
+  if (!courseId) {
+    return res.status(400).json({ error: 'courseId is required.' });
+  }
+
+  try {
+    const existing = await databases.listDocuments(DATABASE_ID, 'lesson_progress', [
+      Query.equal('studentId', userId || ''),
+      Query.equal('lessonId', lessonId),
+      Query.limit(1)
+    ]);
+
+    let progressDoc;
+    if (existing.total > 0) {
+      const existingDoc = existing.documents[0] as any;
+      const updateData: any = {
+        isCompleted: isCompleted ?? existingDoc.isCompleted,
+        lastPosition: lastPosition ?? existingDoc.lastPosition
+      };
+      if (isCompleted && !existingDoc.isCompleted) {
+        updateData.completedAt = new Date().toISOString();
+      }
+      progressDoc = await databases.updateDocument(DATABASE_ID, 'lesson_progress', existingDoc.$id, updateData);
+    } else {
+      progressDoc = await databases.createDocument(DATABASE_ID, 'lesson_progress', ID.unique(), {
+        studentId: userId,
+        lessonId,
+        courseId,
+        isCompleted: isCompleted || false,
+        lastPosition: lastPosition || 0,
+        completedAt: isCompleted ? new Date().toISOString() : null
+      });
+    }
+
+    res.status(200).json({ message: 'Lesson progress updated', progress: progressDoc });
+  } catch (err: any) {
+    console.error('[Academy] Error updating lesson progress:', err.message);
     res.status(400).json({ error: err.message });
   }
 });
@@ -1057,6 +1140,35 @@ router.get('/courses/:courseId/lessons', authenticateJWT, async (req: Authentica
   }
 });
 
+// INSTRUCTOR: Get modules for a course
+router.get('/courses/:courseId/modules', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Instructor access required.' });
+  }
+
+  const { courseId } = req.params;
+
+  try {
+    const modules = await databases.listDocuments(DATABASE_ID, MODULES_COLLECTION, [
+      Query.equal('courseId', courseId),
+      Query.orderAsc('order'),
+      Query.limit(100)
+    ]).catch(() => ({ documents: [] }));
+
+    res.status(200).json({ modules: modules.documents.map((m: any) => ({
+      id: m.$id,
+      courseId: m.courseId,
+      title: m.title,
+      description: m.description,
+      order: m.order,
+      isPublished: m.isPublished
+    })) });
+  } catch (err: any) {
+    console.error('[Academy Instructor Modules] Error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // INSTRUCTOR: Create course
 router.post('/courses', authenticateJWT, async (req: AuthenticatedRequest, res) => {
   if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
@@ -1093,7 +1205,58 @@ router.post('/courses', authenticateJWT, async (req: AuthenticatedRequest, res) 
   }
 });
 
+// INSTRUCTOR/ADMIN: Delete course (cascades: lessons, assignments, enrollments)
+router.delete('/courses/:courseId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Instructor or Admin access required.' });
+  }
+
+  const { courseId } = req.params;
+
+  try {
+    // Check ownership
+    const course = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION, courseId);
+    if (req.user.role === 'Instructor' && (course as any).instructorId !== req.user.id) {
+      return res.status(403).json({ error: 'You do not own this course.' });
+    }
+
+    // 1. Delete all lessons
+    const lessons = await databases.listDocuments(DATABASE_ID, LESSONS_COLLECTION, [
+      Query.equal('courseId', courseId), Query.limit(200)
+    ]);
+    await Promise.all(lessons.documents.map((l: any) => databases.deleteDocument(DATABASE_ID, LESSONS_COLLECTION, l.$id)));
+
+    // 2. Delete all assignments (and their submissions)
+    const assignments = await databases.listDocuments(DATABASE_ID, ASSIGNMENTS_COLLECTION, [
+      Query.equal('courseId', courseId), Query.limit(200)
+    ]);
+    for (const assignment of assignments.documents as any[]) {
+      const submissions = await databases.listDocuments(DATABASE_ID, SUBMISSIONS_COLLECTION, [
+        Query.equal('assignmentId', assignment.$id), Query.limit(200)
+      ]);
+      await Promise.all(submissions.documents.map((s: any) => databases.deleteDocument(DATABASE_ID, SUBMISSIONS_COLLECTION, s.$id)));
+      await databases.deleteDocument(DATABASE_ID, ASSIGNMENTS_COLLECTION, assignment.$id);
+    }
+
+    // 3. Delete all enrollments
+    const enrollments = await databases.listDocuments(DATABASE_ID, ENROLLMENTS_COLLECTION, [
+      Query.equal('courseId', courseId), Query.limit(200)
+    ]);
+    await Promise.all(enrollments.documents.map((e: any) => databases.deleteDocument(DATABASE_ID, ENROLLMENTS_COLLECTION, e.$id)));
+
+    // 4. Delete the course itself
+    await databases.deleteDocument(DATABASE_ID, COURSES_COLLECTION, courseId);
+
+    console.log(`[Academy] Course ${courseId} and all related data deleted by ${req.user?.id}`);
+    res.status(200).json({ message: 'Course and all related data deleted successfully.' });
+  } catch (err: any) {
+    console.error('[Academy] Error deleting course:', err.message);
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // INSTRUCTOR: Update course
+
 router.patch('/courses/:courseId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
   if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
     return res.status(403).json({ error: 'Instructor access required.' });
@@ -1139,7 +1302,7 @@ router.post('/courses/:courseId/lessons', authenticateJWT, async (req: Authentic
   }
 
   const { courseId } = req.params;
-  const { title, content, videoUrl, order, durationMinutes, isPreview } = req.body;
+  const { title, content, videoUrl, order, durationMinutes, isPreview, moduleId } = req.body;
 
   if (!title || order === undefined) {
     return res.status(400).json({ error: 'Title and order are required.' });
@@ -1159,7 +1322,8 @@ router.post('/courses/:courseId/lessons', authenticateJWT, async (req: Authentic
       videoUrl: videoUrl || '',
       order: Number(order),
       durationMinutes: durationMinutes !== undefined ? Number(durationMinutes) : 0,
-      isPreview: isPreview !== undefined ? Boolean(isPreview) : false
+      isPreview: isPreview !== undefined ? Boolean(isPreview) : false,
+      moduleId: moduleId || ''
     });
 
     // Increment lessonCount on course
@@ -1192,7 +1356,7 @@ router.patch('/lessons/:lessonId', authenticateJWT, async (req: AuthenticatedReq
       return res.status(403).json({ error: 'You do not own this course.' });
     }
 
-    const allowedFields = ['title', 'content', 'videoUrl', 'order', 'durationMinutes', 'isPreview'];
+    const allowedFields = ['title', 'content', 'videoUrl', 'order', 'durationMinutes', 'isPreview', 'moduleId'];
     const updateData: Record<string, any> = {};
     for (const key of allowedFields) {
       if (updates[key] !== undefined) {
@@ -1240,6 +1404,103 @@ router.delete('/lessons/:lessonId', authenticateJWT, async (req: AuthenticatedRe
     res.status(200).json({ message: 'Lesson deleted successfully' });
   } catch (err: any) {
     console.error('[Academy Instructor] Error deleting lesson:', err.message);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// INSTRUCTOR: Create module
+router.post('/courses/:courseId/modules', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Instructor access required.' });
+  }
+
+  const { courseId } = req.params;
+  const { title, description, order, isPublished } = req.body;
+
+  if (!title || order === undefined) {
+    return res.status(400).json({ error: 'Title and order are required.' });
+  }
+
+  try {
+    const course = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION, courseId);
+    if (req.user.role === 'Instructor' && (course as any).instructorId !== req.user.id) {
+      return res.status(403).json({ error: 'You do not own this course.' });
+    }
+
+    const moduleDoc = await databases.createDocument(DATABASE_ID, MODULES_COLLECTION, ID.unique(), {
+      courseId,
+      title,
+      description: description || '',
+      order: Number(order),
+      isPublished: isPublished !== undefined ? Boolean(isPublished) : false
+    });
+
+    res.status(201).json({ message: 'Module created successfully', module: moduleDoc });
+  } catch (err: any) {
+    console.error('[Academy Instructor] Error creating module:', err.message);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// INSTRUCTOR: Update module
+router.patch('/modules/:moduleId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Instructor access required.' });
+  }
+
+  const { moduleId } = req.params;
+  const updates = req.body;
+
+  try {
+    const moduleDoc = await databases.getDocument(DATABASE_ID, MODULES_COLLECTION, moduleId);
+    const course = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION, (moduleDoc as any).courseId);
+    if (req.user.role === 'Instructor' && (course as any).instructorId !== req.user.id) {
+      return res.status(403).json({ error: 'You do not own this course.' });
+    }
+
+    const allowedFields = ['title', 'description', 'order', 'isPublished'];
+    const updateData: Record<string, any> = {};
+    for (const key of allowedFields) {
+      if (updates[key] !== undefined) {
+        if (key === 'order') updateData[key] = Number(updates[key]);
+        else if (key === 'isPublished') updateData[key] = Boolean(updates[key]);
+        else updateData[key] = updates[key];
+      }
+    }
+
+    const updated = await databases.updateDocument(DATABASE_ID, MODULES_COLLECTION, moduleId, updateData);
+    res.status(200).json({ message: 'Module updated successfully', module: updated });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// INSTRUCTOR: Delete module
+router.delete('/modules/:moduleId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Instructor access required.' });
+  }
+
+  const { moduleId } = req.params;
+
+  try {
+    const moduleDoc = await databases.getDocument(DATABASE_ID, MODULES_COLLECTION, moduleId);
+    const courseId = (moduleDoc as any).courseId;
+    const course = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION, courseId);
+    if (req.user.role === 'Instructor' && (course as any).instructorId !== req.user.id) {
+      return res.status(403).json({ error: 'You do not own this course.' });
+    }
+
+    // Unlink lessons from this module
+    const lessons = await databases.listDocuments(DATABASE_ID, LESSONS_COLLECTION, [
+      Query.equal('moduleId', moduleId), Query.limit(200)
+    ]).catch(() => ({ documents: [] }));
+    
+    await Promise.all(lessons.documents.map((l: any) => databases.updateDocument(DATABASE_ID, LESSONS_COLLECTION, l.$id, { moduleId: '' })));
+
+    await databases.deleteDocument(DATABASE_ID, MODULES_COLLECTION, moduleId);
+    res.status(200).json({ message: 'Module deleted successfully' });
+  } catch (err: any) {
     res.status(400).json({ error: err.message });
   }
 });
@@ -1307,3 +1568,168 @@ router.post('/admin/certificates/issue', authenticateJWT, async (req: Authentica
 });
 
 export default router;
+
+// --- Quiz Endpoints ---
+
+router.get('/courses/:courseId/quizzes', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { courseId } = req.params;
+  try {
+    const quizzesList = await databases.listDocuments(DATABASE_ID, 'quizzes', [
+      Query.equal('courseId', courseId),
+      Query.limit(100)
+    ]);
+    res.status(200).json({ quizzes: quizzesList.documents });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/courses/:courseId/quizzes', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (!(await ensureAcademyReviewer(req.user?.role))) return res.status(403).json({ error: 'Access denied.' });
+  const { courseId } = req.params;
+  const { title, description, timeLimitMinutes, passingScore, questions, moduleId } = req.body;
+  
+  try {
+    const updateData: any = {
+      courseId,
+      title,
+      description: description || '',
+      timeLimitMinutes: Number(timeLimitMinutes || 0),
+      passingScore: Number(passingScore || 70),
+      questions: questions || '[]'
+    };
+    if (moduleId) updateData.moduleId = moduleId;
+
+    const quiz = await databases.createDocument(DATABASE_ID, 'quizzes', ID.unique(), updateData);
+    res.status(201).json({ message: 'Quiz created', quiz });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.patch('/quizzes/:quizId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (!(await ensureAcademyReviewer(req.user?.role))) return res.status(403).json({ error: 'Access denied.' });
+  const { quizId } = req.params;
+  const { title, description, timeLimitMinutes, passingScore, questions, moduleId } = req.body;
+
+  try {
+    const updateData: any = {};
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (timeLimitMinutes !== undefined) updateData.timeLimitMinutes = Number(timeLimitMinutes);
+    if (passingScore !== undefined) updateData.passingScore = Number(passingScore);
+    if (questions !== undefined) updateData.questions = questions;
+    if (moduleId !== undefined) updateData.moduleId = moduleId;
+
+    const quiz = await databases.updateDocument(DATABASE_ID, 'quizzes', quizId, updateData);
+    res.status(200).json({ message: 'Quiz updated', quiz });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.delete('/quizzes/:quizId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (!(await ensureAcademyReviewer(req.user?.role))) return res.status(403).json({ error: 'Access denied.' });
+  const { quizId } = req.params;
+
+  try {
+    await databases.deleteDocument(DATABASE_ID, 'quizzes', quizId);
+    res.status(200).json({ message: 'Quiz deleted' });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.post('/quizzes/:quizId/attempts', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { quizId } = req.params;
+  const userId = req.user?.id;
+  const { courseId, score, passed, startedAt, answers } = req.body;
+
+  try {
+    const attempt = await databases.createDocument(DATABASE_ID, 'quiz_attempts', ID.unique(), {
+      quizId,
+      studentId: userId,
+      courseId,
+      score: Number(score || 0),
+      passed: Boolean(passed),
+      startedAt: startedAt || new Date().toISOString(),
+      completedAt: new Date().toISOString(),
+      answers: answers || '[]'
+    });
+    res.status(201).json({ message: 'Quiz attempt saved', attempt });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.get('/courses/:courseId/quiz-attempts/me', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { courseId } = req.params;
+  const userId = req.user?.id;
+  try {
+    const attemptsList = await databases.listDocuments(DATABASE_ID, 'quiz_attempts', [
+      Query.equal('studentId', userId || ''),
+      Query.equal('courseId', courseId),
+      Query.orderDesc('completedAt'),
+      Query.limit(100)
+    ]);
+    res.status(200).json({ attempts: attemptsList.documents });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- Testimonial Endpoints ---
+
+router.get('/courses/:courseId/testimonials', async (req, res) => {
+  const { courseId } = req.params;
+  try {
+    const testimonialsList = await databases.listDocuments(DATABASE_ID, 'testimonials', [
+      Query.equal('courseId', courseId),
+      Query.equal('isApproved', true),
+      Query.orderDesc('createdAt'),
+      Query.limit(50)
+    ]);
+    res.status(200).json({ testimonials: testimonialsList.documents });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/courses/:courseId/testimonials', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { courseId } = req.params;
+  const userId = req.user?.id;
+  const { content, rating } = req.body;
+  
+  try {
+    const profile = await getProfileDoc(userId || '');
+    const authorName = profile ? `${(profile as any).firstName} ${(profile as any).lastName}` : req.user?.name || 'Student';
+
+    const testimonial = await databases.createDocument(DATABASE_ID, 'testimonials', ID.unique(), {
+      userId,
+      authorName,
+      courseId,
+      content,
+      rating: Number(rating || 5),
+      isApproved: false, // requires admin approval
+      createdAt: new Date().toISOString()
+    });
+    res.status(201).json({ message: 'Testimonial submitted for review', testimonial });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.patch('/testimonials/:testimonialId/approve', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (!(await ensureAcademyReviewer(req.user?.role))) return res.status(403).json({ error: 'Access denied.' });
+  const { testimonialId } = req.params;
+  const { isApproved } = req.body;
+
+  try {
+    const testimonial = await databases.updateDocument(DATABASE_ID, 'testimonials', testimonialId, {
+      isApproved: Boolean(isApproved)
+    });
+    res.status(200).json({ message: 'Testimonial status updated', testimonial });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});

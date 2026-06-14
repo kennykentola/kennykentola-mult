@@ -32,13 +32,22 @@ import {
   fetchAcademyProgress,
   fetchMyAcademyAssignments,
   submitAcademyAssignment,
-  updateAcademyCourseProgress
+  updateAcademyCourseProgress,
+  fetchLessonProgress,
+  updateLessonProgress,
+  LessonProgressDto,
+  fetchCourseQuizzes,
+  fetchMyQuizAttempts,
+  submitQuizAttempt,
+  QuizDto,
+  QuizAttemptDto,
+  submitTestimonial
 } from '../../../../features/academy/api';
 import { academyOverview, catalogCourses, enrolledCourses } from '../../../../features/academy/content';
 
 type FallbackCourse = (typeof catalogCourses)[number] | (typeof enrolledCourses)[number];
 
-type CourseTab = 'lessons' | 'assignments' | 'live';
+type CourseTab = 'lessons' | 'assignments' | 'live' | 'quizzes';
 
 function buildFallbackLessons(course: FallbackCourse): AcademyLessonDto[] {
   return [
@@ -127,6 +136,11 @@ export default function CourseDetailPage() {
   const [selectedLessonId, setSelectedLessonId] = useState<string>('');
   const [assignments, setAssignments] = useState<AcademyAssignmentDto[]>([]);
   const [liveClasses, setLiveClasses] = useState<AcademyLiveClassDto[]>([]);
+  const [lessonProgress, setLessonProgress] = useState<LessonProgressDto[]>([]);
+  const [quizzes, setQuizzes] = useState<QuizDto[]>([]);
+  const [quizAttempts, setQuizAttempts] = useState<QuizAttemptDto[]>([]);
+  const [selectedQuizId, setSelectedQuizId] = useState<string>('');
+  const [activeQuizAnswers, setActiveQuizAnswers] = useState<Record<number, number>>({});
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<string>('');
   const [assignmentFiles, setAssignmentFiles] = useState('');
   const [assignmentNote, setAssignmentNote] = useState('');
@@ -135,6 +149,10 @@ export default function CourseDetailPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const [showTestimonialModal, setShowTestimonialModal] = useState(false);
+  const [testimonialRating, setTestimonialRating] = useState(5);
+  const [testimonialContent, setTestimonialContent] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -146,12 +164,15 @@ export default function CourseDetailPage() {
       setError('');
       setSuccess('');
 
-      const [courseResponse, progressResponse, assignmentsResponse, myAssignmentsResponse, liveClassesResponse] = await Promise.allSettled([
+      const [courseResponse, progressResponse, assignmentsResponse, myAssignmentsResponse, liveClassesResponse, lessonProgressResponse, quizzesResponse, attemptsResponse] = await Promise.allSettled([
         fetchAcademyCourse(courseId),
         fetchAcademyProgress(),
         fetchAcademyAssignments(courseId),
         fetchMyAcademyAssignments(courseId),
-        fetchAcademyLiveClasses(courseId)
+        fetchAcademyLiveClasses(courseId),
+        fetchLessonProgress(courseId),
+        fetchCourseQuizzes(courseId),
+        fetchMyQuizAttempts(courseId)
       ]);
 
       if (cancelled) return;
@@ -167,6 +188,17 @@ export default function CourseDetailPage() {
       if (progressResponse.status === 'fulfilled') {
         resolvedEnrollment = progressResponse.value.enrollments.find((item) => item.courseId === courseId) || null;
         setEnrollment(resolvedEnrollment);
+      }
+
+      if (lessonProgressResponse.status === 'fulfilled') {
+        setLessonProgress(lessonProgressResponse.value.lessonProgress);
+      }
+
+      if (quizzesResponse.status === 'fulfilled') {
+        setQuizzes(quizzesResponse.value.quizzes);
+      }
+      if (attemptsResponse.status === 'fulfilled') {
+        setQuizAttempts(attemptsResponse.value.attempts);
       }
 
       const fallbackCourse = [...catalogCourses, ...enrolledCourses].find((course) => course.id === courseId);
@@ -225,6 +257,7 @@ export default function CourseDetailPage() {
 
       setSelectedLessonId(startingLesson);
       setSelectedAssignmentId((assignmentsResponse.status === 'fulfilled' ? assignmentsResponse.value.assignments[0]?.id : buildFallbackAssignments(fallbackCourse || enrolledCourses[0])[0]?.id) || '');
+      setSelectedQuizId((quizzesResponse.status === 'fulfilled' ? quizzesResponse.value.quizzes[0]?.$id : '') || '');
 
       if (courseResponse.status === 'rejected' && !fallbackCourse) {
         setError('Course not found.');
@@ -251,12 +284,22 @@ export default function CourseDetailPage() {
     [assignments, selectedAssignmentId]
   );
 
+  const selectedQuiz = useMemo(
+    () => quizzes.find((quiz) => quiz.$id === selectedQuizId) || quizzes[0] || null,
+    [quizzes, selectedQuizId]
+  );
+
+  const selectedQuizAttempt = useMemo(
+    () => selectedQuiz ? quizAttempts.find(a => a.quizId === selectedQuiz.$id) || null : null,
+    [quizAttempts, selectedQuiz]
+  );
+
   const completedCount = enrollment?.completedLessons || 0;
   const progressPercent =
     enrollment?.progress || (lessons.length > 0 ? Math.round((completedCount / lessons.length) * 100) : 0);
 
   const selectedLessonIndex = selectedLesson ? lessons.findIndex((lesson) => lesson.id === selectedLesson.id) : -1;
-  const isLessonCompleted = selectedLessonIndex >= 0 ? selectedLessonIndex < completedCount : false;
+  const isLessonCompleted = selectedLesson ? lessonProgress.some((p) => p.lessonId === selectedLesson.id && p.isCompleted) || (selectedLessonIndex >= 0 && selectedLessonIndex < completedCount) : false;
   const nextLesson = lessons[Math.min(completedCount, Math.max(lessons.length - 1, 0))] || null;
   const isEnrolled = Boolean(enrollment);
   const assignmentStatusLabel = selectedAssignment?.submission
@@ -286,7 +329,16 @@ export default function CourseDetailPage() {
       setActionLoading(true);
       setError('');
       setSuccess('');
-      const nextCompletedLessons = Math.max(completedCount, selectedLessonIndex + 1);
+
+      await updateLessonProgress(selectedLesson.id, { courseId, isCompleted: true });
+      setLessonProgress((prev) => {
+        const exists = prev.find(p => p.lessonId === selectedLesson?.id);
+        if (exists) return prev.map(p => p.lessonId === selectedLesson?.id ? { ...p, isCompleted: true } : p);
+        return [...prev, { lessonId: selectedLesson.id, courseId, studentId: '', isCompleted: true }];
+      });
+
+      const newCompletedCount = lessonProgress.filter(p => p.isCompleted).length + (lessonProgress.some(p => p.lessonId === selectedLesson.id && p.isCompleted) ? 0 : 1);
+      const nextCompletedLessons = Math.max(completedCount, selectedLessonIndex + 1, newCompletedCount);
       const updated = await updateAcademyCourseProgress(courseId, {
         progress: lessons.length ? Math.round((nextCompletedLessons / lessons.length) * 100) : 0,
         completedLessons: nextCompletedLessons,
@@ -342,6 +394,58 @@ export default function CourseDetailPage() {
       setAssignmentNote('');
     } catch (err: any) {
       setError(err?.message || 'Unable to submit assignment.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleSubmitQuiz = async () => {
+    if (!selectedQuiz || !courseId) return;
+    
+    try {
+      setActionLoading(true);
+      setError('');
+      setSuccess('');
+      
+      const parsedQuestions = JSON.parse(selectedQuiz.questions || '[]');
+      let correctCount = 0;
+      parsedQuestions.forEach((q: any, i: number) => {
+        if (activeQuizAnswers[i] === q.correctAnswerIndex) correctCount++;
+      });
+      
+      const score = Math.round((correctCount / parsedQuestions.length) * 100);
+      const passed = score >= selectedQuiz.passingScore;
+      
+      const response = await submitQuizAttempt(selectedQuiz.$id as string, {
+        courseId,
+        score,
+        passed,
+        startedAt: new Date().toISOString(),
+        answers: JSON.stringify(activeQuizAnswers)
+      });
+      
+      setQuizAttempts(prev => [response.attempt, ...prev]);
+      setSuccess(`Quiz submitted! You scored ${score}%.`);
+    } catch (err: any) {
+      setError(err?.message || 'Unable to submit quiz.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleTestimonialSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!courseId) return;
+
+    try {
+      setActionLoading(true);
+      setError('');
+      setSuccess('');
+      await submitTestimonial(courseId, { rating: testimonialRating, content: testimonialContent });
+      setSuccess('Review submitted! Thank you for your feedback.');
+      setShowTestimonialModal(false);
+    } catch (err: any) {
+      setError(err?.message || 'Unable to submit review.');
     } finally {
       setActionLoading(false);
     }
@@ -432,8 +536,9 @@ export default function CourseDetailPage() {
                 <span>Your Progress</span>
                 <span className="font-bold text-indigo-300">{progressPercent}%</span>
               </div>
-              <div className="mt-3 h-2 rounded-full bg-slate-800 overflow-hidden">
-                <div className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400" style={{ width: `${progressPercent}%` }} />
+              <div className="mt-3 h-2 rounded-full bg-slate-800 overflow-hidden relative">
+                <style>{`#progress-${courseId} { width: ${progressPercent}%; }`}</style>
+                <div id={`progress-${courseId}`} className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400" />
               </div>
               <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
                 <div className="rounded-xl border border-white/5 bg-slate-900/70 p-3">
@@ -483,6 +588,16 @@ export default function CourseDetailPage() {
                   Mark Lesson Complete
                 </button>
               )}
+
+              {progressPercent === 100 && (
+                <button
+                  onClick={() => setShowTestimonialModal(true)}
+                  className="w-full mt-3 rounded-xl bg-purple-600 hover:bg-purple-500 py-3 text-sm font-semibold text-white transition-colors flex items-center justify-center gap-2"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Leave a Review
+                </button>
+              )}
             </div>
 
             {error && (
@@ -504,6 +619,7 @@ export default function CourseDetailPage() {
         {[
           { key: 'lessons', label: 'Lessons', icon: Video },
           { key: 'assignments', label: 'Assignments', icon: FileText },
+          { key: 'quizzes', label: 'Quizzes', icon: CheckCircle2 },
           { key: 'live', label: 'Live Classes', icon: MessageSquare }
         ].map((tab) => {
           const Icon = tab.icon;
@@ -544,22 +660,76 @@ export default function CourseDetailPage() {
             {selectedLesson ? (
               <>
                 <div className="overflow-hidden rounded-2xl border border-white/5 bg-slate-950/70">
-                  <div className="aspect-video flex items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.18),_rgba(2,6,23,0.95))]">
-                    {selectedLesson.videoUrl ? (
-                      <iframe
-                        src={selectedLesson.videoUrl}
-                        title={selectedLesson.title}
-                        className="h-full w-full"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      />
-                    ) : (
-                      <div className="text-center">
-                        <Video className="mx-auto h-16 w-16 text-indigo-300/80" />
-                        <p className="mt-3 text-sm text-slate-300">Video player placeholder</p>
-                        <p className="mt-1 text-xs text-slate-500">Attach a video URL to stream this lesson.</p>
-                      </div>
-                    )}
+                  <div className="aspect-video relative bg-black">
+                    {(() => {
+                      const url = selectedLesson.videoUrl || '';
+                      // YouTube
+                      const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+                      // Vimeo
+                      const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+                      // Direct video file
+                      const isDirectVideo = url.match(/\.(mp4|webm|ogg)(\?|$)/i);
+
+                      if (ytMatch) {
+                        return (
+                          <iframe
+                            key={selectedLesson.id}
+                            src={`https://www.youtube.com/embed/${ytMatch[1]}?autoplay=0&rel=0&modestbranding=1&enablejsapi=1`}
+                            title={selectedLesson.title}
+                            className="absolute inset-0 h-full w-full"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowFullScreen
+                          />
+                        );
+                      } else if (vimeoMatch) {
+                        return (
+                          <iframe
+                            key={selectedLesson.id}
+                            src={`https://player.vimeo.com/video/${vimeoMatch[1]}?color=6366f1&title=0&byline=0&portrait=0`}
+                            title={selectedLesson.title}
+                            className="absolute inset-0 h-full w-full"
+                            allow="autoplay; fullscreen; picture-in-picture"
+                            allowFullScreen
+                          />
+                        );
+                      } else if (isDirectVideo) {
+                        return (
+                          <video
+                            key={selectedLesson.id}
+                            src={url}
+                            controls
+                            className="absolute inset-0 h-full w-full"
+                            onEnded={isEnrolled ? handleMarkComplete : undefined}
+                          >
+                            Your browser does not support the video tag.
+                          </video>
+                        );
+                      } else if (url) {
+                        // Generic iframe for other embed URLs
+                        return (
+                          <iframe
+                            key={selectedLesson.id}
+                            src={url}
+                            title={selectedLesson.title}
+                            className="absolute inset-0 h-full w-full"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        );
+                      } else {
+                        return (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
+                            <div className="w-20 h-20 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4">
+                              <Video className="h-10 w-10 text-indigo-400/60" />
+                            </div>
+                            <p className="text-slate-300 font-semibold">No video attached</p>
+                            <p className="mt-1 text-xs text-slate-500 max-w-xs">
+                              The instructor hasn't uploaded a video for this lesson yet. Read the lesson content below.
+                            </p>
+                          </div>
+                        );
+                      }
+                    })()}
                   </div>
                 </div>
 
@@ -582,6 +752,40 @@ export default function CourseDetailPage() {
                     {selectedLesson.content || 'This lesson does not have written content yet.'}
                   </p>
                 </div>
+
+                {/* Previous / Next navigation */}
+                <div className="flex items-center justify-between gap-3 pt-2 border-t border-white/5">
+                  <button
+                    disabled={selectedLessonIndex <= 0}
+                    onClick={() => {
+                      if (selectedLessonIndex > 0) setSelectedLessonId(lessons[selectedLessonIndex - 1].id);
+                    }}
+                    className="flex items-center gap-2 rounded-xl border border-white/5 bg-slate-950/60 px-4 py-2.5 text-sm font-semibold text-slate-300 hover:bg-slate-900 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Previous
+                  </button>
+                  {isEnrolled && !isLessonCompleted && (
+                    <button
+                      onClick={handleMarkComplete}
+                      disabled={actionLoading}
+                      className="flex items-center gap-2 rounded-xl bg-emerald-600/20 border border-emerald-500/30 px-4 py-2.5 text-sm font-semibold text-emerald-300 hover:bg-emerald-600/30 transition-colors disabled:opacity-60"
+                    >
+                      {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                      Mark Complete
+                    </button>
+                  )}
+                  <button
+                    disabled={selectedLessonIndex >= lessons.length - 1}
+                    onClick={() => {
+                      if (selectedLessonIndex < lessons.length - 1) setSelectedLessonId(lessons[selectedLessonIndex + 1].id);
+                    }}
+                    className="flex items-center gap-2 rounded-xl border border-white/5 bg-slate-950/60 px-4 py-2.5 text-sm font-semibold text-slate-300 hover:bg-slate-900 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    Next
+                    <ArrowLeft className="h-4 w-4 rotate-180" />
+                  </button>
+                </div>
               </>
             ) : (
               <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-950/50 p-8 text-center">
@@ -600,7 +804,7 @@ export default function CourseDetailPage() {
             <div className="space-y-3">
               {lessons.map((lesson) => {
                 const active = lesson.id === selectedLessonId;
-                const completed = lesson.order <= completedCount;
+                const completed = lessonProgress.some(p => p.lessonId === lesson.id && p.isCompleted) || (lesson.order <= completedCount);
 
                 return (
                   <button
@@ -776,6 +980,144 @@ https://github.com/.../pull/123"
         </div>
       )}
 
+      {activeTab === 'quizzes' && (
+        <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+          <section className="rounded-3xl border border-white/5 bg-slate-900/30 p-6 lg:p-8 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white">Course Quizzes</h2>
+              <span className="text-xs uppercase tracking-wider text-slate-500">{quizzes.length} quizzes</span>
+            </div>
+
+            <div className="space-y-3">
+              {quizzes.map((quiz) => {
+                const attempt = quizAttempts.find(a => a.quizId === quiz.$id);
+                const active = quiz.$id === selectedQuizId;
+
+                return (
+                  <button
+                    key={quiz.$id}
+                    onClick={() => setSelectedQuizId(quiz.$id as string)}
+                    className={`w-full rounded-2xl border p-4 text-left transition-all ${
+                      active
+                        ? 'border-indigo-500/30 bg-indigo-500/10'
+                        : 'border-white/5 bg-slate-950/40 hover:bg-slate-900/60'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.25em] text-slate-500">
+                          <span>{quiz.timeLimitMinutes} mins</span>
+                          <span className="rounded-full border border-white/10 bg-slate-950/70 px-2 py-0.5 text-slate-400">
+                            {quiz.passingScore}% to pass
+                          </span>
+                        </div>
+                        <h3 className="mt-2 text-sm font-semibold text-white">{quiz.title}</h3>
+                        <p className="mt-1 text-xs text-slate-400 line-clamp-2">{quiz.description}</p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2 text-xs">
+                        {attempt ? (
+                          attempt.passed ? <CheckCircle2 className="h-4 w-4 text-emerald-400" /> : <CheckCircle2 className="h-4 w-4 text-rose-400" />
+                        ) : (
+                          <Lock className="h-4 w-4 text-slate-600" />
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-white/5 bg-slate-900/30 p-6 lg:p-8 space-y-5">
+            {selectedQuiz ? (
+              <>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">{selectedQuiz.title}</h2>
+                    <p className="mt-2 text-sm text-slate-400 leading-relaxed">{selectedQuiz.description}</p>
+                  </div>
+                  {selectedQuizAttempt ? (
+                    <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${selectedQuizAttempt.passed ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300' : 'border-rose-500/20 bg-rose-500/10 text-rose-300'}`}>
+                      {selectedQuizAttempt.passed ? 'Passed' : 'Failed'}
+                    </span>
+                  ) : (
+                    <span className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-xs font-semibold text-slate-300">
+                      Pending
+                    </span>
+                  )}
+                </div>
+
+                {selectedQuizAttempt ? (
+                  <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/10 p-6 space-y-4">
+                    <h3 className="font-bold text-indigo-300">Your Attempt</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-slate-950/40 p-4 rounded-xl">
+                        <span className="text-[10px] uppercase text-slate-400">Score</span>
+                        <div className="text-2xl font-black text-white">{selectedQuizAttempt.score}%</div>
+                      </div>
+                      <div className="bg-slate-950/40 p-4 rounded-xl">
+                        <span className="text-[10px] uppercase text-slate-400">Status</span>
+                        <div className={`text-lg font-bold ${selectedQuizAttempt.passed ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {selectedQuizAttempt.passed ? 'Passed' : 'Failed'}
+                        </div>
+                      </div>
+                    </div>
+                    {!selectedQuizAttempt.passed && (
+                      <p className="text-xs text-indigo-200 mt-2">You can retake the quiz to improve your score.</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {(() => {
+                      const questions = JSON.parse(selectedQuiz.questions || '[]');
+                      return (
+                        <>
+                          <div className="space-y-6">
+                            {questions.map((q: any, i: number) => (
+                              <div key={i} className="bg-slate-950/40 p-5 rounded-2xl border border-white/5">
+                                <h4 className="font-semibold text-sm text-white mb-3">{i + 1}. {q.question}</h4>
+                                <div className="space-y-2">
+                                  {q.options.map((opt: string, optIdx: number) => (
+                                    <label key={optIdx} className="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:bg-white/5 cursor-pointer transition-colors">
+                                      <input
+                                        type="radio"
+                                        name={`q-${i}`}
+                                        value={optIdx}
+                                        checked={activeQuizAnswers[i] === optIdx}
+                                        onChange={() => setActiveQuizAnswers(prev => ({ ...prev, [i]: optIdx }))}
+                                        className="text-indigo-500 focus:ring-indigo-500"
+                                      />
+                                      <span className="text-sm text-slate-300">{opt}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          <button
+                            onClick={handleSubmitQuiz}
+                            disabled={actionLoading || Object.keys(activeQuizAnswers).length < questions.length}
+                            className="w-full justify-center inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:opacity-60"
+                          >
+                            {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                            Submit Answers
+                          </button>
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-950/50 p-8 text-center">
+                <CheckCircle2 className="mx-auto h-12 w-12 text-slate-700" />
+                <p className="mt-3 text-sm text-slate-400">No quiz selected.</p>
+              </div>
+            )}
+          </section>
+        </div>
+      )}
+
       {activeTab === 'live' && (
         <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <section className="rounded-3xl border border-white/5 bg-slate-900/30 p-6 lg:p-8 space-y-4">
@@ -864,6 +1206,64 @@ https://github.com/.../pull/123"
               </div>
             )}
           </section>
+        </div>
+      )}
+
+      {/* Testimonial Modal */}
+      {showTestimonialModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setShowTestimonialModal(false)} />
+          <div className="relative z-10 w-full max-w-lg glass-panel rounded-3xl p-8 border border-white/10 shadow-2xl bg-slate-900/90 backdrop-blur-md">
+            <h3 className="text-xl font-bold text-white mb-6">Rate this Course</h3>
+            <form onSubmit={handleTestimonialSubmit} className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-400 block mb-1.5">Rating (1 to 5)</label>
+                <div className="flex items-center gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      type="button"
+                      key={star}
+                      onClick={() => setTestimonialRating(star)}
+                      className={`h-10 w-10 flex items-center justify-center rounded-xl transition-colors ${
+                        star <= testimonialRating ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-950 text-slate-600 hover:bg-slate-800'
+                      }`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-400 block mb-1.5">Your Review</label>
+                <textarea
+                  rows={4}
+                  required
+                  placeholder="How did this course help you?"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 resize-none"
+                  value={testimonialContent}
+                  onChange={(e) => setTestimonialContent(e.target.value)}
+                />
+              </div>
+
+              <div className="flex gap-4 justify-end mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowTestimonialModal(false)}
+                  className="rounded-xl border border-slate-850 px-5 py-2.5 text-xs font-semibold text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 px-5 py-2.5 text-xs font-bold text-white"
+                >
+                  {actionLoading ? 'Submitting...' : 'Submit Review'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

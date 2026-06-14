@@ -15,7 +15,6 @@ router.post('/register', async (req, res) => {
   }
 
   try {
-    // 1. Create User in Appwrite Auth
     const user = await users.create(
       ID.unique(),
       email,
@@ -31,10 +30,11 @@ router.post('/register', async (req, res) => {
       ID.unique(),
       {
         userId: user.$id,
+        email: email,
         firstName,
         lastName,
         phoneNumber: phoneNumber || '',
-      role: role || 'Student',
+        role: role || 'Student',
         avatarUrl: '',
         purpose: purpose || 'learn',
         enrollments: [],

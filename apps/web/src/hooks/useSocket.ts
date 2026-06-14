@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from '../features/auth/AuthContext';
+import { getSessionJwt } from '../lib/sessionJwt';
 
 export interface ChatMessage {
   $id: string;
@@ -30,10 +31,14 @@ export function useSocket() {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('session_jwt');
-    if (!profile || !token) return;
+    let cancelled = false;
 
-    if (!socketRef.current) {
+    const connectSocket = async () => {
+      if (!profile) return;
+
+      const token = await getSessionJwt();
+      if (cancelled || socketRef.current) return;
+
       const newSocket = io(process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:5000', {
         auth: { token },
         reconnection: true,
@@ -57,9 +62,12 @@ export function useSocket() {
 
       socketRef.current = newSocket;
       setSocket(newSocket);
-    }
+    };
+
+    connectSocket();
 
     return () => {
+      cancelled = true;
       if (socketRef.current) {
         socketRef.current.disconnect();
         socketRef.current = null;

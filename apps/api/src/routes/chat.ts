@@ -16,7 +16,7 @@ router.get('/rooms', authenticateJWT, async (req: AuthenticatedRequest, res) => 
       databaseId,
       'chat_rooms',
       [
-        Query.search('participants', userId),
+        Query.equal('participants', userId),
         Query.orderDesc('$createdAt'),
         Query.limit(50)
       ]
@@ -66,28 +66,78 @@ router.post('/rooms', authenticateJWT, async (req: AuthenticatedRequest, res) =>
 
     if (!userId || !targetUserId) return res.status(400).json({ error: 'Missing targetUserId' });
 
-    const participants = [userId, targetUserId].sort(); // Sort to ensure consistent matching
-    const roomId = `direct_${participants[0]}_${participants[1]}`;
+    const participants = [userId, targetUserId].sort();
 
-    try {
-       // Check if room exists
-       const room = await databases.getDocument(databaseId, 'chat_rooms', roomId);
-       return res.json({ room });
-    } catch {
-       // Create new room if it doesn't exist
-       const newRoom = await databases.createDocument(
-         databaseId,
-         'chat_rooms',
-         roomId,
-         {
-           type: 'direct',
-           participants: participants,
-         }
-       );
-       return res.json({ room: newRoom });
+    // Check if direct room already exists
+    const response = await databases.listDocuments(
+      databaseId,
+      'chat_rooms',
+      [
+        Query.equal('participants', userId),
+        Query.limit(100)
+      ]
+    );
+
+    const existingRoom = response.documents.find((r: any) => 
+      r.type === 'direct' && r.participants.includes(targetUserId)
+    );
+
+    if (existingRoom) {
+      return res.json({ room: existingRoom });
     }
+
+    // Create new room if it doesn't exist
+    const newRoom = await databases.createDocument(
+      databaseId,
+      'chat_rooms',
+      ID.unique(),
+      {
+        type: 'direct',
+        participants: participants,
+      }
+    );
+    return res.json({ room: newRoom });
+
   } catch (err: any) {
     console.error('Error creating room:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4. Search users to start new chat
+router.get('/users/search', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  try {
+    const q = (req.query.q as string || '').toLowerCase();
+    const userId = req.user?.id;
+
+    // Fetch a batch of users (up to 100 for now) and filter in memory
+    // In production, we'd add full-text indexes and use Query.search
+    const response = await databases.listDocuments(
+      databaseId,
+      'users_profile',
+      [
+        Query.limit(100)
+      ]
+    );
+
+    let usersList = response.documents;
+
+    // Exclude current user
+    if (userId) {
+      usersList = usersList.filter((u: any) => u.userId !== userId);
+    }
+
+    if (q) {
+      usersList = usersList.filter((u: any) => 
+        (u.firstName || '').toLowerCase().includes(q) ||
+        (u.lastName || '').toLowerCase().includes(q) ||
+        (u.phoneNumber || '').toLowerCase().includes(q)
+      );
+    }
+
+    res.json({ users: usersList });
+  } catch (err: any) {
+    console.error('Error searching users:', err);
     res.status(500).json({ error: err.message });
   }
 });

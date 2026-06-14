@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Award, Download, ExternalLink, Calendar, Loader2, AlertCircle } from 'lucide-react';
-import { account } from '../../../lib/appwrite';
+import { getSessionJwt } from '../../../lib/sessionJwt';
 
 interface Certificate {
   $id: string;
@@ -32,10 +32,6 @@ export default function CertificatesPage() {
       setLoading(true);
       setError(null);
 
-      // Get JWT from Appwrite
-      const jwtSession = await account.createJWT();
-      const jwt = jwtSession.jwt;
-
       // 1. Fetch courses catalog to map titles
       const coursesRes = await fetch(`${API_BASE}/academy/courses`);
       if (coursesRes.ok) {
@@ -48,9 +44,9 @@ export default function CertificatesPage() {
       }
 
       // 2. Fetch certificates
-      const certsRes = await fetch(`${API_BASE}/academy/certificates`, {
-        headers: {
-          Authorization: `Bearer ${jwt}`,
+        const certsRes = await fetch(`${API_BASE}/academy/certificates`, {
+          headers: {
+          Authorization: `Bearer ${await getSessionJwt()}`,
         },
       });
 

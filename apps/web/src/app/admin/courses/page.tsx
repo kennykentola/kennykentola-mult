@@ -1,50 +1,87 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { BookOpen, Plus, Trash2, Edit2, Upload, FileText, ToggleLeft, ToggleRight } from 'lucide-react';
+import { BookOpen, Plus, Trash2, Eye, EyeOff, Loader2, Search, AlertCircle, Users, DollarSign } from 'lucide-react';
+import { getSessionJwt } from '../../../lib/sessionJwt';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+
+async function fetchWithAuth(url: string, options: RequestInit = {}) {
+  const token = await getSessionJwt();
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      ...options.headers,
+    },
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ error: 'Request failed' }));
+    throw new Error(data.error || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
 
 export default function AdminCoursesPage() {
-  const [courses, setCourses] = useState([
-    { id: 'nextjs-15', title: 'Full-Stack React & Next.js 15', price: '$0 (Free)', instructor: 'Kenny Kentola', enrolled: 18, isPublished: true },
-    { id: 'python-django', title: 'Python & Django Backend Masterclass', price: '$0 (Free)', instructor: 'Sarah Jenkins', enrolled: 9, isPublished: true },
-    { id: 'mobile-expo', title: 'React Native & Expo Go Mobile Development', price: '$199', instructor: 'Kenny Kentola', enrolled: 0, isPublished: false }
-  ]);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [deletingCourseId, setDeletingCourseId] = useState<string | null>(null);
+  const [deletingLoading, setDeletingLoading] = useState(false);
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [instructor, setInstructor] = useState('Kenny Kentola');
-  const [price, setPrice] = useState('$0 (Free)');
-  const [isPublished, setIsPublished] = useState(false);
-  const [showAddForm, setShowAddForm] = useState(false);
-
-  const handleCreateCourse = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newCourse = {
-      id: `course-${Date.now()}`,
-      title,
-      price,
-      instructor,
-      enrolled: 0,
-      isPublished
-    };
-    setCourses([...courses, newCourse]);
-    setTitle('');
-    setDescription('');
-    setPrice('$0 (Free)');
-    setIsPublished(false);
-    setShowAddForm(false);
+  const loadCourses = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await fetchWithAuth(`${API_BASE}/academy/instructor/courses`);
+      setCourses(data.courses || []);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load courses.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleTogglePublish = (id: string) => {
-    const updated = courses.map(c => {
-      if (c.id === id) {
-        return { ...c, isPublished: !c.isPublished };
-      }
-      return c;
-    });
-    setCourses(updated);
+  useEffect(() => {
+    loadCourses();
+  }, []);
+
+  const handleTogglePublish = async (course: any) => {
+    try {
+      await fetchWithAuth(`${API_BASE}/academy/courses/${course.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isPublished: !course.isPublished }),
+      });
+      setCourses(prev => prev.map(c => c.id === course.id ? { ...c, isPublished: !c.isPublished } : c));
+    } catch (err: any) {
+      setError(err.message || 'Failed to toggle publish status.');
+    }
   };
+
+  const handleDeleteCourse = async () => {
+    if (!deletingCourseId) return;
+    setDeletingLoading(true);
+    try {
+      await fetchWithAuth(`${API_BASE}/academy/courses/${deletingCourseId}`, {
+        method: 'DELETE',
+      });
+      setCourses(prev => prev.filter(c => c.id !== deletingCourseId));
+      setDeletingCourseId(null);
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete course.');
+    } finally {
+      setDeletingLoading(false);
+    }
+  };
+
+  const filteredCourses = courses.filter(c =>
+    c.title?.toLowerCase().includes(search.toLowerCase()) ||
+    c.instructorName?.toLowerCase().includes(search.toLowerCase()) ||
+    c.category?.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -52,168 +89,158 @@ export default function AdminCoursesPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-white">Course Manager</h1>
-          <p className="text-slate-400 text-sm mt-1">Design course curriculums, configure lesson handouts, and manage student enrollments.</p>
+          <p className="text-slate-400 text-sm mt-1">View, publish, and manage all academy courses. Use the Instructor portal to create and edit course content.</p>
         </div>
-
-        <button
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="rounded-xl bg-gradient-to-r from-rose-500 to-orange-600 hover:opacity-90 transition-opacity px-5 py-3 text-xs font-bold text-white shadow flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" /> Create Course Curriculum
-        </button>
+        <div className="relative max-w-sm w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+          <input
+            type="text"
+            placeholder="Search courses..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-rose-500/50 transition-colors"
+          />
+        </div>
       </div>
 
-      {/* Creation form */}
-      {showAddForm && (
-        <div className="glass-panel border border-white/10 bg-slate-900/40 rounded-2xl p-6 lg:p-8 animate-in fade-in duration-200">
-          <h2 className="text-lg font-bold text-white mb-6">Create New Course</h2>
-          <form onSubmit={handleCreateCourse} className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="course-title-input" className="text-xs font-semibold text-slate-400 block mb-1.5">Course Title</label>
-                <input
-                  id="course-title-input"
-                  title="Course Title"
-                  type="text"
-                  required
-                  placeholder="e.g. Docker Fundamentals"
-                  className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-rose-500/50 transition-colors"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-              </div>
-              <div>
-                <label htmlFor="instructor-name-input" className="text-xs font-semibold text-slate-400 block mb-1.5">Instructor Name</label>
-                <input
-                  id="instructor-name-input"
-                  title="Instructor Name"
-                  placeholder="e.g. Kenny Kentola"
-                  type="text"
-                  required
-                  className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-rose-500/50 transition-colors"
-                  value={instructor}
-                  onChange={(e) => setInstructor(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="description-input" className="text-xs font-semibold text-slate-400 block mb-1.5">Description</label>
-              <textarea
-                id="description-input"
-                title="Description"
-                required
-                rows={4}
-                placeholder="Detailed summary of the curriculum path, target audience, and syllabus..."
-                className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-rose-500/50 transition-colors resize-none"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div>
-                <label htmlFor="price-input" className="text-xs font-semibold text-slate-400 block mb-1.5">Price / Tuition Cost</label>
-                <input
-                  id="price-input"
-                  title="Price / Tuition Cost"
-                  type="text"
-                  required
-                  placeholder="e.g. Free, $150"
-                  className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-rose-500/50 transition-colors"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-400 block mb-1.5">Cover Image (Optional)</label>
-                <div className="flex items-center gap-3">
-                  <button type="button" className="rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-slate-900 px-4 py-2.5 text-xs text-slate-300 font-semibold flex items-center gap-2 transition-colors">
-                    <Upload className="h-4 w-4" /> Cover JPG
-                  </button>
-                </div>
-              </div>
-              <div className="flex items-center pt-6">
-                <button
-                  type="button"
-                  onClick={() => setIsPublished(!isPublished)}
-                  className="flex items-center gap-2 text-xs font-semibold text-slate-300"
-                >
-                  {isPublished ? (
-                    <ToggleRight className="h-6 w-6 text-rose-500" />
-                  ) : (
-                    <ToggleLeft className="h-6 w-6 text-slate-500" />
-                  )}
-                  Publish Immediately
-                </button>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
-              <button
-                type="button"
-                onClick={() => setShowAddForm(false)}
-                className="rounded-xl bg-slate-900 hover:bg-slate-800 px-4 py-2.5 text-xs font-semibold text-slate-400 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="rounded-xl bg-rose-600 hover:bg-rose-500 px-5 py-2.5 text-xs font-semibold text-white transition-colors"
-              >
-                Create Course
-              </button>
-            </div>
-          </form>
+      {error && (
+        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm flex items-center gap-3">
+          <AlertCircle className="h-5 w-5 shrink-0" />
+          <span>{error}</span>
+          <button onClick={() => setError('')} className="ml-auto text-rose-400 hover:text-rose-300">✕</button>
         </div>
       )}
 
-      {/* Courses List Table */}
-      <div className="glass-panel border border-white/5 bg-slate-900/20 rounded-3xl p-6 lg:p-8 space-y-6">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Academy Courses Listing</h3>
-        
+      {/* Stats row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Courses', value: courses.length, icon: BookOpen, color: 'indigo' },
+          { label: 'Published', value: courses.filter(c => c.isPublished).length, icon: Eye, color: 'emerald' },
+          { label: 'Drafts', value: courses.filter(c => !c.isPublished).length, icon: EyeOff, color: 'slate' },
+          { label: 'Free Courses', value: courses.filter(c => !c.price || c.price === 0).length, icon: DollarSign, color: 'cyan' },
+        ].map(({ label, value, icon: Icon, color }) => (
+          <div key={label} className="rounded-2xl border border-white/5 bg-slate-900/30 p-4">
+            <div className={`text-${color}-400 mb-2`}><Icon className="h-5 w-5" /></div>
+            <div className="text-2xl font-black text-white">{value}</div>
+            <div className="text-xs text-slate-500 mt-0.5">{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Courses Table */}
+      <div className="rounded-3xl border border-white/5 bg-slate-900/20 overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-slate-900 text-slate-500 font-bold uppercase tracking-wider">
-                <th className="py-4 px-4">Course Info</th>
-                <th className="py-4 px-4">Instructor</th>
-                <th className="py-4 px-4">Enrolled Students</th>
-                <th className="py-4 px-4">Tuition Price</th>
-                <th className="py-4 px-4">Status</th>
-                <th className="py-4 px-4 text-right">Action</th>
+          <table className="w-full text-left text-sm text-slate-300">
+            <thead className="bg-slate-900/80 text-xs font-bold uppercase text-slate-500">
+              <tr>
+                <th className="px-6 py-4">Course</th>
+                <th className="px-6 py-4">Instructor</th>
+                <th className="px-6 py-4">Lessons</th>
+                <th className="px-6 py-4">Price</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-900/50">
-              {courses.map((course) => (
-                <tr key={course.id} className="hover:bg-slate-900/25 transition-colors">
-                  <td className="py-4 px-4 font-semibold text-white">{course.title}</td>
-                  <td className="py-4 px-4 text-slate-400">{course.instructor}</td>
-                  <td className="py-4 px-4 font-bold text-slate-300">{course.enrolled}</td>
-                  <td className="py-4 px-4 text-slate-400">{course.price}</td>
-                  <td className="py-4 px-4">
-                    <button
-                      onClick={() => handleTogglePublish(course.id)}
-                      className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${
-                        course.isPublished 
-                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                          : 'bg-rose-500/10 text-rose-450 border border-rose-500/20'
-                      }`}
-                    >
-                      {course.isPublished ? 'Published' : 'Draft'}
-                    </button>
-                  </td>
-                  <td className="py-4 px-4 text-right">
-                    <Link href={`/admin/courses/${course.id}/curriculum`} className="text-rose-450 hover:underline font-bold text-[10px]">
-                      Manage Curriculum
-                    </Link>
+            <tbody className="divide-y divide-slate-800/50">
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                    <Loader2 className="mx-auto h-8 w-8 animate-spin text-rose-500 mb-4" />
+                    Loading courses...
                   </td>
                 </tr>
-              ))}
+              ) : filteredCourses.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                    {search ? 'No courses match your search.' : 'No courses found. Create one via the Instructor portal.'}
+                  </td>
+                </tr>
+              ) : (
+                filteredCourses.map((course) => (
+                  <tr key={course.id} className="hover:bg-slate-800/20 transition-colors">
+                    <td className="px-6 py-4">
+                      <div>
+                        <div className="font-bold text-white">{course.title}</div>
+                        <div className="text-xs text-slate-500 mt-0.5">{course.category} · {course.level}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-slate-300">{course.instructorName}</td>
+                    <td className="px-6 py-4 font-bold text-slate-300">{course.lessonCount || 0}</td>
+                    <td className="px-6 py-4 text-slate-300">
+                      {course.price === 0 || !course.price ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Free</span>
+                      ) : (
+                        <span className="font-bold">${course.price}</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => handleTogglePublish(course)}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border transition-colors ${
+                          course.isPublished
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20'
+                            : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+                        }`}
+                      >
+                        {course.isPublished ? <><Eye className="h-3 w-3" /> Published</> : <><EyeOff className="h-3 w-3" /> Draft</>}
+                      </button>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <Link
+                          href={`/admin/courses/${course.id}/curriculum`}
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold text-rose-400 border border-rose-500/20 hover:bg-rose-500/10 transition-colors"
+                        >
+                          Curriculum
+                        </Link>
+                        <button
+                          onClick={() => setDeletingCourseId(course.id)}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-colors"
+                          title="Delete course"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deletingCourseId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="w-full max-w-sm bg-slate-900 rounded-2xl border border-rose-500/20 shadow-2xl p-6">
+            <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mb-4">
+              <Trash2 className="h-6 w-6 text-rose-400" />
+            </div>
+            <h2 className="text-lg font-bold text-white">Delete Course?</h2>
+            <p className="mt-2 text-sm text-slate-400">
+              This will permanently delete the course along with all lessons, assignments, submissions, and student enrollments. <strong className="text-rose-400">This cannot be undone.</strong>
+            </p>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setDeletingCourseId(null)}
+                disabled={deletingLoading}
+                className="flex-1 py-2.5 rounded-xl border border-slate-700 text-sm font-semibold text-slate-300 hover:text-white transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteCourse}
+                disabled={deletingLoading}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-sm font-bold text-white transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+              >
+                {deletingLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

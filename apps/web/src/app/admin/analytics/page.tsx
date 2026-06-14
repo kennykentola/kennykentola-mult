@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../../features/auth/AuthContext';
+import { getSessionJwt } from '../../../lib/sessionJwt';
 import { 
   BarChart3, 
   Users, 
@@ -77,23 +78,24 @@ export default function AdminAnalyticsPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const jwt = typeof window !== 'undefined' ? localStorage.getItem('session_jwt') : null;
-    if (!jwt) {
-      setError('Not authenticated');
-      setLoading(false);
-      return;
-    }
-
-    fetch(`${API_BASE}/admin/analytics`, {
-      headers: { Authorization: `Bearer ${jwt}` }
-    })
-      .then(res => res.json())
-      .then(d => {
-        if (d.error) throw new Error(d.error);
+    const loadAnalytics = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/admin/analytics`, {
+          headers: { Authorization: `Bearer ${await getSessionJwt()}` }
+        });
+        const d = await res.json();
+        if (!res.ok || d.error) {
+          throw new Error(d.error || 'Failed to load analytics');
+        }
         setData(d);
-      })
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false));
+      } catch (e: any) {
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAnalytics();
   }, []);
 
   if (loading) {

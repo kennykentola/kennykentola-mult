@@ -28,6 +28,7 @@ const collections: CollectionDef[] = [
     name: 'Users Profile',
     attributes: [
       { key: 'userId', type: 'string', size: 50, required: true },
+      { key: 'email', type: 'string', size: 255, required: false },
       { key: 'firstName', type: 'string', size: 100, required: true },
       { key: 'lastName', type: 'string', size: 100, required: true },
       { key: 'phoneNumber', type: 'string', size: 30, required: false },
@@ -59,10 +60,22 @@ const collections: CollectionDef[] = [
     ]
   },
   {
+    id: 'modules',
+    name: 'Modules',
+    attributes: [
+      { key: 'courseId', type: 'string', size: 50, required: true },
+      { key: 'title', type: 'string', size: 255, required: true },
+      { key: 'description', type: 'string', size: 2000, required: false },
+      { key: 'order', type: 'integer', required: true, defaultValue: 1 },
+      { key: 'isPublished', type: 'boolean', required: true, defaultValue: false }
+    ]
+  },
+  {
     id: 'lessons',
     name: 'Lessons',
     attributes: [
       { key: 'courseId', type: 'string', size: 50, required: true },
+      { key: 'moduleId', type: 'string', size: 50, required: false },
       { key: 'title', type: 'string', size: 255, required: true },
       { key: 'content', type: 'string', size: 10000, required: false },
       { key: 'videoUrl', type: 'string', size: 500, required: false },
@@ -254,6 +267,80 @@ const collections: CollectionDef[] = [
       { key: 'content', type: 'string', size: 5000, required: true },
       { key: 'fileId', type: 'string', size: 100, required: false },
       { key: 'readBy', type: 'string', size: 50, required: false, array: true }
+    ]
+  },
+  {
+    id: 'lesson_progress',
+    name: 'Lesson Progress',
+    attributes: [
+      { key: 'studentId', type: 'string', size: 50, required: true },
+      { key: 'lessonId', type: 'string', size: 50, required: true },
+      { key: 'courseId', type: 'string', size: 50, required: true },
+      { key: 'isCompleted', type: 'boolean', required: true, defaultValue: false },
+      { key: 'lastPosition', type: 'integer', required: false, defaultValue: 0 },
+      { key: 'completedAt', type: 'datetime', required: false }
+    ]
+  },
+  {
+    id: 'quizzes',
+    name: 'Quizzes',
+    attributes: [
+      { key: 'courseId', type: 'string', size: 50, required: true },
+      { key: 'moduleId', type: 'string', size: 50, required: false },
+      { key: 'title', type: 'string', size: 255, required: true },
+      { key: 'description', type: 'string', size: 2000, required: false },
+      { key: 'timeLimitMinutes', type: 'integer', required: true, defaultValue: 0 },
+      { key: 'passingScore', type: 'integer', required: true, defaultValue: 70 },
+      { key: 'questions', type: 'string', size: 10000, required: false }
+    ]
+  },
+  {
+    id: 'quiz_attempts',
+    name: 'Quiz Attempts',
+    attributes: [
+      { key: 'quizId', type: 'string', size: 50, required: true },
+      { key: 'studentId', type: 'string', size: 50, required: true },
+      { key: 'courseId', type: 'string', size: 50, required: true },
+      { key: 'score', type: 'integer', required: true, defaultValue: 0 },
+      { key: 'passed', type: 'boolean', required: true, defaultValue: false },
+      { key: 'startedAt', type: 'datetime', required: true },
+      { key: 'completedAt', type: 'datetime', required: false },
+      { key: 'answers', type: 'string', size: 10000, required: false }
+    ]
+  },
+  {
+    id: 'testimonials',
+    name: 'Testimonials',
+    attributes: [
+      { key: 'userId', type: 'string', size: 50, required: true },
+      { key: 'authorName', type: 'string', size: 150, required: true },
+      { key: 'courseId', type: 'string', size: 50, required: false },
+      { key: 'content', type: 'string', size: 2000, required: true },
+      { key: 'rating', type: 'integer', required: true, defaultValue: 5 },
+      { key: 'isApproved', type: 'boolean', required: true, defaultValue: false },
+      { key: 'createdAt', type: 'datetime', required: true }
+    ]
+  },
+  {
+    id: 'user_activity_logs',
+    name: 'User Activity Logs',
+    attributes: [
+      { key: 'userId', type: 'string', size: 50, required: true },
+      { key: 'action', type: 'string', size: 100, required: true },
+      { key: 'resourceType', type: 'string', size: 50, required: false },
+      { key: 'resourceId', type: 'string', size: 50, required: false },
+      { key: 'timestamp', type: 'datetime', required: true }
+    ]
+  },
+  {
+    id: 'instructor_payouts',
+    name: 'Instructor Payouts',
+    attributes: [
+      { key: 'instructorId', type: 'string', size: 50, required: true },
+      { key: 'amount', type: 'float', required: true },
+      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'pending' },
+      { key: 'payoutDate', type: 'datetime', required: false },
+      { key: 'method', type: 'string', size: 50, required: true, defaultValue: 'Bank Transfer' }
     ]
   }
 ];
@@ -604,8 +691,17 @@ export async function initializeDatabase() {
           }
           await waitForAttribute(colDef.id, attr.key);
         } catch (createErr: any) {
-          if (createErr.code === 409 || createErr.message?.includes('already exists') || createErr.type?.includes('already_exists')) {
+          if (
+            createErr.code === 409 ||
+            createErr.message?.includes('already exists') ||
+            createErr.type?.includes('already_exists')
+          ) {
             console.log(`  [Attribute] "${attr.key}" already exists or is being created. Skipping.`);
+          } else if (
+            createErr.code === 400 &&
+            (createErr.type === 'attribute_limit_exceeded' || createErr.message?.includes('maximum number or size of attributes'))
+          ) {
+            console.warn(`  [Attribute] "${attr.key}" skipped because collection '${colDef.id}' reached Appwrite's attribute limit.`);
           } else {
             throw createErr;
           }

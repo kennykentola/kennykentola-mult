@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../../features/auth/AuthContext';
 import { useSocket, ChatRoom, ChatMessage } from '../../../hooks/useSocket';
 import { useWebRTC } from '../../../hooks/useWebRTC';
+import { getSessionJwt } from '../../../lib/sessionJwt';
 import { 
   Search, Send, Phone, Mic, MicOff, 
   PhoneOff, Video, MoreVertical, Check, CheckCheck,
@@ -28,6 +29,10 @@ export default function MessagesPage() {
   const [newMessage, setNewMessage] = useState('');
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
@@ -37,9 +42,8 @@ export default function MessagesPage() {
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const jwt = localStorage.getItem('session_jwt');
         const res = await fetch(`${API_BASE}/chat/rooms`, {
-          headers: { Authorization: `Bearer ${jwt}` }
+          headers: { Authorization: `Bearer ${await getSessionJwt()}` }
         });
         const data = await res.json();
         if (data.rooms) setRooms(data.rooms);
@@ -99,9 +103,8 @@ export default function MessagesPage() {
 
     const fetchHistory = async () => {
       try {
-        const jwt = localStorage.getItem('session_jwt');
         const res = await fetch(`${API_BASE}/chat/history/${activeRoom.$id}`, {
-          headers: { Authorization: `Bearer ${jwt}` }
+          headers: { Authorization: `Bearer ${await getSessionJwt()}` }
         });
         const data = await res.json();
         if (data.messages) setMessages(data.messages);
@@ -118,6 +121,58 @@ export default function MessagesPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Search Users
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+    
+    const timeoutId = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const res = await fetch(`${API_BASE}/chat/users/search?q=${encodeURIComponent(searchQuery)}`, {
+          headers: { Authorization: `Bearer ${await getSessionJwt()}` }
+        });
+        const data = await res.json();
+        setSearchResults(data.users || []);
+      } catch (err) {
+        console.error('Failed to search users', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  const startNewChat = async (targetUser: any) => {
+    try {
+      const res = await fetch(`${API_BASE}/chat/rooms`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${await getSessionJwt()}` 
+        },
+        body: JSON.stringify({ targetUserId: targetUser.userId })
+      });
+      const data = await res.json();
+      if (data.room) {
+        setRooms(prev => {
+          if (!prev.find(r => r.$id === data.room.$id)) {
+            return [data.room, ...prev];
+          }
+          return prev;
+        });
+        setActiveRoom(data.room);
+        setSearchQuery('');
+      }
+    } catch (err) {
+      console.error('Failed to create/join room', err);
+    }
+  };
 
   const getOtherParticipant = (room: ChatRoom) => {
     return room.participants.find(id => id !== profile?.$id) || 'Unknown User';
@@ -326,47 +381,75 @@ export default function MessagesPage() {
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
             <input
               type="text"
-              placeholder="Search or start new chat"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by name, email, or phone"
               className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
             />
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {rooms.map((room) => {
-            const otherUserId = getOtherParticipant(room);
-            const isOnline = isUserOnline(otherUserId);
-            const isActive = activeRoom?.$id === room.$id;
+          {searchQuery.trim().length > 0 ? (
+            // Search Results
+            isSearching ? (
+              <p className="text-sm text-slate-500 p-3 text-center">Searching...</p>
+            ) : searchResults.length === 0 ? (
+              <p className="text-sm text-slate-500 p-3 text-center">No users found.</p>
+            ) : (
+              searchResults.map((user) => (
+                <button
+                  key={user.userId}
+                  onClick={() => startNewChat(user)}
+                  className="w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all border-l-2 border-transparent hover:bg-slate-900/60"
+                >
+                  <div className="relative h-12 w-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-lg text-emerald-400 shrink-0">
+                    {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                  </div>
+                  <div className="min-w-0 flex-1 border-b border-white/5 pb-2">
+                    <h4 className="text-sm font-bold text-white truncate">{user.firstName} {user.lastName}</h4>
+                    <p className="text-xs text-slate-400 truncate">{user.role || 'Student'}</p>
+                  </div>
+                </button>
+              ))
+            )
+          ) : (
+            // Existing Rooms
+            rooms.map((room) => {
+              const otherUserId = getOtherParticipant(room);
+              const isOnline = isUserOnline(otherUserId);
+              const isActive = activeRoom?.$id === room.$id;
 
-            return (
-              <button
-                key={room.$id}
-                onClick={() => setActiveRoom(room)}
-                className={`w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all ${isActive
-                    ? 'bg-indigo-650/10 bg-slate-800 border-l-2 border-indigo-500'
-                    : 'border-l-2 border-transparent hover:bg-slate-900/60'
-                  }`}
-              >
-                <div className="relative h-12 w-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-lg text-indigo-400 shrink-0">
-                  {otherUserId.substring(0, 2).toUpperCase()}
-                  {isOnline && (
-                    <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-slate-900"></span>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1 border-b border-white/5 pb-2">
-                  <div className="flex justify-between items-baseline mb-1">
-                    <h4 className="text-sm font-bold text-white truncate">{otherUserId}</h4>
-                    {room.lastMessageTime && (
-                      <span className="text-[10px] text-slate-500">
-                        {new Date(room.lastMessageTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
+              return (
+                <button
+                  key={room.$id}
+                  onClick={() => setActiveRoom(room)}
+                  className={`w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all ${isActive
+                      ? 'bg-indigo-650/10 bg-slate-800 border-l-2 border-indigo-500'
+                      : 'border-l-2 border-transparent hover:bg-slate-900/60'
+                    }`}
+                >
+                  <div className="relative h-12 w-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-lg text-indigo-400 shrink-0">
+                    {otherUserId.substring(0, 2).toUpperCase()}
+                    {isOnline && (
+                      <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-slate-900"></span>
                     )}
                   </div>
-                  <p className="text-xs text-slate-400 truncate">{room.lastMessageText || 'No messages yet'}</p>
-                </div>
-              </button>
-            );
-          })}
+                  <div className="min-w-0 flex-1 border-b border-white/5 pb-2">
+                    <div className="flex justify-between items-baseline mb-1">
+                      <h4 className="text-sm font-bold text-white truncate">{otherUserId}</h4>
+                      {room.lastMessageTime && (
+                        <span className="text-[10px] text-slate-500">
+                          {new Date(room.lastMessageTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-400 truncate">{room.lastMessageText || 'No messages yet'}</p>
+                  </div>
+                </button>
+              );
+            })
+          )}
         </div>
       </aside>
 

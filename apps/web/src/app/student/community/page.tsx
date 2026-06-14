@@ -3,8 +3,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { MessageSquare, Heart, Send, Loader2, Users, AlertCircle } from 'lucide-react';
-import { account } from '../../../lib/appwrite';
 import { useAuth } from '../../../features/auth/AuthContext';
+import { getSessionJwt } from '../../../lib/sessionJwt';
 
 interface Post {
   $id: string;
@@ -48,12 +48,9 @@ export default function CommunityFeed() {
       setLoading(true);
       setError(null);
 
-      const jwtSession = await account.createJWT();
-      const jwt = jwtSession.jwt;
-
       const res = await fetch(`${API_BASE}/academy/community/posts`, {
         headers: {
-          Authorization: `Bearer ${jwt}`,
+          Authorization: `Bearer ${await getSessionJwt()}`,
         },
       });
 
@@ -75,12 +72,9 @@ export default function CommunityFeed() {
   const fetchComments = async (postId: string) => {
     try {
       setCommentLoading((prev) => ({ ...prev, [postId]: true }));
-      const jwtSession = await account.createJWT();
-      const jwt = jwtSession.jwt;
-
       const res = await fetch(`${API_BASE}/academy/community/posts/${postId}/comments`, {
         headers: {
-          Authorization: `Bearer ${jwt}`,
+          Authorization: `Bearer ${await getSessionJwt()}`,
         },
       });
 
@@ -155,14 +149,11 @@ export default function CommunityFeed() {
 
     try {
       setSubmitting(true);
-      const jwtSession = await account.createJWT();
-      const jwt = jwtSession.jwt;
-
       const res = await fetch(`${API_BASE}/academy/community/posts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${jwt}`,
+          Authorization: `Bearer ${await getSessionJwt()}`,
         },
         body: JSON.stringify({ content: postContent }),
       });
@@ -182,13 +173,10 @@ export default function CommunityFeed() {
   // 5. Like Post Action
   const handleLikePost = async (postId: string) => {
     try {
-      const jwtSession = await account.createJWT();
-      const jwt = jwtSession.jwt;
-
       const res = await fetch(`${API_BASE}/academy/community/posts/${postId}/like`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${jwt}`,
+          Authorization: `Bearer ${await getSessionJwt()}`,
         },
       });
 
@@ -206,14 +194,11 @@ export default function CommunityFeed() {
     if (!content.trim()) return;
 
     try {
-      const jwtSession = await account.createJWT();
-      const jwt = jwtSession.jwt;
-
       const res = await fetch(`${API_BASE}/academy/community/posts/${postId}/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${jwt}`,
+          Authorization: `Bearer ${await getSessionJwt()}`,
         },
         body: JSON.stringify({ content }),
       });

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '../../features/auth/AuthContext';
+import { getLandingRoute, isRouteAllowed } from '../../lib/routeAccess';
 import { 
   LayoutDashboard, 
   GraduationCap, 
@@ -45,24 +46,13 @@ export default function DashboardLayout({
   useEffect(() => {
     if (!loading) {
       if (!profile) {
-        router.push('/login');
-      } else {
-        const purpose = profile.purpose || 'learn';
-        const currentPath = pathname || '';
-        
-        if (purpose === 'learn') {
-          if (!currentPath.startsWith('/student') && !currentPath.startsWith('/admin')) {
-            router.push('/student/dashboard');
-          }
-        } else if (purpose === 'print') {
-          if (!currentPath.startsWith('/printing') && !currentPath.startsWith('/admin')) {
-            router.push('/printing');
-          }
-        } else if (purpose === 'hire') {
-          if (!currentPath.startsWith('/projects') && !currentPath.startsWith('/admin')) {
-            router.push('/projects');
-          }
-        }
+        router.replace('/login');
+        return;
+      }
+
+      const currentPath = pathname || '';
+      if (!isRouteAllowed(currentPath, profile)) {
+        router.replace(getLandingRoute(profile));
       }
     }
   }, [profile, loading, pathname, router]);
@@ -84,6 +74,7 @@ export default function DashboardLayout({
 
   const userPurpose = profile.purpose || 'learn';
   const userRole = profile.role || 'Student';
+  const canUseUnifiedDashboard = userPurpose === 'both';
   const portalLabel = userPurpose === 'learn'
     ? (isStudentPortal ? 'Student Portal' : 'Academy Portal')
     : userPurpose === 'hire'
@@ -129,7 +120,7 @@ export default function DashboardLayout({
     if (userPurpose === 'both') {
       navItems.push({ name: 'Unified Portal', href: '/dashboard', icon: Shield });
     }
-  } else {
+  } else if (canUseUnifiedDashboard) {
     // Unified portal
     navItems.push(
       { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
@@ -139,6 +130,10 @@ export default function DashboardLayout({
       { name: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
       { name: 'Payments', href: '/dashboard/payments', icon: CreditCard },
       { name: 'Profile', href: '/dashboard/profile', icon: User }
+    );
+  } else {
+    navItems.push(
+      { name: 'Overview', href: getLandingRoute(profile), icon: LayoutDashboard }
     );
   }
 
@@ -169,6 +164,14 @@ export default function DashboardLayout({
               {portalLabel}
             </span>
           </div>
+          <button
+            onClick={handleSignOut}
+            className="ml-auto rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-1.5 text-[11px] font-semibold text-slate-400 hover:border-rose-500/30 hover:text-rose-400 hover:bg-rose-950/20 transition-all duration-200"
+            aria-label="Sign out"
+            title="Sign out"
+          >
+            Sign Out
+          </button>
         </div>
 
         <nav className="flex-1 py-6 px-4 space-y-1">
@@ -320,14 +323,24 @@ export default function DashboardLayout({
               </span>
             </div>
           </div>
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 -mr-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-900"
-            title="Open menu"
-            aria-label="Open menu"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSignOut}
+              className="rounded-lg border border-slate-800 bg-slate-900 px-3 py-1.5 text-[11px] font-semibold text-slate-400 hover:border-rose-500/30 hover:text-rose-400 transition-all duration-200"
+              title="Sign out"
+              aria-label="Sign out"
+            >
+              Sign Out
+            </button>
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 -mr-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-900"
+              title="Open menu"
+              aria-label="Open menu"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+          </div>
         </header>
 
         {/* Dynamic Page Workspace */}

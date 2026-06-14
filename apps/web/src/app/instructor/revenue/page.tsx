@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   Clock,
 } from 'lucide-react';
+import { getSessionJwt } from '../../../lib/sessionJwt';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
@@ -88,19 +89,22 @@ export default function InstructorRevenuePage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const jwt = typeof window !== 'undefined' ? localStorage.getItem('session_jwt') : null;
-    if (!jwt) { setError('Not authenticated.'); setLoading(false); return; }
-
-    fetch(`${API_BASE}/academy/instructor/revenue`, {
-      headers: { Authorization: `Bearer ${jwt}` }
-    })
-      .then((r) => r.json())
-      .then((d) => {
+    const loadRevenue = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/academy/instructor/revenue`, {
+          headers: { Authorization: `Bearer ${await getSessionJwt()}` }
+        });
+        const d = await res.json();
         if (d.error) throw new Error(d.error);
         setData(d);
-      })
-      .catch((e) => setError(e.message || 'Failed to load revenue data.'))
-      .finally(() => setLoading(false));
+      } catch (e: any) {
+        setError(e.message || 'Failed to load revenue data.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadRevenue();
   }, []);
 
   if (loading) {
