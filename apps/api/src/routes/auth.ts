@@ -87,6 +87,52 @@ router.get('/profile', authenticateJWT, async (req: AuthenticatedRequest, res) =
   }
 });
 
+router.patch('/profile', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  try {
+    const userId = req.user?.id;
+    const { firstName, lastName, phoneNumber, emailNotifications, smsNotifications } = req.body;
+
+    const profiles = await databases.listDocuments(
+      DATABASE_ID,
+      'users_profile',
+      [Query.equal('userId', userId || '')]
+    );
+
+    if (profiles.total === 0) {
+      return res.status(404).json({ error: 'User profile not found' });
+    }
+
+    const updateData: Record<string, any> = {};
+    if (firstName !== undefined) updateData.firstName = String(firstName).trim();
+    if (lastName !== undefined) updateData.lastName = String(lastName).trim();
+    if (phoneNumber !== undefined) updateData.phoneNumber = String(phoneNumber).trim();
+    if (emailNotifications !== undefined) updateData.emailNotifications = Boolean(emailNotifications);
+    if (smsNotifications !== undefined) updateData.smsNotifications = Boolean(smsNotifications);
+
+    if (!updateData.firstName && firstName !== undefined) {
+      return res.status(400).json({ error: 'First name is required.' });
+    }
+    if (!updateData.lastName && lastName !== undefined) {
+      return res.status(400).json({ error: 'Last name is required.' });
+    }
+
+    const updated = await databases.updateDocument(
+      DATABASE_ID,
+      'users_profile',
+      profiles.documents[0].$id,
+      updateData
+    );
+
+    res.status(200).json({
+      message: 'Profile updated successfully',
+      profile: updated
+    });
+  } catch (err: any) {
+    console.error('[Auth Profile] Error updating profile:', err.message);
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // ADMIN: List all platform users
 router.get('/admin/users', authenticateJWT, async (req: AuthenticatedRequest, res) => {
   if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {

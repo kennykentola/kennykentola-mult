@@ -35,6 +35,8 @@ const collections: CollectionDef[] = [
       { key: 'role', type: 'string', size: 50, required: true, defaultValue: 'Student' },
       { key: 'avatarUrl', type: 'string', size: 500, required: false },
       { key: 'purpose', type: 'string', size: 50, required: false, defaultValue: 'learn' },
+      { key: 'emailNotifications', type: 'boolean', required: false, defaultValue: true },
+      { key: 'smsNotifications', type: 'boolean', required: false, defaultValue: false },
       { key: 'enrollments', type: 'string', size: 50, required: false, array: true },
       { key: 'activeProjects', type: 'string', size: 50, required: false, array: true },
       { key: 'printOrders', type: 'string', size: 50, required: false, array: true },
@@ -247,6 +249,45 @@ const collections: CollectionDef[] = [
     ]
   },
   {
+    id: 'projects',
+    name: 'Projects',
+    attributes: [
+      { key: 'clientId', type: 'string', size: 50, required: true },
+      { key: 'title', type: 'string', size: 255, required: true },
+      { key: 'description', type: 'string', size: 5000, required: true },
+      { key: 'budget', type: 'float', required: false, defaultValue: 0 },
+      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'requested' },
+      { key: 'pmId', type: 'string', size: 50, required: false },
+      { key: 'developers', type: 'string', size: 50, required: false, array: true },
+      { key: 'designers', type: 'string', size: 50, required: false, array: true }
+    ]
+  },
+  {
+    id: 'project_milestones',
+    name: 'Project Milestones',
+    attributes: [
+      { key: 'projectId', type: 'string', size: 50, required: true },
+      { key: 'title', type: 'string', size: 255, required: true },
+      { key: 'description', type: 'string', size: 1000, required: false },
+      { key: 'dueDate', type: 'datetime', required: true },
+      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'pending' },
+      { key: 'completedAt', type: 'datetime', required: false }
+    ]
+  },
+  {
+    id: 'tickets',
+    name: 'Tickets',
+    attributes: [
+      { key: 'userId', type: 'string', size: 50, required: true },
+      { key: 'projectOrContractId', type: 'string', size: 50, required: false },
+      { key: 'subject', type: 'string', size: 255, required: true },
+      { key: 'description', type: 'string', size: 5000, required: true },
+      { key: 'priority', type: 'string', size: 50, required: true, defaultValue: 'medium' },
+      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'open' },
+      { key: 'assignedTo', type: 'string', size: 50, required: false }
+    ]
+  },
+  {
     id: 'chat_rooms',
     name: 'Chat Rooms',
     attributes: [
@@ -339,8 +380,56 @@ const collections: CollectionDef[] = [
       { key: 'instructorId', type: 'string', size: 50, required: true },
       { key: 'amount', type: 'float', required: true },
       { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'pending' },
-      { key: 'payoutDate', type: 'datetime', required: false },
-      { key: 'method', type: 'string', size: 50, required: true, defaultValue: 'Bank Transfer' }
+    ]
+  },
+  {
+    id: 'solar_jobs',
+    name: 'Solar Jobs',
+    attributes: [
+      { key: 'clientId', type: 'string', size: 50, required: true },
+      { key: 'jobType', type: 'string', size: 100, required: true },
+      { key: 'description', type: 'string', size: 5000, required: true },
+      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'pending-quote' },
+      { key: 'assignedTechnicians', type: 'string', size: 50, required: false, array: true },
+      { key: 'quotePrice', type: 'float', required: false, defaultValue: 0 },
+      { key: 'scheduledDate', type: 'datetime', required: false },
+      { key: 'address', type: 'string', size: 1000, required: true },
+      { key: 'paymentId', type: 'string', size: 50, required: false },
+      { key: 'siteImageUrls', type: 'string', size: 1000, required: false, array: true }
+    ]
+  },
+  {
+    id: 'student_projects',
+    name: 'Student Projects',
+    attributes: [
+      { key: 'studentId', type: 'string', size: 50, required: true },
+      { key: 'title', type: 'string', size: 255, required: true },
+      { key: 'description', type: 'string', size: 5000, required: true },
+      { key: 'universityName', type: 'string', size: 255, required: false },
+      { key: 'department', type: 'string', size: 255, required: false },
+      { key: 'degree', type: 'string', size: 100, required: false },
+      { key: 'level', type: 'string', size: 50, required: false },
+      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'pending-proposal' },
+      { key: 'assignedDeveloper', type: 'string', size: 50, required: false },
+      { key: 'price', type: 'float', required: true, defaultValue: 0 },
+      { key: 'proposalUrl', type: 'string', size: 500, required: false },
+      { key: 'documentationUrl', type: 'string', size: 500, required: false },
+      { key: 'sourceCodeUrl', type: 'string', size: 500, required: false },
+      { key: 'paymentId', type: 'string', size: 50, required: false }
+    ]
+  },
+  {
+    id: 'maintenance_contracts',
+    name: 'Maintenance Contracts',
+    attributes: [
+      { key: 'clientId', type: 'string', size: 50, required: true },
+      { key: 'title', type: 'string', size: 255, required: true },
+      { key: 'serviceType', type: 'string', size: 100, required: true },
+      { key: 'frequency', type: 'string', size: 50, required: true },
+      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'pending' },
+      { key: 'startDate', type: 'datetime', required: true },
+      { key: 'endDate', type: 'datetime', required: false },
+      { key: 'amount', type: 'float', required: true }
     ]
   }
 ];
@@ -405,7 +494,7 @@ const academySeedLessons = [
     courseId: 'nextjs-15',
     title: 'App Router Foundation and Project Setup',
     content: 'Set up the project structure, app routing layout, and shared workspace patterns.',
-    videoUrl: '',
+    videoUrl: 'https://www.youtube.com/embed/843nec-IvW0',
     order: 1,
     durationMinutes: 32,
     isPreview: true
@@ -415,7 +504,7 @@ const academySeedLessons = [
     courseId: 'nextjs-15',
     title: 'Server Components and Data Fetching',
     content: 'Understand server components, async data fetching, and rendering patterns.',
-    videoUrl: '',
+    videoUrl: 'https://www.youtube.com/embed/843nec-IvW0',
     order: 2,
     durationMinutes: 38,
     isPreview: false
@@ -425,7 +514,7 @@ const academySeedLessons = [
     courseId: 'nextjs-15',
     title: 'Server Actions and Mutations',
     content: 'Wire form submissions and mutations through server actions and Appwrite.',
-    videoUrl: '',
+    videoUrl: 'https://www.youtube.com/embed/843nec-IvW0',
     order: 3,
     durationMinutes: 41,
     isPreview: false
@@ -435,7 +524,7 @@ const academySeedLessons = [
     courseId: 'python-django',
     title: 'Backend Planning and Environment Setup',
     content: 'Define the backend architecture, install dependencies, and configure Docker.',
-    videoUrl: '',
+    videoUrl: 'https://www.youtube.com/embed/F5mRW0jo-U4',
     order: 1,
     durationMinutes: 30,
     isPreview: true
@@ -445,7 +534,7 @@ const academySeedLessons = [
     courseId: 'python-django',
     title: 'Building REST APIs with Django',
     content: 'Create reusable serializers, routers, and secure API endpoints.',
-    videoUrl: '',
+    videoUrl: 'https://www.youtube.com/embed/F5mRW0jo-U4',
     order: 2,
     durationMinutes: 36,
     isPreview: false
@@ -455,7 +544,7 @@ const academySeedLessons = [
     courseId: 'python-django',
     title: 'JWT Authentication and Deployment',
     content: 'Implement JWT login flows and prep the service for deployment.',
-    videoUrl: '',
+    videoUrl: 'https://www.youtube.com/embed/F5mRW0jo-U4',
     order: 3,
     durationMinutes: 44,
     isPreview: false
@@ -465,7 +554,7 @@ const academySeedLessons = [
     courseId: 'mobile-expo',
     title: 'Expo Project Foundation',
     content: 'Set up a cross-platform workspace and mobile navigation structure.',
-    videoUrl: '',
+    videoUrl: 'https://www.youtube.com/embed/ZBCUegTZF7M',
     order: 1,
     durationMinutes: 28,
     isPreview: true
@@ -475,7 +564,7 @@ const academySeedLessons = [
     courseId: 'mobile-expo',
     title: 'Shared UI Components and State',
     content: 'Build reusable mobile screens, state containers, and form patterns.',
-    videoUrl: '',
+    videoUrl: 'https://www.youtube.com/embed/ZBCUegTZF7M',
     order: 2,
     durationMinutes: 34,
     isPreview: false
@@ -485,7 +574,7 @@ const academySeedLessons = [
     courseId: 'mobile-expo',
     title: 'Offline Storage and Push Notifications',
     content: 'Wire up offline persistence and notification hooks for production apps.',
-    videoUrl: '',
+    videoUrl: 'https://www.youtube.com/embed/ZBCUegTZF7M',
     order: 3,
     durationMinutes: 40,
     isPreview: false
@@ -718,7 +807,13 @@ export async function initializeDatabase() {
   console.log('[Appwrite Init] Bank accounts seed content ensured.');
 
   await ensureBucket('certificates', 'Student Certificates');
-  console.log('[Appwrite Init] Single permitted storage bucket verified/created.');
+  console.log('[Appwrite Init] Certificates storage bucket verified/created.');
+
+  await ensureBucket('print_orders', 'Print Orders Files');
+  console.log('[Appwrite Init] Print Orders storage bucket verified/created.');
+
+  await ensureBucket('academic_files', 'Academic Project Files');
+  console.log('[Appwrite Init] Academic Files storage bucket verified/created.');
 }
 
 if (require.main === module) {

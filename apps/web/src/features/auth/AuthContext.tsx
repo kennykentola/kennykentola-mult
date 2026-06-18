@@ -21,6 +21,8 @@ export interface Profile {
   role: string;
   purpose: 'learn' | 'hire' | 'print' | 'both';
   avatarUrl?: string;
+  emailNotifications?: boolean;
+  smsNotifications?: boolean;
   enrollments?: string[];
   activeProjects?: string[];
   clientType?: 'academic' | 'commercial';

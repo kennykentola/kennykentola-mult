@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   FileCheck, 
   ExternalLink, 
@@ -9,7 +9,9 @@ import {
   ChevronRight, 
   Clock, 
   Award,
-  Filter
+  Filter,
+  Download,
+  BarChart3
 } from 'lucide-react';
 import { getInstructorSubmissions, gradeSubmission } from '../../../features/instructor/instructorService';
 
@@ -25,6 +27,23 @@ export default function GradingWorkspace() {
   const [feedback, setFeedback] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+
+  const analytics = useMemo(() => {
+    const total = submissions.length;
+    const graded = submissions.filter((sub) => sub.status === 'graded').length;
+    const pending = total - graded;
+    const scored = submissions.filter((sub) => typeof sub.pointsAwarded === 'number');
+    const averageScore = scored.length
+      ? Math.round(
+          scored.reduce((sum, sub) => {
+            const maxPoints = Number(sub.assignment?.maxPoints || 0);
+            return sum + (maxPoints > 0 ? (Number(sub.pointsAwarded || 0) / maxPoints) * 100 : 0);
+          }, 0) / scored.length
+        )
+      : 0;
+
+    return { total, graded, pending, averageScore };
+  }, [submissions]);
 
   useEffect(() => {
     loadSubmissions();
@@ -87,12 +106,55 @@ export default function GradingWorkspace() {
     }
   };
 
+  const handleExportCsv = () => {
+    const rows = [
+      ['Student', 'Course', 'Assignment', 'Status', 'Score', 'Max Points', 'Submitted At'],
+      ...submissions.map((sub) => [
+        sub.studentName,
+        sub.course.title,
+        sub.assignment.title,
+        sub.status,
+        sub.pointsAwarded ?? '',
+        sub.assignment.maxPoints,
+        sub.submittedAt ? new Date(sub.submittedAt).toISOString() : ''
+      ])
+    ];
+
+    const csv = rows
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `assignment-submissions-${filterStatus}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-extrabold text-white">Grading Workspace</h1>
         <p className="text-slate-400 text-sm mt-1">Review student project files, inspect repository submissions, and write developer feedback reports.</p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { label: 'Submissions', value: analytics.total, accent: 'text-white' },
+          { label: 'Awaiting Review', value: analytics.pending, accent: 'text-amber-400' },
+          { label: 'Graded', value: analytics.graded, accent: 'text-emerald-400' },
+          { label: 'Average Score', value: analytics.averageScore ? `${analytics.averageScore}%` : 'N/A', accent: 'text-indigo-400' }
+        ].map((stat) => (
+          <div key={stat.label} className="rounded-2xl border border-white/5 bg-slate-900/30 p-5">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+              <BarChart3 className="h-3.5 w-3.5" />
+              {stat.label}
+            </div>
+            <p className={`mt-2 text-2xl font-extrabold ${stat.accent}`}>{stat.value}</p>
+          </div>
+        ))}
       </div>
 
       {error && (
@@ -110,6 +172,15 @@ export default function GradingWorkspace() {
           <div className="flex items-center justify-between border-b border-white/5 pb-3">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Submission Queue</span>
             <div className="flex items-center gap-2">
+              <button
+                onClick={handleExportCsv}
+                disabled={submissions.length === 0}
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-800 bg-slate-950 px-2.5 py-1 text-[10px] font-semibold text-slate-350 hover:border-indigo-500/30 hover:text-indigo-300 disabled:cursor-not-allowed disabled:opacity-50"
+                title="Export current submissions"
+              >
+                <Download className="h-3.5 w-3.5" />
+                CSV
+              </button>
               <Filter className="h-3.5 w-3.5 text-slate-500" />
               <select
                 title="Filter Submissions"

@@ -24,7 +24,7 @@ export function getLandingRoute(profile: Profile) {
   if (purpose === 'learn') return '/student/dashboard';
   if (purpose === 'print') return '/printing';
   if (purpose === 'hire') return '/projects';
-  return '/dashboard';
+  return '/student/dashboard';
 }
 
 export function isRouteAllowed(pathname: string, profile: Profile) {
@@ -39,7 +39,7 @@ export function isRouteAllowed(pathname: string, profile: Profile) {
   if (pathname.startsWith('/student')) return purpose === 'learn' || purpose === 'both';
   if (pathname.startsWith('/projects')) return purpose === 'hire' || purpose === 'both';
   if (pathname.startsWith('/printing')) return purpose === 'print' || purpose === 'both';
-  if (pathname.startsWith('/dashboard')) return purpose === 'both';
+  if (pathname.startsWith('/dashboard')) return false;
 
   return true;
 }

@@ -1,1 +1,1 @@
-export { default } from '../../../dashboard/courses/[courseId]/page';
+export { default } from '../../../../features/dashboard/CourseWorkspacePage';

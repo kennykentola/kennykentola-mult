@@ -86,6 +86,23 @@ This file is a handoff note for the KennyKentola multi-company project. It captu
 - `npm run build --workspace api` passes successfully.
 - Cleared stale `apps/web/.next` output and verified the web build regenerates cleanly after the router shim update.
 
+### Phase 9: Academy Portal Expansion
+- Added student-only route shells for assignments, certificates, community, and settings.
+- Added a student assignments page backed by `/academy/student/assignments`, including learner-side submission and grading status.
+- Added a student certificates page backed by `/academy/certificates`, with certificate PDF download/share links.
+- Added an academy community feed backed by `/academy/community`, including posts, likes, and comments.
+- Added certificate collections, community post/comment collections, lesson progress, quiz, quiz attempt, testimonial, module, and instructor payout collections to Appwrite initialization.
+- Added certificate generation hooks when course progress reaches 100%, plus admin certificate listing and manual issue endpoints.
+- Added instructor-facing course, module, lesson, assignment, quiz, student, revenue, message, and settings pages.
+- Added admin-facing academy course, curriculum, certificate, assignment review, analytics, user, payment, project, and printing management pages.
+- Added quiz creation/management APIs and learner quiz attempt APIs.
+- Added testimonial submission and approval APIs.
+- Added embedded video support for YouTube, Vimeo, and direct video files in the course workspace.
+
+### Phase 9 Validation
+- `npm run build --workspace web` passes successfully.
+- `npm run build --workspace api` passes successfully.
+
 ## Notes
 
 - The user referenced `docs/academy-plan.md`, but that file does not exist in this checkout.
@@ -114,15 +131,17 @@ This file is a handoff note for the KennyKentola multi-company project. It captu
 - Printing portal: `apps/web/src/app/printing/page.tsx`
 - Auth profile type: `apps/web/src/features/auth/AuthContext.tsx`
 
-## Phase 8 Recommended Next Steps
+## Recommended Next Steps
 
-1. Add student-only route shells for assignments, certificates, community, and settings.
-2. Decide whether to keep the legacy `/dashboard/projects` and `/dashboard/printing` aliases long term or redirect them.
-3. Add instructor-facing assignment analytics and export.
-4. Show learner-side submission history and grading status.
+1. Decide whether to keep the legacy `/dashboard/projects` and `/dashboard/printing` aliases long term or redirect them.
+2. Persist student settings/profile changes instead of simulating the update in the UI.
+3. Replace any remaining static/demo messaging views with the real chat/thread backend.
+4. Add instructor-facing assignment analytics and export.
 5. Add live class RSVP/attendance tracking if required.
-6. Attach real video URLs to lesson and live class content.
-7. Add notifications for upcoming live classes and due assignments.
+6. Attach production video URLs to seeded lesson and live class content.
+7. Add notifications for upcoming live classes, new lessons, due assignments, and messages.
+8. Replace URL-only assignment submission with real file upload/storage if students should upload files directly.
+9. Add admin community moderation UI if the community feed is going live.
 
 ## Implementation Reminder
 

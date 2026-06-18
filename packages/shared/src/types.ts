@@ -114,6 +114,10 @@ export interface StudentProject {
   studentId: string;
   title: string;
   description: string;
+  universityName?: string;
+  department?: string;
+  degree?: string;
+  level?: string;
   status: 'pending-proposal' | 'proposal-approved' | 'document-drafting' | 'code-development' | 'completed';
   assignedDeveloper?: string;
   price: number;
@@ -134,6 +138,7 @@ export interface SolarJob {
   scheduledDate?: string;
   address: string;
   paymentId?: string;
+  siteImageUrls?: string[];
 }
 
 export interface BankAccount {
@@ -198,4 +203,27 @@ export interface CommunityComment {
   authorName: string;
   content: string;
   createdAt: string;
+}
+
+export interface Ticket {
+  $id?: string;
+  userId: string;
+  projectOrContractId?: string;
+  subject: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'open' | 'in-progress' | 'resolved' | 'closed';
+  assignedTo?: string;
+}
+
+export interface MaintenanceContract {
+  $id?: string;
+  clientId: string;
+  title: string;
+  serviceType: 'IT Support' | 'Network Management' | 'Software Maintenance' | 'Hardware Servicing';
+  frequency: 'monthly' | 'quarterly' | 'annual';
+  status: 'active' | 'pending' | 'expired' | 'cancelled';
+  startDate: string;
+  endDate?: string;
+  amount: number;
 }

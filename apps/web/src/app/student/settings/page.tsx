@@ -12,28 +12,56 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { useAuth } from '../../../features/auth/AuthContext';
+import { getSessionJwt } from '../../../lib/sessionJwt';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
 export default function StudentSettingsPage() {
-  const { profile } = useAuth();
+  const { profile, refreshProfile } = useAuth();
   const [firstName, setFirstName] = useState(profile?.firstName || '');
   const [lastName, setLastName] = useState(profile?.lastName || '');
   const [phone, setPhone] = useState(profile?.phoneNumber || '');
   
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [smsNotifications, setSmsNotifications] = useState(false);
+  const [emailNotifications, setEmailNotifications] = useState(profile?.emailNotifications ?? true);
+  const [smsNotifications, setSmsNotifications] = useState(profile?.smsNotifications ?? false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setSuccess('');
-    
-    // Simulate API update
-    setTimeout(() => {
-      setLoading(false);
+    setError('');
+
+    try {
+      const res = await fetch(`${API_BASE}/auth/profile`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${await getSessionJwt()}`
+        },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          phoneNumber: phone,
+          emailNotifications,
+          smsNotifications
+        })
+      });
+
+      const payload = await res.json();
+      if (!res.ok) {
+        throw new Error(payload?.error || 'Unable to save settings.');
+      }
+
+      await refreshProfile();
       setSuccess('Settings updated successfully!');
-    }, 1000);
+    } catch (err: any) {
+      setError(err?.message || 'Unable to save settings.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!profile) return null;
@@ -58,6 +86,12 @@ export default function StudentSettingsPage() {
         <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-300 flex items-center gap-3 animate-in fade-in duration-300">
           <CheckCircle2 className="h-5 w-5 shrink-0" />
           <span>{success}</span>
+        </div>
+      )}
+
+      {error && (
+        <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-300 flex items-center gap-3 animate-in fade-in duration-300">
+          <span>{error}</span>
         </div>
       )}
 

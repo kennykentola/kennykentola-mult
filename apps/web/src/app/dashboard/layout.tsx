@@ -74,7 +74,6 @@ export default function DashboardLayout({
 
   const userPurpose = profile.purpose || 'learn';
   const userRole = profile.role || 'Student';
-  const canUseUnifiedDashboard = userPurpose === 'both';
   const portalLabel = userPurpose === 'learn'
     ? (isStudentPortal ? 'Student Portal' : 'Academy Portal')
     : userPurpose === 'hire'
@@ -97,9 +96,6 @@ export default function DashboardLayout({
       { name: 'Profile', href: '/student/profile', icon: User },
       { name: 'Settings', href: '/student/settings', icon: Settings }
     );
-    if (userPurpose === 'both') {
-      navItems.push({ name: 'Unified Portal', href: '/dashboard', icon: Shield });
-    }
   } else if (isPrintingPortal) {
     navItems.push(
       { name: 'Print Orders', href: '/printing', icon: Printer },
@@ -107,29 +103,12 @@ export default function DashboardLayout({
       { name: 'Payments', href: '/printing/payments', icon: CreditCard },
       { name: 'Profile', href: '/printing/profile', icon: User }
     );
-    if (userPurpose === 'both') {
-      navItems.push({ name: 'Unified Portal', href: '/dashboard', icon: Shield });
-    }
   } else if (isProjectsPortal) {
     navItems.push(
       { name: 'Projects', href: '/projects', icon: Briefcase },
       { name: 'Messages', href: '/projects/messages', icon: MessageSquare },
       { name: 'Payments', href: '/projects/payments', icon: CreditCard },
       { name: 'Profile', href: '/projects/profile', icon: User }
-    );
-    if (userPurpose === 'both') {
-      navItems.push({ name: 'Unified Portal', href: '/dashboard', icon: Shield });
-    }
-  } else if (canUseUnifiedDashboard) {
-    // Unified portal
-    navItems.push(
-      { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
-      { name: 'My Courses', href: '/student/courses', icon: GraduationCap },
-      { name: 'Projects', href: '/projects', icon: Briefcase },
-      { name: 'Printing', href: '/printing', icon: Printer },
-      { name: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
-      { name: 'Payments', href: '/dashboard/payments', icon: CreditCard },
-      { name: 'Profile', href: '/dashboard/profile', icon: User }
     );
   } else {
     navItems.push(

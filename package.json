@@ -14,9 +14,11 @@
     "init:appwrite": "npm run init:appwrite --workspace api"
   },
   "devDependencies": {
+    "turbo": "^2.9.18",
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "cloudinary": "^2.10.0",
     "react": "19.2.7",
     "react-dom": "19.2.7"
   }
