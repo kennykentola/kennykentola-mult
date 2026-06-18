@@ -147,9 +147,12 @@ export default function SolarDashboardPage() {
 
                   <div className="text-sm flex justify-end">
                     {job.status === 'quoted' && (
-                      <button className="px-4 py-1.5 bg-green-500 hover:bg-green-400 text-black font-semibold rounded-md transition-colors text-sm">
+                      <Link 
+                        href={`/checkout/solar_jobs/${job.$id}`}
+                        className="px-4 py-1.5 bg-green-500 hover:bg-green-400 text-black font-semibold rounded-md transition-colors text-sm text-center"
+                      >
                         Pay & Book
-                      </button>
+                      </Link>
                     )}
                   </div>
                 </div>

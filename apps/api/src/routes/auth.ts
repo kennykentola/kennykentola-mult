@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { users, databases } from '../services/appwrite';
-import { ID } from 'node-appwrite';
+import { ID, Client, Account } from 'node-appwrite';
 
 const router = Router();
 const DATABASE_ID = process.env.APPWRITE_DATABASE_ID || 'multicompany';
@@ -78,9 +78,35 @@ router.get('/profile', authenticateJWT, async (req: AuthenticatedRequest, res) =
       return res.status(404).json({ error: 'User profile not found' });
     }
 
+    let profileDoc = profiles.documents[0];
+
+    // Optional: Sync prefs.role with profile.role if they differ, treating prefs as source of truth for Super Admin
+    try {
+      const client = new Client()
+        .setEndpoint(process.env.APPWRITE_ENDPOINT || 'https://fra.cloud.appwrite.io/v1')
+        .setProject(process.env.APPWRITE_PROJECT_ID || '')
+        .setJWT(req.headers.authorization!.split(' ')[1]);
+      
+      const account = new Account(client);
+      const user = await account.get();
+      const prefsRole = (user.prefs as any)?.role;
+
+      if (prefsRole && prefsRole !== profileDoc.role) {
+        profileDoc = await databases.updateDocument(
+          DATABASE_ID,
+          'users_profile',
+          profileDoc.$id,
+          { role: prefsRole }
+        );
+        req.user!.role = prefsRole;
+      }
+    } catch (e) {
+      console.warn('[Auth] Could not sync prefs.role:', e);
+    }
+
     res.status(200).json({
       user: req.user,
-      profile: profiles.documents[0]
+      profile: profileDoc
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

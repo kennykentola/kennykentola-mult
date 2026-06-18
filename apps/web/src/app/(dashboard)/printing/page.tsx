@@ -110,7 +110,21 @@ export default function PrintingDashboardPage() {
                       </span>
                     </td>
                     <td className="p-4 text-right font-medium text-primary-foreground">
-                      {order.quotePrice > 0 ? `$${order.quotePrice.toFixed(2)}` : 'Pending Quote'}
+                      {order.quotePrice > 0 ? (
+                        <div className="flex flex-col items-end gap-2">
+                          <span>${order.quotePrice.toFixed(2)}</span>
+                          {order.status === 'quoted' && (
+                            <Link 
+                              href={`/checkout/print_orders/${order.$id}`}
+                              className="px-3 py-1 bg-green-500 hover:bg-green-400 text-black text-xs font-bold rounded shadow-sm transition-colors"
+                            >
+                              Pay Now
+                            </Link>
+                          )}
+                        </div>
+                      ) : (
+                        'Pending Quote'
+                      )}
                     </td>
                   </tr>
                 ))}

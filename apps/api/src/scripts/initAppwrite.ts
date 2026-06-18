@@ -1,5 +1,5 @@
 import { databases, storage } from '../services/appwrite';
-import { AppwriteException } from 'node-appwrite';
+import { AppwriteException, Permission, Role } from 'node-appwrite';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -218,6 +218,16 @@ const collections: CollectionDef[] = [
     ]
   },
   {
+    id: 'bank_accounts',
+    name: 'Bank Accounts',
+    attributes: [
+      { key: 'bankName', type: 'string', size: 100, required: true },
+      { key: 'accountName', type: 'string', size: 255, required: true },
+      { key: 'accountNumber', type: 'string', size: 50, required: true },
+      { key: 'isActive', type: 'boolean', required: true, defaultValue: true }
+    ]
+  },
+  {
     id: 'payments',
     name: 'Payments',
     attributes: [
@@ -430,6 +440,21 @@ const collections: CollectionDef[] = [
       { key: 'startDate', type: 'datetime', required: true },
       { key: 'endDate', type: 'datetime', required: false },
       { key: 'amount', type: 'float', required: true }
+    ]
+  },
+  {
+    id: 'agency_projects',
+    name: 'Software Agency Projects',
+    attributes: [
+      { key: 'clientId', type: 'string', size: 50, required: true },
+      { key: 'title', type: 'string', size: 255, required: true },
+      { key: 'description', type: 'string', size: 5000, required: true },
+      { key: 'projectType', type: 'string', size: 100, required: true },
+      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'pending-quote' },
+      { key: 'budget', type: 'float', required: false },
+      { key: 'quotePrice', type: 'float', required: false },
+      { key: 'deadline', type: 'datetime', required: false },
+      { key: 'paymentId', type: 'string', size: 50, required: false }
     ]
   }
 ];
@@ -756,7 +781,21 @@ export async function initializeDatabase() {
     }
 
     if (!exists) {
-      await databases.createCollection(DATABASE_ID, colDef.id, colDef.name);
+      await databases.createCollection(DATABASE_ID, colDef.id, colDef.name, [
+        Permission.read(Role.any()),
+        Permission.create(Role.any()),
+        Permission.update(Role.any()),
+        Permission.delete(Role.any())
+      ]);
+      await sleep(500);
+    } else {
+      // Update permissions for existing collections
+      await databases.updateCollection(DATABASE_ID, colDef.id, colDef.name, [
+        Permission.read(Role.any()),
+        Permission.create(Role.any()),
+        Permission.update(Role.any()),
+        Permission.delete(Role.any())
+      ]);
       await sleep(500);
     }
 

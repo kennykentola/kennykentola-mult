@@ -17,7 +17,8 @@ import {
   Menu,
   X,
   ShieldAlert,
-  BarChart3
+  BarChart3,
+  Inbox
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -94,6 +95,7 @@ export default function AdminLayout({
 
   const navItems = [
     { name: 'Admin Overview', href: '/admin', icon: Shield },
+    { name: 'Service Requests', href: '/admin/requests', icon: Inbox },
     { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
     { name: 'Configure Users', href: '/admin/users', icon: Users },
     { name: 'Course Manager', href: '/admin/courses', icon: BookOpen },

@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { NotificationProvider } from '@/features/notifications/NotificationProvider';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, logout } = useAuth();
@@ -23,7 +24,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const role = (user.prefs as any)?.role || 'Client';
 
   return (
-    <div className="flex h-screen bg-background">
+    <NotificationProvider>
+      <div className="flex h-screen bg-background">
       {/* Sidebar */}
       <aside className="w-64 bg-card border-r border-border flex flex-col">
         <div className="p-6">
@@ -93,5 +95,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </main>
     </div>
+    </NotificationProvider>
   );
 }

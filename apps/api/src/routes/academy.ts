@@ -288,7 +288,7 @@ async function listSubmissionReviews(filters: {
 }
 
 async function ensureAcademyReviewer(role?: string) {
-  return role === 'Admin' || role === 'Instructor';
+  return role === 'Admin' || role === 'Super Admin' || role === 'Instructor';
 }
 
 router.get('/courses', async (_req, res) => {
