@@ -67,6 +67,7 @@ export default function AcademyDashboardPage() {
                 <div className="w-full bg-white/5 rounded-full h-2 mb-4 overflow-hidden">
                   <div 
                     className="bg-primary h-2 rounded-full" 
+                    // eslint-disable-next-line
                     style={{ width: `${enrollment.progress}%` }}
                   />
                 </div>

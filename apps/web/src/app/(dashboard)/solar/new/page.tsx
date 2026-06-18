@@ -213,6 +213,7 @@ export default function NewSolarJobPage() {
             <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-yellow-500 transition-all duration-300 ease-out"
+                // eslint-disable-next-line
                 style={{ width: `${uploadProgress}%` }}
               />
             </div>

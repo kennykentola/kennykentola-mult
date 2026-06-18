@@ -84,7 +84,7 @@ export function DynamicQuoteModal({ isOpen, onClose, request, collectionId, onUp
             <h2 className="text-xl font-bold text-white">Review Request</h2>
             <p className="text-xs text-muted mt-1 font-mono">ID: {request.$id}</p>
           </div>
-          <button onClick={onClose} className="p-2 text-muted hover:text-white rounded-lg hover:bg-white/10 transition-colors">
+          <button onClick={onClose} aria-label="Close review request" className="p-2 text-muted hover:text-white rounded-lg hover:bg-white/10 transition-colors">
             <X className="h-5 w-5" />
           </button>
         </div>

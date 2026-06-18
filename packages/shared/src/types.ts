@@ -29,6 +29,9 @@ export interface Course {
   coverImage?: string;
   price: number;
   isPublished: boolean;
+  category?: string;
+  summary?: string;
+  level?: string;
 }
 
 export interface Lesson {

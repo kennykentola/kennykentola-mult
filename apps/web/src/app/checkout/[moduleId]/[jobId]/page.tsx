@@ -13,7 +13,9 @@ import { BankAccount } from '@company/shared';
 const PAYSTACK_PUBLIC_KEY = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_test_1234567890';
 
 export default function UniversalCheckoutPage() {
-  const { moduleId, jobId } = useParams();
+  const params = useParams();
+  const moduleId = params?.moduleId as string;
+  const jobId = params?.jobId as string;
   const router = useRouter();
   const { user } = useAuth();
   
@@ -295,6 +297,7 @@ export default function UniversalCheckoutPage() {
                         <input 
                           type="file" 
                           accept="image/*"
+                          aria-label="Upload Payment Receipt"
                           onChange={handleReceiptUpload}
                           disabled={isUploading || !bankDetails}
                           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
