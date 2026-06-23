@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { 
   Plus, 
   BookOpen, 
@@ -70,7 +72,9 @@ async function getAssignmentsForCourse(courseId: string) {
   }
 }
 
+
 export default function CourseManager() {
+  const router = useRouter();
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -355,12 +359,11 @@ export default function CourseManager() {
     setSubmitting(true);
     setError('');
     try {
-      await createQuiz(quizForm.courseId, {
+      const res = await createQuiz(quizForm.courseId, {
         title: quizForm.title,
         description: quizForm.description,
         timeLimitMinutes: Number(quizForm.timeLimitMinutes),
         passingScore: Number(quizForm.passingScore),
-        questions: quizForm.questions,
         moduleId: quizForm.moduleId || undefined
       });
       setShowQuizModal(false);
@@ -374,6 +377,11 @@ export default function CourseManager() {
         questions: '[]'
       });
       await loadCourseDetails(expandedCourse || quizForm.courseId);
+      
+      // Redirect to the new quiz builder
+      if (res && res.quiz) {
+        router.push(`/instructor/courses/${quizForm.courseId}/quizzes/${res.quiz.$id}`);
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to add quiz.');
     } finally {
@@ -686,25 +694,35 @@ export default function CourseManager() {
                         </div>
 
                         {quizzes.length === 0 ? (
-                          <p className="text-xs text-slate-500 italic py-4">No quizzes created yet.</p>
+                          <div className="p-4 rounded-xl border border-dashed border-white/10 bg-slate-900/30 text-xs font-semibold text-slate-500 text-center">
+                            No quizzes yet.
+                          </div>
                         ) : (
                           <div className="space-y-2">
                             {quizzes.map((quiz: any) => (
-                              <div key={quiz.$id} className="p-3 rounded-xl border border-white/5 bg-slate-900/30 text-xs flex justify-between items-center group">
+                              <div key={quiz.$id} className="p-3 rounded-xl border border-white/5 bg-slate-900/30 text-xs flex justify-between items-center group transition-colors hover:border-indigo-500/30">
                                 <div>
                                   <div className="font-semibold text-white">{quiz.title}</div>
                                   <div className="text-[10px] text-slate-500 font-medium mt-1">
                                     {quiz.timeLimitMinutes} mins • {quiz.passingScore}% to pass
                                   </div>
                                 </div>
-                                <button
-                                  onClick={() => handleDeleteQuiz(quiz.$id)}
-                                  title="Delete Quiz"
-                                  aria-label="Delete Quiz"
-                                  className="flex items-center gap-1 text-[10px] font-bold text-rose-400 hover:text-rose-300 opacity-0 group-hover:opacity-100"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" /> Delete
-                                </button>
+                                <div className="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Link
+                                    href={`/instructor/courses/${course.$id}/quizzes/${quiz.$id}`}
+                                    className="flex items-center gap-1 text-[10px] font-bold text-indigo-400 hover:text-indigo-300"
+                                  >
+                                    <Edit className="h-3.5 w-3.5" /> Edit Quiz
+                                  </Link>
+                                  <button
+                                    onClick={() => handleDeleteQuiz(quiz.$id)}
+                                    title="Delete Quiz"
+                                    aria-label="Delete Quiz"
+                                    className="flex items-center gap-1 text-[10px] font-bold text-rose-400 hover:text-rose-300"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" /> Delete
+                                  </button>
+                                </div>
                               </div>
                             ))}
                           </div>
@@ -1193,19 +1211,6 @@ export default function CourseManager() {
                     onChange={(e) => setQuizForm({ ...quizForm, passingScore: Number(e.target.value) })}
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-400 block mb-1.5">Questions (JSON Format)</label>
-                <textarea
-                  rows={6}
-                  required
-                  placeholder={'[\n  {\n    "question": "What is React?",\n    "options": ["A library", "A framework", "A database", "A language"],\n    "correctAnswerIndex": 0\n  }\n]'}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 font-mono text-xs resize-none"
-                  value={quizForm.questions}
-                  onChange={(e) => setQuizForm({ ...quizForm, questions: e.target.value })}
-                />
-                <p className="text-[10px] text-slate-500 mt-1">Provide an array of objects with `question`, `options`, and `correctAnswerIndex`.</p>
               </div>
 
               <div className="flex gap-4 justify-end mt-6">

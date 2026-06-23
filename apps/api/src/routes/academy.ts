@@ -1567,7 +1567,6 @@ router.post('/admin/certificates/issue', authenticateJWT, async (req: Authentica
   }
 });
 
-export default router;
 
 // --- Quiz Endpoints ---
 

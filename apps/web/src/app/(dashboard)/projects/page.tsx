@@ -28,7 +28,7 @@ export default function ProjectsPage() {
   const fetchProjects = async () => {
     try {
       const databases = new Databases(client);
-      const role = user?.prefs?.role || 'Client';
+      const role = (user?.prefs as any)?.role || 'Client';
       const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || 'multicompany';
 
       let queries = [];
@@ -58,7 +58,7 @@ export default function ProjectsPage() {
           <h1 className="text-3xl font-bold text-primary-foreground tracking-tight">Agency Projects</h1>
           <p className="text-muted mt-1 text-sm">Manage and track active software development cycles.</p>
         </div>
-        {(user?.prefs?.role === 'Super Admin' || user?.prefs?.role === 'Project Manager') && (
+        {((user?.prefs as any)?.role === 'Super Admin' || (user?.prefs as any)?.role === 'Project Manager') && (
           <button className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md text-sm font-medium transition-colors">
             New Project
           </button>

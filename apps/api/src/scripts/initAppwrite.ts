@@ -833,7 +833,12 @@ export async function initializeDatabase() {
       try {
         await databases.getAttribute(DATABASE_ID, colDef.id, attr.key);
         console.log(`  [Attribute] "${attr.key}" already exists. Skipping.`);
-      } catch (err) {
+      } catch (err: any) {
+        if (err.code !== 404) {
+          console.warn(`  [Attribute] Failed to fetch attribute "${attr.key}". Skipping to prevent crash. Error: ${err.message}`);
+          continue;
+        }
+
         console.log(`  [Attribute] Creating "${attr.key}" (Type: ${attr.type}, Array: ${!!attr.array})...`);
         try {
           if (attr.type === 'string') {
@@ -865,6 +870,9 @@ export async function initializeDatabase() {
           }
         }
       }
+      
+      // Throttle attribute checking to prevent overwhelming the Appwrite API
+      await sleep(50);
     }
     console.log(`[Collection] "${colDef.id}" processing completed.`);
   }

@@ -38,7 +38,8 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 
     const connectSocket = async () => {
       try {
-        const { jwt } = await account.createJWT();
+        const { getSessionJwt } = await import('@/lib/sessionJwt');
+        const jwt = await getSessionJwt();
         
         // Extract base URL from API URL
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
@@ -60,9 +61,22 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
           console.log('[Socket] Disconnected');
         });
 
-        currentSocket.on('connect_error', (err) => {
+        currentSocket.on('connect_error', async (err) => {
           console.error('[Socket] Connection Error:', err.message);
           setIsConnected(false);
+          
+          if (err.message.includes('Authentication') || err.message.includes('Invalid token') || err.message.includes('Expired')) {
+            try {
+               // Refresh the JWT
+               const { account } = await import('@/lib/appwrite');
+               const session = await account.createJWT();
+               if (currentSocket) {
+                 currentSocket.auth = { token: session.jwt };
+               }
+            } catch (e) {
+               console.error('[Socket] Failed to refresh token during reconnect', e);
+            }
+          }
         });
 
         // Online status events

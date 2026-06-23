@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: multi-company-api
+    env: node
+    buildCommand: npm install && cd apps/api && npm run build
+    startCommand: cd apps/api && npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.x
+      - key: PORT
+        value: 5000
+      - key: CLIENT_URL
+        sync: false
+      - key: APPWRITE_ENDPOINT
+        sync: false
+      - key: APPWRITE_PROJECT_ID
+        sync: false
+      - key: APPWRITE_API_KEY
+        sync: false

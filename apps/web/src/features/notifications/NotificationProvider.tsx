@@ -12,7 +12,7 @@ interface NotificationContextType {
 const NotificationContext = createContext<NotificationContextType>({});
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   
   // Keep track of the last seen status for documents so we don't spam toasts
   // if the same document is updated multiple times without a status change.
@@ -21,7 +21,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     // We only want to subscribe to client-facing notifications if they are a regular user.
     // Admins have their own dashboard which they can refresh.
-    if (!user || profile?.role === 'Admin' || profile?.role === 'Super Admin') return;
+    const role = (user as any)?.prefs?.role;
+    if (!user || role === 'Admin' || role === 'Super Admin') return;
 
     const dbId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || 'multicompany';
     
@@ -103,7 +104,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       console.log('[NotificationProvider] Unsubscribing...');
       unsubscribe();
     };
-  }, [user, profile]);
+  }, [user]);
 
   return (
     <NotificationContext.Provider value={{}}>

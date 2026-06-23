@@ -113,7 +113,7 @@ export default function PrintingDashboardPage() {
                       {order.quotePrice > 0 ? (
                         <div className="flex flex-col items-end gap-2">
                           <span>${order.quotePrice.toFixed(2)}</span>
-                          {order.status === 'quoted' && (
+                          {(order.status as string) === 'quoted' && (
                             <Link 
                               href={`/checkout/print_orders/${order.$id}`}
                               className="px-3 py-1 bg-green-500 hover:bg-green-400 text-black text-xs font-bold rounded shadow-sm transition-colors"

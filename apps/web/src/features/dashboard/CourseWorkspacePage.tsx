@@ -11,10 +11,15 @@ import {
   fetchAcademyLiveClasses,
   fetchMyAcademyAssignments,
   submitAcademyAssignment,
-  updateAcademyCourseProgress
+  updateAcademyCourseProgress,
+  fetchCourseQuizzes,
+  fetchMyQuizAttempts,
+  QuizDto,
+  QuizAttemptDto
 } from '../academy/api';
+import Link from 'next/link';
 
-type Tab = 'lessons' | 'assignments' | 'live';
+type Tab = 'lessons' | 'assignments' | 'live' | 'quizzes';
 
 function formatDateTime(value?: string) {
   if (!value) return 'Not scheduled';
@@ -27,6 +32,8 @@ export default function CourseWorkspacePage() {
   const [courseData, setCourseData] = useState<AcademyCourseDetailResponse | null>(null);
   const [assignments, setAssignments] = useState<AcademyAssignmentDto[]>([]);
   const [liveClasses, setLiveClasses] = useState<AcademyLiveClassDto[]>([]);
+  const [quizzes, setQuizzes] = useState<QuizDto[]>([]);
+  const [quizAttempts, setQuizAttempts] = useState<QuizAttemptDto[]>([]);
   const [activeLessonId, setActiveLessonId] = useState('');
   const [activeTab, setActiveTab] = useState<Tab>('lessons');
   const [fileUrls, setFileUrls] = useState('');
@@ -45,15 +52,19 @@ export default function CourseWorkspacePage() {
       setError('');
 
       try {
-        const [courseResponse, assignmentsResponse, liveResponse] = await Promise.all([
+        const [courseResponse, assignmentsResponse, liveResponse, quizzesResponse, attemptsResponse] = await Promise.all([
           fetchAcademyCourse(courseId),
           fetchMyAcademyAssignments(courseId),
-          fetchAcademyLiveClasses(courseId)
+          fetchAcademyLiveClasses(courseId),
+          fetchCourseQuizzes(courseId),
+          fetchMyQuizAttempts(courseId)
         ]);
         if (cancelled) return;
         setCourseData(courseResponse);
         setAssignments(assignmentsResponse.assignments);
         setLiveClasses(liveResponse.liveClasses);
+        setQuizzes(quizzesResponse.quizzes.filter(q => q.isPublished));
+        setQuizAttempts(attemptsResponse.attempts);
         setActiveLessonId(courseResponse.lessons[0]?.id || '');
       } catch (err: any) {
         if (!cancelled) setError(err?.message || 'Unable to load course workspace.');
@@ -153,7 +164,8 @@ export default function CourseWorkspacePage() {
         {[
           { key: 'lessons', label: 'Lessons', icon: Video },
           { key: 'assignments', label: 'Assignments', icon: FileText },
-          { key: 'live', label: 'Live Classes', icon: MessageSquare }
+          { key: 'live', label: 'Live Classes', icon: MessageSquare },
+          { key: 'quizzes', label: 'Quizzes', icon: CheckCircle2 }
         ].map((tab) => {
           const Icon = tab.icon;
           const active = activeTab === tab.key;
@@ -258,6 +270,52 @@ export default function CourseWorkspacePage() {
             </div>
           ))}
           {liveClasses.length === 0 && <p className="text-sm text-slate-400">No live classes are scheduled yet.</p>}
+        </div>
+      )}
+      {activeTab === 'quizzes' && (
+        <div className="grid gap-4 md:grid-cols-2">
+          {quizzes.map((quiz) => {
+            const attempt = quizAttempts.find(a => a.quizId === quiz.$id);
+            return (
+              <div key={quiz.$id} className="rounded-3xl border border-white/5 bg-slate-900/30 p-6 flex flex-col h-full">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-lg font-bold text-white">{quiz.title}</h2>
+                  {attempt ? (
+                    <span className={`rounded-full px-3 py-1 text-[10px] font-bold border ${attempt.passed ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400' : 'border-rose-500/30 bg-rose-500/10 text-rose-400'}`}>
+                      {attempt.passed ? 'PASSED' : 'FAILED'}
+                    </span>
+                  ) : (
+                    <span className="rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-[10px] font-bold text-indigo-400">
+                      TODO
+                    </span>
+                  )}
+                </div>
+                <p className="mt-3 text-sm leading-6 text-slate-400 flex-1">{quiz.description}</p>
+                <p className="mt-3 text-xs text-slate-500 font-semibold">{quiz.timeLimitMinutes} Mins • {quiz.passingScore}% to pass</p>
+                
+                {attempt ? (
+                  <div className="mt-5 rounded-xl border border-white/5 bg-slate-950/50 p-4">
+                    <div className="text-xs font-semibold text-slate-500 uppercase mb-1">Your Score</div>
+                    <div className="text-2xl font-black text-white">{attempt.score}%</div>
+                    <Link
+                      href={`/student/courses/${courseId}/quizzes/${quiz.$id}/take`}
+                      className="mt-3 block text-center rounded-xl bg-slate-800 hover:bg-slate-700 px-5 py-2.5 text-xs font-bold text-white transition-colors"
+                    >
+                      View Results
+                    </Link>
+                  </div>
+                ) : (
+                  <Link
+                    href={`/student/courses/${courseId}/quizzes/${quiz.$id}/take`}
+                    className="mt-5 text-center rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white hover:bg-indigo-500 transition-colors"
+                  >
+                    Start Quiz
+                  </Link>
+                )}
+              </div>
+            );
+          })}
+          {quizzes.length === 0 && <p className="text-sm text-slate-400 col-span-2">No quizzes are available for this course yet.</p>}
         </div>
       )}
     </div>

@@ -307,6 +307,7 @@ export type QuizDto = {
   timeLimitMinutes: number;
   passingScore: number;
   questions: string;
+  isPublished: boolean;
 };
 
 export type QuizAttemptDto = {
@@ -319,6 +320,19 @@ export type QuizAttemptDto = {
   startedAt: string;
   completedAt?: string;
   answers: string;
+};
+
+export type QuizQuestionDto = {
+  $id?: string;
+  quizId: string;
+  question: string;
+  optionA: string;
+  optionB: string;
+  optionC?: string;
+  optionD?: string;
+  correctOption: 'A' | 'B' | 'C' | 'D';
+  points?: number;
+  order?: number;
 };
 
 export function fetchCourseQuizzes(courseId: string) {
@@ -345,11 +359,39 @@ export function deleteQuiz(quizId: string) {
   }, true);
 }
 
-export function submitQuizAttempt(quizId: string, payload: Partial<QuizAttemptDto>) {
-  return academyFetch<{ message: string; attempt: QuizAttemptDto }>(`/quizzes/${quizId}/attempts`, {
+export function fetchQuizQuestions(quizId: string) {
+  return academyFetch<{ questions: QuizQuestionDto[] }>(`/quizzes/${quizId}/questions`, undefined, true);
+}
+
+export function addQuizQuestion(quizId: string, payload: Partial<QuizQuestionDto>) {
+  return academyFetch<{ question: QuizQuestionDto }>(`/quizzes/${quizId}/questions`, {
     method: 'POST',
     body: JSON.stringify(payload)
   }, true);
+}
+
+export function updateQuizQuestion(questionId: string, payload: Partial<QuizQuestionDto>) {
+  return academyFetch<{ question: QuizQuestionDto }>(`/quiz_questions/${questionId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload)
+  }, true);
+}
+
+export function deleteQuizQuestion(questionId: string) {
+  return academyFetch<{ message: string }>(`/quiz_questions/${questionId}`, {
+    method: 'DELETE'
+  }, true);
+}
+
+export function submitQuizAttempt(quizId: string, payload: Partial<QuizAttemptDto>) {
+  return academyFetch<{ message: string; attempt: QuizAttemptDto }>(`/quizzes/${quizId}/submit`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  }, true);
+}
+
+export function fetchQuizAttempt(quizId: string) {
+  return academyFetch<{ attempt: QuizAttemptDto | null }>(`/quizzes/${quizId}/attempt`, undefined, true);
 }
 
 export function fetchMyQuizAttempts(courseId: string) {

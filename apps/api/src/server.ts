@@ -26,9 +26,10 @@ const corsOptions = {
     }
 
     const isLocalhostOrigin = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+    const isVercelOrigin = /\.vercel\.app$/.test(origin);
     const isAllowedOrigin = allowedOrigins.has(origin);
 
-    if (isLocalhostOrigin || isAllowedOrigin) {
+    if (isLocalhostOrigin || isVercelOrigin || isAllowedOrigin) {
       return callback(null, true);
     }
 
@@ -86,8 +87,12 @@ initSocketServer(httpServer);
 
 async function startServer() {
   try {
-    await initializeDatabase();
-    console.log('[API] Appwrite database initialization completed.');
+    if (process.env.INIT_APPWRITE === 'true') {
+      await initializeDatabase();
+      console.log('[API] Appwrite database initialization completed.');
+    } else {
+      console.log('[API] Skipping Appwrite database initialization. (Set INIT_APPWRITE=true to run)');
+    }
   } catch (err) {
     console.error('[API] Appwrite database initialization failed:', err);
     process.exit(1);

@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/auth';
 import { CreditCard, Building2, UploadCloud, CheckCircle2, ArrowLeft, ShieldCheck } from 'lucide-react';
 import { PaystackButton } from 'react-paystack';
 import { BankAccount } from '@company/shared';
-import { submitPayment } from '../../../features/payments/paymentsService';
+import { submitPayment } from '../../../../features/payments/paymentsService';
 
 // You will need to replace this with your actual Paystack Public Key
 const PAYSTACK_PUBLIC_KEY = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_test_1234567890';

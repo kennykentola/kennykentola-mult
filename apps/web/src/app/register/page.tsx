@@ -145,16 +145,6 @@ export default function Register() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-
-        <div className="relative my-4">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-800" />
-          </div>
-          <div className="relative flex justify-center text-xs text-slate-500">
-            <span className="bg-slate-900/50 px-3">or register with email</span>
-          </div>
-        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">

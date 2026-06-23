@@ -16,7 +16,7 @@ router.get('/rooms', authenticateJWT, async (req: AuthenticatedRequest, res) => 
       databaseId,
       'chat_rooms',
       [
-        Query.contains('participants', userId),
+        (Query as any).contains('participants', userId),
         Query.orderDesc('$createdAt'),
         Query.limit(50)
       ]
@@ -38,7 +38,7 @@ router.get('/history/:roomId', authenticateJWT, async (req: AuthenticatedRequest
     // Verify user is in room (unless community_global)
     if (roomId === 'community_global') {
       const userPrefs = await users.getPrefs(userId!);
-      if (!userPrefs.isCommunityMember) {
+      if (!(userPrefs as any).isCommunityMember) {
         return res.status(403).json({ error: 'You have not joined the community group' });
       }
     } else {
@@ -80,7 +80,7 @@ router.post('/rooms', authenticateJWT, async (req: AuthenticatedRequest, res) =>
       databaseId,
       'chat_rooms',
       [
-        Query.contains('participants', userId),
+        (Query as any).contains('participants', userId),
         Query.limit(100)
       ]
     );

@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 
-const ReactPlayer = dynamic(() => import('react-player/lazy'), { ssr: false });
+const ReactPlayer: any = dynamic(() => import('react-player'), { ssr: false });
 
 interface VideoPlayerProps {
   src: string;

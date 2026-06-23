@@ -106,20 +106,20 @@ export default function AcademyDashboardPage() {
                 </div>
                 <div className="p-5 flex-1 flex flex-col">
                   <span className="text-xs font-semibold text-primary uppercase tracking-wider mb-2">
-                    {course.category || 'Course'}
+                    {(course as any).category || 'Course'}
                   </span>
                   <h3 className="font-bold text-primary-foreground mb-2 group-hover:text-primary transition-colors">
                     {course.title}
                   </h3>
                   <p className="text-sm text-muted line-clamp-2 mb-4 flex-1">
-                    {course.summary || course.description}
+                    {(course as any).summary || course.description}
                   </p>
                   <div className="flex justify-between items-center mt-auto pt-4 border-t border-white/5">
                     <span className="text-sm font-medium text-primary-foreground">
                       {course.price === 0 ? 'Free' : `$${course.price}`}
                     </span>
                     <span className="text-xs text-muted">
-                      {course.level || 'All Levels'}
+                      {(course as any).level || 'All Levels'}
                     </span>
                   </div>
                 </div>
