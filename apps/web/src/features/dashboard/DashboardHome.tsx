@@ -391,36 +391,58 @@ function AcademyOverview({
 }
 
 function AgencyOverview({ portalBasePath, isUnified = false }: { portalBasePath: string; isUnified?: boolean }) {
-  const projects = [
-    {
-      name: 'Multi-Tenant CRM Web Portal',
-      status: 'In Development',
-      progress: 45,
-      nextMilestone: 'Milestone 2: Database Migration',
-      price: '$2,500'
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadProjects() {
+      try {
+        const { getMyProjects } = await import('../projects/projectsService');
+        const data = await getMyProjects();
+        if (!cancelled) setProjects(data.projects);
+      } catch (err) {
+        console.error('Failed to load projects:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
-  ];
+    loadProjects();
+    return () => { cancelled = true; };
+  }, []);
+
+  const totalProjects = projects.length;
+  const activeProjects = projects.filter(p => p.status === 'in-progress').length;
+  const pendingQuotes = projects.filter(p => p.status === 'requested').length;
+  const totalSpent = projects.reduce((sum, p) => sum + (p.budget || 0), 0);
+
+  const activeProjectList = projects.filter(p => p.status !== 'completed').slice(0, 2).map(p => ({
+    name: p.title,
+    status: p.status === 'in-progress' ? 'In Development' : p.status === 'requested' ? 'Pending Quote' : 'Planning',
+    progress: p.status === 'in-progress' ? 50 : 10,
+    nextMilestone: p.status === 'requested' ? 'Quote Required' : 'Development Phase'
+  }));
 
   return (
     <div className="space-y-6">
       <div className={`grid gap-4 ${isUnified ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-4'}`}>
         <div className="glass-card rounded-2xl border border-white/5 bg-slate-900/40 p-5">
-          <span className="text-xs text-slate-400 font-medium block">Active Projects</span>
-          <span className="text-2xl font-extrabold text-white mt-1.5 block">1</span>
+          <span className="text-xs text-slate-400 font-medium block">Total Projects</span>
+          <span className="text-2xl font-extrabold text-white mt-1.5 block">{loading ? '-' : totalProjects}</span>
         </div>
         <div className="glass-card rounded-2xl border border-white/5 bg-slate-900/40 p-5">
-          <span className="text-xs text-slate-400 font-medium block">Pending Invoices</span>
-          <span className="text-2xl font-extrabold text-amber-400 mt-1.5 block">1</span>
+          <span className="text-xs text-slate-400 font-medium block">Active Development</span>
+          <span className="text-2xl font-extrabold text-blue-400 mt-1.5 block">{loading ? '-' : activeProjects}</span>
         </div>
         {!isUnified && (
           <>
             <div className="glass-card rounded-2xl border border-white/5 bg-slate-900/40 p-5">
-              <span className="text-xs text-slate-400 font-medium block">Payments Settled</span>
-              <span className="text-2xl font-extrabold text-emerald-400 mt-1.5 block">$1,250</span>
+              <span className="text-xs text-slate-400 font-medium block">Pending Quotes</span>
+              <span className="text-2xl font-extrabold text-amber-400 mt-1.5 block">{loading ? '-' : pendingQuotes}</span>
             </div>
             <div className="glass-card rounded-2xl border border-white/5 bg-slate-900/40 p-5">
-              <span className="text-xs text-slate-400 font-medium block">Agreements Signed</span>
-              <span className="text-2xl font-extrabold text-indigo-400 mt-1.5 block">1</span>
+              <span className="text-xs text-slate-400 font-medium block">Total Investment</span>
+              <span className="text-2xl font-extrabold text-indigo-400 mt-1.5 block">{loading ? '-' : `NGN ${totalSpent.toLocaleString()}`}</span>
             </div>
           </>
         )}
@@ -435,7 +457,7 @@ function AgencyOverview({ portalBasePath, isUnified = false }: { portalBasePath:
         </div>
 
         <div className="space-y-3">
-          {projects.map((project, idx) => (
+          {activeProjectList.map((project, idx) => (
             <div key={idx} className="glass-panel border border-white/5 bg-slate-950/40 hover:bg-slate-900/40 rounded-2xl p-5 transition-colors">
               <div className="flex justify-between items-start mb-2">
                 <div>
@@ -444,7 +466,6 @@ function AgencyOverview({ portalBasePath, isUnified = false }: { portalBasePath:
                   </span>
                   <h4 className="text-sm font-bold text-white mt-1.5">{project.name}</h4>
                 </div>
-                <span className="text-xs font-bold text-cyan-400">{project.price}</span>
               </div>
               <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden mb-3">
                 <div
@@ -481,31 +502,60 @@ function AgencyOverview({ portalBasePath, isUnified = false }: { portalBasePath:
 }
 
 function PrintingOverview({ portalBasePath, isUnified = false }: { portalBasePath: string; isUnified?: boolean }) {
-  const recentOrders = [
-    { title: 'Thesis Document', status: 'In Production', type: 'Document Printing', price: 'NGN 2,500', date: '2 days ago' },
-    { title: 'Conference Poster', status: 'Ready', type: 'Graphic Design', price: 'NGN 8,000', date: '3 days ago' }
-  ];
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadOrders() {
+      try {
+        // Import dynamically to avoid circular dependencies if any
+        const { getMyOrders } = await import('../printing/printingService');
+        const data = await getMyOrders();
+        if (!cancelled) setOrders(data.orders);
+      } catch (err) {
+        console.error('Failed to load printing orders:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    loadOrders();
+    return () => { cancelled = true; };
+  }, []);
+
+  const totalOrders = orders.length;
+  const inProduction = orders.filter(o => o.status === 'processing' || o.status === 'printing').length;
+  const readyForPickup = orders.filter(o => o.status === 'ready').length;
+  const totalSpent = orders.reduce((sum, o) => sum + (o.price || 0), 0);
+
+  const recentOrders = orders.slice(0, 2).map(o => ({
+    title: o.title,
+    status: o.status === 'ready' ? 'Ready' : o.status === 'pending' ? 'Pending' : 'In Production',
+    type: o.serviceType,
+    price: o.price > 0 ? `NGN ${o.price.toLocaleString()}` : 'Pending Quote',
+    date: new Date(o.$createdAt).toLocaleDateString()
+  }));
 
   return (
     <div className="space-y-6">
       <div className={`grid gap-4 ${isUnified ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-4'}`}>
         <div className="glass-card rounded-2xl border border-white/5 bg-slate-900/40 p-5">
           <span className="text-xs text-slate-400 font-medium block">Total Orders</span>
-          <span className="text-2xl font-extrabold text-white mt-1.5 block">3</span>
+          <span className="text-2xl font-extrabold text-white mt-1.5 block">{loading ? '-' : totalOrders}</span>
         </div>
         <div className="glass-card rounded-2xl border border-white/5 bg-slate-900/40 p-5">
           <span className="text-xs text-slate-400 font-medium block">In Production</span>
-          <span className="text-2xl font-extrabold text-blue-400 mt-1.5 block">1</span>
+          <span className="text-2xl font-extrabold text-blue-400 mt-1.5 block">{loading ? '-' : inProduction}</span>
         </div>
         {!isUnified && (
           <>
             <div className="glass-card rounded-2xl border border-white/5 bg-slate-900/40 p-5">
               <span className="text-xs text-slate-400 font-medium block">Ready for Pickup</span>
-              <span className="text-2xl font-extrabold text-emerald-400 mt-1.5 block">1</span>
+              <span className="text-2xl font-extrabold text-emerald-400 mt-1.5 block">{loading ? '-' : readyForPickup}</span>
             </div>
             <div className="glass-card rounded-2xl border border-white/5 bg-slate-900/40 p-5">
               <span className="text-xs text-slate-400 font-medium block">Total Spent</span>
-              <span className="text-2xl font-extrabold text-rose-400 mt-1.5 block">NGN 25,500</span>
+              <span className="text-2xl font-extrabold text-rose-400 mt-1.5 block">{loading ? '-' : `NGN ${totalSpent.toLocaleString()}`}</span>
             </div>
           </>
         )}

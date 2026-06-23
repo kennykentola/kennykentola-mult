@@ -106,6 +106,7 @@ export default function AdminLayout({
     { name: 'Course Manager', href: '/admin/courses', icon: BookOpen },
     { name: 'Academy Review', href: '/admin/assignments', icon: FileCheck },
     { name: 'Project Board', href: '/admin/projects', icon: Layers },
+    { name: 'CS Projects', href: '/admin/academic', icon: BookOpen },
     { name: 'Print Orders', href: '/admin/printing', icon: Printer },
     { name: 'Verify Payments', href: '/admin/payments', icon: FileCheck, badgeCount: pendingCount },
     { name: 'System Settings', href: '/admin/settings', icon: Settings },

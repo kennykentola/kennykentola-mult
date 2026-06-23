@@ -268,8 +268,34 @@ const collections: CollectionDef[] = [
       { key: 'budget', type: 'float', required: false, defaultValue: 0 },
       { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'requested' },
       { key: 'pmId', type: 'string', size: 50, required: false },
+      { key: 'pmName', type: 'string', size: 255, required: false },
       { key: 'developers', type: 'string', size: 50, required: false, array: true },
       { key: 'designers', type: 'string', size: 50, required: false, array: true }
+    ]
+  },
+  {
+    id: 'project_messages',
+    name: 'Project Messages',
+    attributes: [
+      { key: 'projectId', type: 'string', size: 50, required: true },
+      { key: 'senderId', type: 'string', size: 50, required: true },
+      { key: 'senderName', type: 'string', size: 150, required: true },
+      { key: 'content', type: 'string', size: 5000, required: true },
+      { key: 'fileUrl', type: 'string', size: 500, required: false },
+      { key: 'createdAt', type: 'datetime', required: true }
+    ]
+  },
+  {
+    id: 'project_assets',
+    name: 'Project Assets',
+    attributes: [
+      { key: 'projectId', type: 'string', size: 50, required: true },
+      { key: 'uploadedBy', type: 'string', size: 50, required: true },
+      { key: 'uploaderName', type: 'string', size: 150, required: true },
+      { key: 'fileName', type: 'string', size: 255, required: true },
+      { key: 'fileUrl', type: 'string', size: 1000, required: true },
+      { key: 'fileType', type: 'string', size: 50, required: false },
+      { key: 'createdAt', type: 'datetime', required: true }
     ]
   },
   {
@@ -439,7 +465,8 @@ const collections: CollectionDef[] = [
       { key: 'proposalUrl', type: 'string', size: 500, required: false },
       { key: 'documentationUrl', type: 'string', size: 500, required: false },
       { key: 'sourceCodeUrl', type: 'string', size: 500, required: false },
-      { key: 'paymentId', type: 'string', size: 50, required: false }
+      { key: 'paymentId', type: 'string', size: 50, required: false },
+      { key: 'serviceScope', type: 'string', size: 100, required: false, defaultValue: 'Full Process' }
     ]
   },
   {

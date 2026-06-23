@@ -63,6 +63,8 @@ import adminRouter from './routes/admin';
 import superAdminRouter from './routes/super-admin';
 import chatRouter from './routes/chat';
 import uploadRouter from './routes/upload';
+import projectsRouter from './routes/projects';
+import academicProjectsRouter from './routes/academicProjects';
 
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/printing', printingRouter);
@@ -72,6 +74,8 @@ app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/super-admin', superAdminRouter);
 app.use('/api/v1/chat', chatRouter);
 app.use('/api/v1/upload', uploadRouter);
+app.use('/api/v1/projects', projectsRouter);
+app.use('/api/v1/academic-projects', academicProjectsRouter);
 
 // Basic Health Check Endpoint
 app.get('/api/health', (req, res) => {

@@ -7,6 +7,33 @@ import { Databases, Query } from 'appwrite';
 import Link from 'next/link';
 import { Course } from '@company/shared';
 
+const getProgressWidthClass = (progress: number) => {
+  const rounded = Math.round((progress || 0) / 5) * 5;
+  switch (rounded) {
+    case 5: return 'w-[5%]';
+    case 10: return 'w-[10%]';
+    case 15: return 'w-[15%]';
+    case 20: return 'w-[20%]';
+    case 25: return 'w-[25%]';
+    case 30: return 'w-[30%]';
+    case 35: return 'w-[35%]';
+    case 40: return 'w-[40%]';
+    case 45: return 'w-[45%]';
+    case 50: return 'w-[50%]';
+    case 55: return 'w-[55%]';
+    case 60: return 'w-[60%]';
+    case 65: return 'w-[65%]';
+    case 70: return 'w-[70%]';
+    case 75: return 'w-[75%]';
+    case 80: return 'w-[80%]';
+    case 85: return 'w-[85%]';
+    case 90: return 'w-[90%]';
+    case 95: return 'w-[95%]';
+    case 100: return 'w-full';
+    default: return 'w-0';
+  }
+};
+
 export default function AcademyDashboardPage() {
   const { user } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
@@ -66,9 +93,7 @@ export default function AcademyDashboardPage() {
                 </h3>
                 <div className="w-full bg-white/5 rounded-full h-2 mb-4 overflow-hidden">
                   <div 
-                    className="bg-primary h-2 rounded-full" 
-                    // eslint-disable-next-line
-                    style={{ width: `${enrollment.progress}%` }}
+                    className={`bg-primary h-2 rounded-full ${getProgressWidthClass(enrollment.progress)}`} 
                   />
                 </div>
                 <div className="flex justify-between items-center text-sm">

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../features/auth/AuthContext';
 import { 
   Users, 
@@ -16,21 +16,47 @@ import Link from 'next/link';
 
 export default function AdminDashboardHome() {
   const { profile } = useAuth();
+  const [metrics, setMetrics] = useState<any>({
+    totalUsers: 0,
+    totalCourses: 0,
+    totalEnrollments: 0,
+    totalPrintOrders: 0,
+    totalRevenue: 0,
+    activeProjects: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    async function loadAnalytics() {
+      try {
+        const { getAdminAnalytics } = await import('../../features/admin/adminService');
+        const data = await getAdminAnalytics();
+        if (!cancelled) setMetrics(data.metrics);
+      } catch (err) {
+        console.error('Failed to load admin analytics:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    loadAnalytics();
+    return () => { cancelled = true; };
+  }, []);
 
   if (!profile) return null;
 
   const kpis = [
-    { name: 'Total Platform Users', value: '1,482', icon: Users, change: '+12% this week', color: 'from-blue-500/10 to-indigo-500/10 border-indigo-500/20 text-indigo-400' },
-    { name: 'Active Software Contracts', value: '18', icon: Layers, change: '4 pending approval', color: 'from-cyan-500/10 to-teal-500/10 border-cyan-500/20 text-cyan-400' },
-    { name: 'Settle-Invoiced Income', value: '$24,850', icon: DollarSign, change: '+$3,200 this month', color: 'from-emerald-500/10 to-teal-500/10 border-emerald-500/20 text-emerald-400' },
-    { name: 'Pending Receipts', value: '3', icon: Clock, change: 'Action required', color: 'from-rose-500/10 to-orange-500/10 border-rose-500/20 text-rose-400' }
+    { name: 'Total Platform Users', value: loading ? '-' : metrics.totalUsers.toLocaleString(), icon: Users, change: 'All users', color: 'from-blue-500/10 to-indigo-500/10 border-indigo-500/20 text-indigo-400' },
+    { name: 'Active Software Projects', value: loading ? '-' : metrics.activeProjects.toLocaleString(), icon: Layers, change: 'In database', color: 'from-cyan-500/10 to-teal-500/10 border-cyan-500/20 text-cyan-400' },
+    { name: 'Settle-Invoiced Income', value: loading ? '-' : `₦${metrics.totalRevenue.toLocaleString()}`, icon: DollarSign, change: 'Verified payments', color: 'from-emerald-500/10 to-teal-500/10 border-emerald-500/20 text-emerald-400' },
+    { name: 'Print Orders', value: loading ? '-' : metrics.totalPrintOrders.toLocaleString(), icon: Clock, change: 'Total requested', color: 'from-rose-500/10 to-orange-500/10 border-rose-500/20 text-rose-400' }
   ];
 
   const recentActivities = [
-    { desc: 'New user "John Doe" registered as Student', time: '5 mins ago', badge: 'User' },
-    { desc: 'Client "Acme Corp" submitted estimate request "Solar Wiring"', time: '1 hr ago', badge: 'Request' },
-    { desc: 'Student "Jane Smith" uploaded Bank Receipt for inv-101', time: '2 hrs ago', badge: 'Payment' },
-    { desc: 'Admin updated project status of "Multi-Tenant CRM"', time: '4 hrs ago', badge: 'Project' }
+    { desc: 'New user registration monitoring active', time: 'Live', badge: 'System' },
+    { desc: 'Payment verification queue monitoring active', time: 'Live', badge: 'System' },
+    { desc: 'Project request monitoring active', time: 'Live', badge: 'System' },
+    { desc: 'Printing queue monitoring active', time: 'Live', badge: 'System' }
   ];
 
   return (

@@ -36,20 +36,52 @@ const statusConfig: Record<OrderStatus, { label: string; color: string; dotColor
   cancelled:  { label: 'Cancelled',     color: 'text-rose-400 bg-rose-500/10 border-rose-500/20',     dotColor: 'bg-rose-400' },
 };
 
-// Demo data — will be replaced by Appwrite queries
-const demoOrders: AdminPrintOrder[] = [
-  { id: 'PO-001', customer: 'Adeola Femi',    title: 'Thesis Document',    type: 'Document Printing', status: 'processing', price: '₦2,500',  date: '2026-06-04', files: 3 },
-  { id: 'PO-002', customer: 'Chioma Nwankwo', title: 'Conference Poster',  type: 'Graphic Design',    status: 'ready',      price: '₦8,000',  date: '2026-06-03', files: 1 },
-  { id: 'PO-003', customer: 'Bola Adeyemi',   title: 'Student ID Batch',   type: 'ID Card Production',status: 'pending',    price: '₦15,000', date: '2026-06-05', files: 5 },
-  { id: 'PO-004', customer: 'Emeka Okoro',    title: 'Invoice Copies',     type: 'Photocopying',      status: 'delivered',  price: '₦800',    date: '2026-06-01', files: 2 },
-  { id: 'PO-005', customer: 'Fatima Yusuf',   title: 'Business Cards',     type: 'Graphic Design',    status: 'pending',    price: '₦5,500',  date: '2026-06-05', files: 1 },
-];
-
 export default function AdminPrintingPage() {
   const [filterStatus, setFilterStatus] = useState<OrderStatus | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [orders, setOrders] = useState<AdminPrintOrder[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = demoOrders.filter((order) => {
+  React.useEffect(() => {
+    let cancelled = false;
+    async function loadOrders() {
+      try {
+        const { getAdminOrders } = await import('../../../features/printing/printingService');
+        const data = await getAdminOrders('all');
+        if (!cancelled) {
+          // map to AdminPrintOrder format expected by the UI
+          setOrders(data.orders.map((o: any) => ({
+            id: o.$id,
+            customer: o.userId || 'Unknown',
+            title: o.title,
+            type: o.serviceType,
+            status: o.status as OrderStatus,
+            price: o.price > 0 ? `₦${o.price.toLocaleString()}` : 'Pending Quote',
+            date: new Date(o.$createdAt).toLocaleDateString(),
+            files: Array.isArray(o.fileUrls) ? o.fileUrls.length : 0
+          })));
+        }
+      } catch (err) {
+        console.error('Failed to load admin printing orders:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    loadOrders();
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus) => {
+    try {
+      const { updateOrderStatus } = await import('../../../features/printing/printingService');
+      await updateOrderStatus(orderId, { status: newStatus });
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+    } catch (err) {
+      alert('Failed to update status');
+    }
+  };
+
+  const filtered = orders.filter((order) => {
     const matchesStatus = filterStatus === 'all' || order.status === filterStatus;
     const matchesSearch = order.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -58,10 +90,10 @@ export default function AdminPrintingPage() {
   });
 
   const stats = {
-    total: demoOrders.length,
-    pending: demoOrders.filter(o => o.status === 'pending').length,
-    processing: demoOrders.filter(o => o.status === 'processing').length,
-    ready: demoOrders.filter(o => o.status === 'ready').length,
+    total: orders.length,
+    pending: orders.filter(o => o.status === 'pending').length,
+    processing: orders.filter(o => o.status === 'processing').length,
+    ready: orders.filter(o => o.status === 'ready').length,
   };
 
   return (
@@ -167,6 +199,7 @@ export default function AdminPrintingPage() {
                   {order.status === 'pending' && (
                     <>
                       <button
+                        onClick={() => handleUpdateStatus(order.id, 'processing')}
                         className="rounded-lg p-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-900/20 transition-colors"
                         title="Accept order"
                         aria-label={`Accept order ${order.id}`}
@@ -174,6 +207,7 @@ export default function AdminPrintingPage() {
                         <CheckCircle className="h-4 w-4" />
                       </button>
                       <button
+                        onClick={() => handleUpdateStatus(order.id, 'cancelled')}
                         className="rounded-lg p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-900/20 transition-colors"
                         title="Reject order"
                         aria-label={`Reject order ${order.id}`}
@@ -184,6 +218,7 @@ export default function AdminPrintingPage() {
                   )}
                   {order.status === 'processing' && (
                     <button
+                      onClick={() => handleUpdateStatus(order.id, 'ready')}
                       className="rounded-lg p-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-900/20 transition-colors"
                       title="Mark as ready"
                       aria-label={`Mark ${order.id} as ready`}
