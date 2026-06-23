@@ -123,15 +123,34 @@ export default function AdminAnalyticsPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-8 p-4">
       {/* Header */}
-      <div>
-        <span className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-xs font-semibold text-indigo-300">
-          <BarChart3 className="h-3.5 w-3.5" />
-          Analytics & Reports
-        </span>
-        <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-white">Platform Dashboard</h1>
-        <p className="mt-2 text-slate-400 text-sm">
-          High-level overview of users, courses, projects, and revenue.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <span className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-xs font-semibold text-indigo-300">
+            <BarChart3 className="h-3.5 w-3.5" />
+            Analytics & Reports
+          </span>
+          <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-white">Platform Dashboard</h1>
+          <p className="mt-2 text-slate-400 text-sm">
+            High-level overview of users, courses, projects, and revenue.
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            if (!monthlyData || monthlyData.length === 0) return;
+            const headers = ['Month', 'Revenue', 'New Users', 'Enrollments'];
+            const rows = monthlyData.map(m => [m.name, m.revenue, m.users, m.enrollments]);
+            const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `analytics_export_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+          }}
+          disabled={!monthlyData || monthlyData.length === 0}
+          className="self-start sm:self-auto inline-flex items-center gap-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-300 transition-colors disabled:opacity-50"
+        >
+          Export CSV
+        </button>
       </div>
 
       {/* KPI Cards */}

@@ -12,6 +12,7 @@ interface Project {
   description: string;
   budget: number;
   status: string;
+  deliverableUrl?: string;
 }
 
 interface Milestone {
@@ -121,9 +122,13 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
             
             <div className="pt-4 border-t border-border">
               <p className="text-xs text-muted uppercase tracking-wider font-semibold">Deliverables</p>
-              <button className="mt-3 w-full py-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-md text-sm font-medium transition-colors">
-                View Repository
-              </button>
+              {project.deliverableUrl ? (
+                <a href={project.deliverableUrl} target="_blank" rel="noreferrer" className="mt-3 block text-center w-full py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-md text-sm font-medium transition-colors">
+                  View Final Deliverable
+                </a>
+              ) : (
+                <p className="mt-3 text-sm text-slate-500">Not yet available. Our developers are working on it.</p>
+              )}
             </div>
           </div>
         </div>

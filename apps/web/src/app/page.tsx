@@ -96,11 +96,11 @@ export default function Home() {
           </div>
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
-            <a href="#academy" className="hover:text-white transition-colors">Academy</a>
+            <Link href="/about" className="hover:text-white transition-colors">About</Link>
             <a href="#services" className="hover:text-white transition-colors">Services</a>
-            <a href="#portfolio" className="hover:text-white transition-colors">Portfolio</a>
-            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-            <a href="#blog" className="hover:text-white transition-colors">Blog</a>
+            <Link href="/bootcamps" className="hover:text-white transition-colors">Bootcamps</Link>
+            <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
+            <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
           </nav>
 
           <div className="flex items-center gap-4">

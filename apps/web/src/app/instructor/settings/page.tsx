@@ -103,7 +103,7 @@ export default function InstructorSettingsPage() {
                   type="button"
                   role="switch"
                   aria-label={`Toggle ${item.label}`}
-                  {...{ 'aria-checked': checked }}
+                  aria-checked={checked ? 'true' : 'false'}
                   onClick={() => setNotifications((n) => ({ ...n, [item.key]: !checked }))}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                     checked ? 'bg-indigo-600' : 'bg-slate-700'

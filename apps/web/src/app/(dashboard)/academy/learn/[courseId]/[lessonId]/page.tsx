@@ -126,7 +126,7 @@ export default function LessonPlayerPage({ params }: { params: Promise<{ courseI
       {/* Main Video Area */}
       <div className="flex-1 space-y-6">
         <VideoPlayer 
-          src="https://www.w3schools.com/html/mov_bbb.mp4" // Placeholder MP4 since YouTube was rejected
+          src={currentLesson.videoUrl || ''} 
           onEnded={() => console.log('Video ended naturally')}
         />
 

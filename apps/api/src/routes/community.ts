@@ -163,4 +163,64 @@ router.post('/posts/:postId/comments', authenticateJWT, async (req: Authenticate
   }
 });
 
+// DELETE a post (author or admin/super-admin)
+router.delete('/posts/:postId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { postId } = req.params;
+  const role = req.user?.role || '';
+  const userId = req.user?.id || '';
+  try {
+    const post = await databases.getDocument(DATABASE_ID, POSTS_COLLECTION, postId) as any;
+    const isAdmin = ['Admin', 'Super Admin'].includes(role);
+    if (!isAdmin && post.userId !== userId) {
+      return res.status(403).json({ error: 'You can only delete your own posts.' });
+    }
+    // Delete all comments on this post first
+    const comments = await databases.listDocuments(DATABASE_ID, COMMENTS_COLLECTION, [
+      Query.equal('postId', postId), Query.limit(200)
+    ]);
+    await Promise.all(comments.documents.map((c: any) =>
+      databases.deleteDocument(DATABASE_ID, COMMENTS_COLLECTION, c.$id)
+    ));
+    await databases.deleteDocument(DATABASE_ID, POSTS_COLLECTION, postId);
+
+    // Broadcast deletion
+    const io = getIO();
+    if (io) io.to('community_feed').emit('post_deleted', { postId });
+
+    res.status(200).json({ message: 'Post deleted.' });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// DELETE a comment (author or admin/super-admin)
+router.delete('/comments/:commentId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { commentId } = req.params;
+  const role = req.user?.role || '';
+  const userId = req.user?.id || '';
+  try {
+    const comment = await databases.getDocument(DATABASE_ID, COMMENTS_COLLECTION, commentId) as any;
+    const isAdmin = ['Admin', 'Super Admin'].includes(role);
+    if (!isAdmin && comment.userId !== userId) {
+      return res.status(403).json({ error: 'You can only delete your own comments.' });
+    }
+    await databases.deleteDocument(DATABASE_ID, COMMENTS_COLLECTION, commentId);
+
+    // Decrement post commentsCount
+    try {
+      const post = await databases.getDocument(DATABASE_ID, POSTS_COLLECTION, comment.postId) as any;
+      await databases.updateDocument(DATABASE_ID, POSTS_COLLECTION, comment.postId, {
+        commentsCount: Math.max(0, (post.commentsCount || 1) - 1)
+      });
+    } catch (_) {}
+
+    const io = getIO();
+    if (io) io.to('community_feed').emit('comment_deleted', { commentId, postId: comment.postId });
+
+    res.status(200).json({ message: 'Comment deleted.' });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 export default router;

@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth';
 import { CreditCard, Building2, UploadCloud, CheckCircle2, ArrowLeft, ShieldCheck } from 'lucide-react';
 import { PaystackButton } from 'react-paystack';
 import { BankAccount } from '@company/shared';
+import { submitPayment } from '../../../features/payments/paymentsService';
 
 // You will need to replace this with your actual Paystack Public Key
 const PAYSTACK_PUBLIC_KEY = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_test_1234567890';
@@ -139,8 +140,19 @@ export default function UniversalCheckoutPage() {
       const databases = new Databases(client);
       const dbId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || 'multicompany';
       
+      // Update job to pending-verification
       await databases.updateDocument(dbId, moduleId as string, jobId as string, {
         status: 'pending-verification'
+      });
+
+      // Submit payment slip to the central payments collection
+      await submitPayment({
+        type: moduleId as string,
+        referenceId: jobId as string,
+        bankAccountId: bankDetails?.$id || 'unknown',
+        amount: price,
+        receiptImage: receiptUrl,
+        referenceNumber: `TRX-${Date.now()}` // Or add an input for the user to provide this
       });
 
       alert('Receipt uploaded successfully! We will verify it shortly.');

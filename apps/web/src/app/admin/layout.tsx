@@ -18,7 +18,10 @@ import {
   X,
   ShieldAlert,
   BarChart3,
-  Inbox
+  Inbox,
+  Zap,
+  Code2,
+  MessageSquare
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -97,6 +100,8 @@ export default function AdminLayout({
     { name: 'Admin Overview', href: '/admin', icon: Shield },
     { name: 'Service Requests', href: '/admin/requests', icon: Inbox },
     { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+    { name: 'Client Chat', href: '/admin/chat', icon: MessageSquare },
+    { name: 'Community', href: '/admin/community', icon: Users },
     { name: 'Configure Users', href: '/admin/users', icon: Users },
     { name: 'Course Manager', href: '/admin/courses', icon: BookOpen },
     { name: 'Academy Review', href: '/admin/assignments', icon: FileCheck },
@@ -104,6 +109,13 @@ export default function AdminLayout({
     { name: 'Print Orders', href: '/admin/printing', icon: Printer },
     { name: 'Verify Payments', href: '/admin/payments', icon: FileCheck, badgeCount: pendingCount },
     { name: 'System Settings', href: '/admin/settings', icon: Settings },
+  ];
+
+  const workerItems = [
+    { name: 'Electrician Desk', href: '/admin/worker/solar', icon: Zap },
+    { name: 'Developer Desk', href: '/admin/worker/agency', icon: Code2 },
+    { name: 'Writer Desk', href: '/admin/worker/academic', icon: BookOpen },
+    { name: 'Printer Desk', href: '/admin/worker/printing', icon: Printer },
   ];
 
   return (
@@ -133,33 +145,56 @@ export default function AdminLayout({
           </button>
         </div>
 
-        <nav className="flex-1 py-6 px-4 space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = pathname === item.href;
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  active 
-                    ? 'bg-rose-500/10 border border-rose-500/20 text-rose-450 shadow-sm shadow-rose-500/5' 
-                    : 'border border-transparent text-slate-400 hover:text-white hover:bg-slate-900/50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className="h-4 w-4" />
+          <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+            <div className="px-3 mb-2 mt-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Management
+            </div>
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all group ${
+                    isActive
+                      ? 'bg-rose-500/10 text-rose-450 font-bold'
+                      : 'text-slate-400 hover:bg-slate-900/50 hover:text-slate-200'
+                  }`}
+                >
+                  <Icon className={`h-4 w-4 ${isActive ? 'text-rose-500' : 'text-slate-500 group-hover:text-slate-400'}`} />
                   {item.name}
-                </div>
-                {item.badgeCount !== undefined && item.badgeCount > 0 && (
-                  <span className="bg-rose-650 text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">
-                    {item.badgeCount}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
+                  {item.badgeCount ? (
+                    <span className="ml-auto bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                      {item.badgeCount}
+                    </span>
+                  ) : null}
+                </Link>
+              );
+            })}
+
+            <div className="px-3 mb-2 mt-6 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Worker Desks
+            </div>
+            {workerItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all group ${
+                    isActive
+                      ? 'bg-indigo-500/10 text-indigo-400 font-bold'
+                      : 'text-slate-400 hover:bg-slate-900/50 hover:text-slate-200'
+                  }`}
+                >
+                  <Icon className={`h-4 w-4 ${isActive ? 'text-indigo-400' : 'text-slate-500 group-hover:text-slate-400'}`} />
+                  {item.name}
+                </Link>
+              );
+            })}
+          </nav>
 
         {/* Back to User Dashboard */}
         <div className="p-4 border-t border-slate-900">
@@ -190,30 +225,54 @@ export default function AdminLayout({
               </button>
             </div>
 
-            <nav className="flex-1 py-6 space-y-1">
+            <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+              <div className="px-3 mb-2 mt-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                Management
+              </div>
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const active = pathname === item.href;
+                const isActive = pathname === item.href;
                 return (
                   <Link
-                    key={item.name}
+                    key={item.href}
                     href={item.href}
                     onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                      active 
-                        ? 'bg-rose-500/10 border border-rose-500/20 text-rose-450' 
-                        : 'border border-transparent text-slate-400 hover:text-white hover:bg-slate-900/50'
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all group ${
+                      isActive
+                        ? 'bg-rose-500/10 text-rose-450 font-bold border border-rose-500/20'
+                        : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <Icon className="h-4 w-4" />
-                      {item.name}
-                    </div>
-                    {item.badgeCount !== undefined && item.badgeCount > 0 && (
-                      <span className="bg-rose-650 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    <Icon className={`h-4 w-4 ${isActive ? 'text-rose-500' : 'text-slate-500'}`} />
+                    {item.name}
+                    {item.badgeCount ? (
+                      <span className="ml-auto bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                         {item.badgeCount}
                       </span>
-                    )}
+                    ) : null}
+                  </Link>
+                );
+              })}
+
+              <div className="px-3 mb-2 mt-6 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                Worker Desks
+              </div>
+              {workerItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setSidebarOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all group ${
+                      isActive
+                        ? 'bg-indigo-500/10 text-indigo-400 font-bold border border-indigo-500/20'
+                        : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
+                    }`}
+                  >
+                    <Icon className={`h-4 w-4 ${isActive ? 'text-indigo-400' : 'text-slate-500'}`} />
+                    {item.name}
                   </Link>
                 );
               })}

@@ -117,11 +117,12 @@ export default function Register() {
           type="button"
           onClick={() => {
             try {
-              const { account } = require('../../lib/appwrite');
               const redirectUrl = `${window.location.origin}/dashboard`;
-              account.createOAuth2Session('google' as any, redirectUrl, `${window.location.origin}/register`);
-            } catch (err) {
-              setError('Google sign-in is not configured yet. Please register with email and password.');
+              import('../../lib/appwrite').then(({ account }) => {
+                account.createOAuth2Session('google' as any, redirectUrl, `${window.location.origin}/register`);
+              });
+            } catch (err: any) {
+              setError('Google sign-in is not configured yet. Please sign in with email and password.');
             }
           }}
           className="w-full flex items-center justify-center gap-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 py-3 text-sm font-semibold text-white transition-all mb-4"
@@ -134,6 +135,17 @@ export default function Register() {
           </svg>
           Continue with Google
         </button>
+
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-800" />
+          </div>
+          <div className="relative flex justify-center text-xs text-slate-500">
+            <span className="bg-slate-900/50 px-3">or register with email</span>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
 
         <div className="relative my-4">
           <div className="absolute inset-0 flex items-center">

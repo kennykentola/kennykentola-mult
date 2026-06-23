@@ -337,12 +337,26 @@ const collections: CollectionDef[] = [
     name: 'Quizzes',
     attributes: [
       { key: 'courseId', type: 'string', size: 50, required: true },
-      { key: 'moduleId', type: 'string', size: 50, required: false },
       { key: 'title', type: 'string', size: 255, required: true },
       { key: 'description', type: 'string', size: 2000, required: false },
-      { key: 'timeLimitMinutes', type: 'integer', required: true, defaultValue: 0 },
       { key: 'passingScore', type: 'integer', required: true, defaultValue: 70 },
-      { key: 'questions', type: 'string', size: 10000, required: false }
+      { key: 'order', type: 'integer', required: false, defaultValue: 1 },
+      { key: 'isPublished', type: 'boolean', required: true, defaultValue: false }
+    ]
+  },
+  {
+    id: 'quiz_questions',
+    name: 'Quiz Questions',
+    attributes: [
+      { key: 'quizId', type: 'string', size: 50, required: true },
+      { key: 'question', type: 'string', size: 2000, required: true },
+      { key: 'optionA', type: 'string', size: 500, required: true },
+      { key: 'optionB', type: 'string', size: 500, required: true },
+      { key: 'optionC', type: 'string', size: 500, required: false },
+      { key: 'optionD', type: 'string', size: 500, required: false },
+      { key: 'correctOption', type: 'string', size: 1, required: true },
+      { key: 'points', type: 'integer', required: false, defaultValue: 1 },
+      { key: 'order', type: 'integer', required: false, defaultValue: 1 }
     ]
   },
   {
@@ -353,10 +367,10 @@ const collections: CollectionDef[] = [
       { key: 'studentId', type: 'string', size: 50, required: true },
       { key: 'courseId', type: 'string', size: 50, required: true },
       { key: 'score', type: 'integer', required: true, defaultValue: 0 },
+      { key: 'maxScore', type: 'integer', required: true, defaultValue: 0 },
       { key: 'passed', type: 'boolean', required: true, defaultValue: false },
-      { key: 'startedAt', type: 'datetime', required: true },
-      { key: 'completedAt', type: 'datetime', required: false },
-      { key: 'answers', type: 'string', size: 10000, required: false }
+      { key: 'answersJson', type: 'string', size: 10000, required: false },
+      { key: 'completedAt', type: 'datetime', required: false }
     ]
   },
   {
@@ -671,8 +685,13 @@ async function ensureDocument(collectionId: string, documentId: string, payload:
     await databases.getDocument(DATABASE_ID, collectionId, documentId);
   } catch (err) {
     const { id, ...data } = payload;
-    await databases.createDocument(DATABASE_ID, collectionId, documentId, data);
+    try {
+      await databases.createDocument(DATABASE_ID, collectionId, documentId, data);
+    } catch (createErr: any) {
+      console.warn(`[Seed] Failed to create document ${documentId} in ${collectionId}. Ignoring. Error: ${createErr.message}`);
+    }
   }
+  await sleep(200);
 }
 
 async function seedAcademyContent() {
@@ -761,10 +780,14 @@ export async function initializeDatabase() {
   try {
     await databases.get(DATABASE_ID);
     console.log(`[Appwrite Init] Database '${DATABASE_ID}' found.`);
-  } catch (err) {
-    console.log(`[Appwrite Init] Database '${DATABASE_ID}' not found. Creating...`);
-    await databases.create(DATABASE_ID, DATABASE_NAME);
-    await sleep(1000);
+  } catch (err: any) {
+    if (err.code === 404) {
+      console.log(`[Appwrite Init] Database '${DATABASE_ID}' not found. Creating...`);
+      await databases.create(DATABASE_ID, DATABASE_NAME);
+      await sleep(1000);
+    } else {
+      console.warn(`[Appwrite Init] Failed to fetch database. Ignoring to prevent crash. Error: ${err.message}`);
+    }
   }
 
   // 2. Build collections and attributes
@@ -776,8 +799,11 @@ export async function initializeDatabase() {
       await databases.getCollection(DATABASE_ID, colDef.id);
       exists = true;
       console.log(`[Collection] Collection "${colDef.id}" already exists. Skipping creation.`);
-    } catch (err) {
-      // missing
+    } catch (err: any) {
+      if (err.code !== 404) {
+        console.warn(`[Collection] Failed to fetch collection "${colDef.id}". Skipping. Error: ${err.message}`);
+        continue;
+      }
     }
 
     if (!exists) {
@@ -790,12 +816,16 @@ export async function initializeDatabase() {
       await sleep(500);
     } else {
       // Update permissions for existing collections
-      await databases.updateCollection(DATABASE_ID, colDef.id, colDef.name, [
-        Permission.read(Role.any()),
-        Permission.create(Role.any()),
-        Permission.update(Role.any()),
-        Permission.delete(Role.any())
-      ]);
+      try {
+        await databases.updateCollection(DATABASE_ID, colDef.id, colDef.name, [
+          Permission.read(Role.any()),
+          Permission.create(Role.any()),
+          Permission.update(Role.any()),
+          Permission.delete(Role.any())
+        ]);
+      } catch (e: any) {
+        console.warn(`[Collection] Failed to update permissions for "${colDef.id}". Ignoring. Error: ${e.message}`);
+      }
       await sleep(500);
     }
 

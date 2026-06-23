@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticateJWT, AuthenticatedRequest } from '../middleware/auth';
-import { databases } from '../services/appwrite';
+import { databases, users } from '../services/appwrite';
 const databaseId = process.env.APPWRITE_DATABASE_ID || 'multicompany';
 import { Query, ID } from 'node-appwrite';
 
@@ -16,7 +16,7 @@ router.get('/rooms', authenticateJWT, async (req: AuthenticatedRequest, res) => 
       databaseId,
       'chat_rooms',
       [
-        Query.equal('participants', userId),
+        Query.contains('participants', userId),
         Query.orderDesc('$createdAt'),
         Query.limit(50)
       ]
@@ -35,10 +35,17 @@ router.get('/history/:roomId', authenticateJWT, async (req: AuthenticatedRequest
     const { roomId } = req.params;
     const userId = req.user?.id;
 
-    // Verify user is in room
-    const room = await databases.getDocument(databaseId, 'chat_rooms', roomId);
-    if (!(room as any).participants.includes(userId)) {
-      return res.status(403).json({ error: 'You are not a participant in this room' });
+    // Verify user is in room (unless community_global)
+    if (roomId === 'community_global') {
+      const userPrefs = await users.getPrefs(userId!);
+      if (!userPrefs.isCommunityMember) {
+        return res.status(403).json({ error: 'You have not joined the community group' });
+      }
+    } else {
+      const room = await databases.getDocument(databaseId, 'chat_rooms', roomId);
+      if (!(room as any).participants.includes(userId)) {
+        return res.status(403).json({ error: 'You are not a participant in this room' });
+      }
     }
 
     const response = await databases.listDocuments(
@@ -73,7 +80,7 @@ router.post('/rooms', authenticateJWT, async (req: AuthenticatedRequest, res) =>
       databaseId,
       'chat_rooms',
       [
-        Query.equal('participants', userId),
+        Query.contains('participants', userId),
         Query.limit(100)
       ]
     );
@@ -138,6 +145,52 @@ router.get('/users/search', authenticateJWT, async (req: AuthenticatedRequest, r
     res.json({ users: usersList });
   } catch (err: any) {
     console.error('Error searching users:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 5. Join Community
+router.post('/community/join', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    // Fetch existing prefs
+    const userPrefs = await users.getPrefs(userId);
+    
+    // Update prefs
+    await users.updatePrefs(userId, {
+      ...userPrefs,
+      isCommunityMember: true
+    });
+
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error('Error joining community:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 6. Get Community Members
+router.get('/community/members', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  try {
+    // List all users. Since we can't query inside prefs directly with the SDK,
+    // we fetch users and filter them in memory (or use search if feasible).
+    // In production, we'd use a dedicated collection, but for this demo, fetching works.
+    const response = await users.list([Query.limit(500)]);
+
+    const members = response.users
+      .filter((u: any) => u.prefs?.isCommunityMember === true)
+      .map((u: any) => ({
+        userId: u.$id,
+        firstName: u.name.split(' ')[0] || u.name,
+        lastName: u.name.split(' ').slice(1).join(' ') || '',
+        role: u.prefs?.role || 'Member'
+      }));
+
+    res.json({ members });
+  } catch (err: any) {
+    console.error('Error fetching community members:', err);
     res.status(500).json({ error: err.message });
   }
 });

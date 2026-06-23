@@ -118,6 +118,11 @@ export default function AcademicDashboardPage() {
                         Download Code
                       </a>
                     )}
+                    {(project as any).deliverableUrl && (
+                      <a href={(project as any).deliverableUrl} target="_blank" rel="noreferrer" className="text-sm text-indigo-400 hover:underline font-bold px-3 py-1 bg-indigo-500/10 rounded-md border border-indigo-500/20">
+                        View Final Deliverable
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>

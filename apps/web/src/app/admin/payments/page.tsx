@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FileText, Check, X, Eye, ShieldAlert, Award, Loader2, RefreshCw } from 'lucide-react';
+import { FileText, Check, X, Eye, ShieldAlert, Award, Loader2, RefreshCw, Download } from 'lucide-react';
 import { getAdminPendingPayments, verifyPayment, rejectPayment } from '../../../features/payments/paymentsService';
 
 export default function AdminPaymentsPage() {
@@ -76,6 +76,31 @@ export default function AdminPaymentsPage() {
     }
   };
 
+  const handleExportCsv = () => {
+    if (receiptsQueue.length === 0) return;
+    
+    const headers = ['ID', 'Date Uploaded', 'Client Name', 'Invoice ID', 'Amount', 'Status'];
+    const rows = receiptsQueue.map(r => [
+      r.id,
+      r.dateUploaded,
+      `"${r.clientName}"`,
+      r.invoiceId,
+      r.amount,
+      'Pending'
+    ]);
+    
+    const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `pending_payments_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const activeReceipt = receiptsQueue.find(r => r.id === activeReceiptId);
 
   return (
@@ -86,13 +111,22 @@ export default function AdminPaymentsPage() {
           <h1 className="text-3xl font-extrabold text-white">Manual Payment Queue</h1>
           <p className="text-slate-400 text-sm mt-1">Audit customer manual bank transfer receipt screenshots and mark invoices as paid in real-time.</p>
         </div>
-        <button
-          onClick={loadPending}
-          disabled={loading}
-          className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-350 hover:text-white border border-slate-800 text-xs font-semibold transition-colors"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={handleExportCsv}
+            disabled={receiptsQueue.length === 0}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 text-xs font-semibold transition-colors disabled:opacity-50"
+          >
+            <Download className="h-3.5 w-3.5" /> Export CSV
+          </button>
+          <button
+            onClick={loadPending}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-350 hover:text-white border border-slate-800 text-xs font-semibold transition-colors"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
+          </button>
+        </div>
       </div>
 
       {successMsg && (

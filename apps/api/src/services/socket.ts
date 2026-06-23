@@ -1,7 +1,7 @@
 import { Server as HttpServer } from 'http';
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import { Client, Account, Query } from 'node-appwrite';
-import { databases } from './appwrite';
+import { databases, users } from './appwrite';
 const databaseId = process.env.APPWRITE_DATABASE_ID || 'multicompany';
 import { ID } from 'node-appwrite';
 
@@ -12,6 +12,10 @@ const onlineUsers = new Map<string, Set<string>>();
 
 async function canAccessChatRoom(roomId: string, userId: string) {
   try {
+    if (roomId === 'community_global') {
+      const prefs = await users.getPrefs(userId);
+      return (prefs as any).isCommunityMember === true;
+    }
     const room = await databases.getDocument(databaseId, 'chat_rooms', roomId);
     return Array.isArray((room as any).participants) && (room as any).participants.includes(userId);
   } catch {
@@ -128,17 +132,19 @@ export function initSocketServer(server: HttpServer) {
           }
         );
 
-        // Update chat room last message
-        await databases.updateDocument(
-          databaseId,
-          'chat_rooms',
-          data.roomId,
-          {
-            lastMessageId: message.$id,
-            lastMessageText: data.type === 'audio' ? '🎤 Voice message' : data.content.substring(0, 50),
-            lastMessageTime: new Date().toISOString()
-          }
-        );
+        // Update chat room last message (unless it's the virtual community room)
+        if (data.roomId !== 'community_global') {
+          await databases.updateDocument(
+            databaseId,
+            'chat_rooms',
+            data.roomId,
+            {
+              lastMessageId: message.$id,
+              lastMessageText: data.type === 'audio' ? '🎤 Voice message' : data.content.substring(0, 50),
+              lastMessageTime: new Date().toISOString()
+            }
+          );
+        }
 
         // Broadcast to the room
         io?.to(data.roomId).emit('receive_message', message);

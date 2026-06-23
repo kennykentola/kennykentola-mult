@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
+
+const ReactPlayer = dynamic(() => import('react-player/lazy'), { ssr: false });
 
 interface VideoPlayerProps {
   src: string;
@@ -10,38 +12,35 @@ interface VideoPlayerProps {
 }
 
 export function VideoPlayer({ src, poster, onEnded, onTimeUpdate }: VideoPlayerProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const handleTimeUpdate = () => {
-      if (onTimeUpdate) onTimeUpdate(video.currentTime);
-    };
-
-    video.addEventListener('timeupdate', handleTimeUpdate);
-    video.addEventListener('ended', () => {
-      if (onEnded) onEnded();
-    });
-
-    return () => {
-      video.removeEventListener('timeupdate', handleTimeUpdate);
-      video.removeEventListener('ended', () => {
-        if (onEnded) onEnded();
-      });
-    };
-  }, [onEnded, onTimeUpdate]);
+  if (!src) {
+    return (
+      <div className="relative w-full aspect-video bg-slate-900 rounded-xl overflow-hidden border border-border flex items-center justify-center">
+        <span className="text-slate-500 text-sm">No video source provided.</span>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden border border-border">
-      <video
-        ref={videoRef}
-        src={src}
-        poster={poster}
+      <ReactPlayer
+        url={src}
         controls
-        controlsList="nodownload"
-        className="w-full h-full object-contain"
+        width="100%"
+        height="100%"
+        light={poster}
+        onEnded={() => {
+          if (onEnded) onEnded();
+        }}
+        onProgress={(state: any) => {
+          if (onTimeUpdate) onTimeUpdate(state.playedSeconds);
+        }}
+        config={{
+          file: {
+            attributes: {
+              controlsList: 'nodownload'
+            }
+          }
+        }}
       />
     </div>
   );

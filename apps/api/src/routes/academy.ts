@@ -1719,6 +1719,302 @@ router.post('/courses/:courseId/testimonials', authenticateJWT, async (req: Auth
   }
 });
 
+// ============================================================
+// QUIZ ROUTES
+// ============================================================
+
+const QUIZZES_COLLECTION = 'quizzes';
+const QUIZ_QUESTIONS_COLLECTION = 'quiz_questions';
+const QUIZ_ATTEMPTS_COLLECTION = 'quiz_attempts';
+
+// GET quizzes for a course (student/instructor/admin)
+router.get('/courses/:courseId/quizzes', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { courseId } = req.params;
+  try {
+    const result = await databases.listDocuments(DATABASE_ID, QUIZZES_COLLECTION, [
+      Query.equal('courseId', courseId),
+      Query.orderAsc('order'),
+      Query.limit(50)
+    ]);
+    res.status(200).json({ quizzes: result.documents });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET questions for a quiz (correctOption hidden for students)
+router.get('/quizzes/:quizId/questions', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { quizId } = req.params;
+  const role = req.user?.role || '';
+  const isEditor = ['Instructor', 'Admin', 'Super Admin'].includes(role);
+  try {
+    const result = await databases.listDocuments(DATABASE_ID, QUIZ_QUESTIONS_COLLECTION, [
+      Query.equal('quizId', quizId),
+      Query.orderAsc('order'),
+      Query.limit(100)
+    ]);
+    const questions = result.documents.map((q: any) => {
+      if (!isEditor) {
+        const { correctOption, ...safe } = q;
+        return safe;
+      }
+      return q;
+    });
+    res.status(200).json({ questions });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// CREATE quiz (instructor/admin)
+router.post('/courses/:courseId/quizzes', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { courseId } = req.params;
+  const role = req.user?.role || '';
+  if (!['Instructor', 'Admin', 'Super Admin'].includes(role)) {
+    return res.status(403).json({ error: 'Instructor or Admin access required.' });
+  }
+  const { title, description, passingScore, order } = req.body;
+  if (!title) return res.status(400).json({ error: 'Quiz title is required.' });
+  try {
+    const quiz = await databases.createDocument(DATABASE_ID, QUIZZES_COLLECTION, ID.unique(), {
+      courseId,
+      title,
+      description: description || '',
+      passingScore: Number(passingScore) || 70,
+      order: Number(order) || 1,
+      isPublished: false
+    });
+    res.status(201).json({ quiz });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// UPDATE quiz (instructor/admin)
+router.patch('/quizzes/:quizId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { quizId } = req.params;
+  const role = req.user?.role || '';
+  if (!['Instructor', 'Admin', 'Super Admin'].includes(role)) {
+    return res.status(403).json({ error: 'Access denied.' });
+  }
+  const { title, description, passingScore, order, isPublished } = req.body;
+  const update: Record<string, any> = {};
+  if (title !== undefined) update.title = title;
+  if (description !== undefined) update.description = description;
+  if (passingScore !== undefined) update.passingScore = Number(passingScore);
+  if (order !== undefined) update.order = Number(order);
+  if (isPublished !== undefined) update.isPublished = Boolean(isPublished);
+  try {
+    const quiz = await databases.updateDocument(DATABASE_ID, QUIZZES_COLLECTION, quizId, update);
+    res.status(200).json({ quiz });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// DELETE quiz + all its questions
+router.delete('/quizzes/:quizId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { quizId } = req.params;
+  const role = req.user?.role || '';
+  if (!['Instructor', 'Admin', 'Super Admin'].includes(role)) {
+    return res.status(403).json({ error: 'Access denied.' });
+  }
+  try {
+    // Delete all questions first
+    const questions = await databases.listDocuments(DATABASE_ID, QUIZ_QUESTIONS_COLLECTION, [
+      Query.equal('quizId', quizId), Query.limit(100)
+    ]);
+    await Promise.all(questions.documents.map((q: any) =>
+      databases.deleteDocument(DATABASE_ID, QUIZ_QUESTIONS_COLLECTION, q.$id)
+    ));
+    // Delete all attempts
+    const attempts = await databases.listDocuments(DATABASE_ID, QUIZ_ATTEMPTS_COLLECTION, [
+      Query.equal('quizId', quizId), Query.limit(100)
+    ]);
+    await Promise.all(attempts.documents.map((a: any) =>
+      databases.deleteDocument(DATABASE_ID, QUIZ_ATTEMPTS_COLLECTION, a.$id)
+    ));
+    await databases.deleteDocument(DATABASE_ID, QUIZZES_COLLECTION, quizId);
+    res.status(200).json({ message: 'Quiz deleted.' });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ADD question to quiz
+router.post('/quizzes/:quizId/questions', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { quizId } = req.params;
+  const role = req.user?.role || '';
+  if (!['Instructor', 'Admin', 'Super Admin'].includes(role)) {
+    return res.status(403).json({ error: 'Access denied.' });
+  }
+  const { question, optionA, optionB, optionC, optionD, correctOption, points, order } = req.body;
+  if (!question || !optionA || !optionB || !correctOption) {
+    return res.status(400).json({ error: 'question, optionA, optionB, and correctOption are required.' });
+  }
+  if (!['A', 'B', 'C', 'D'].includes(correctOption)) {
+    return res.status(400).json({ error: 'correctOption must be A, B, C, or D.' });
+  }
+  try {
+    const q = await databases.createDocument(DATABASE_ID, QUIZ_QUESTIONS_COLLECTION, ID.unique(), {
+      quizId,
+      question,
+      optionA,
+      optionB,
+      optionC: optionC || '',
+      optionD: optionD || '',
+      correctOption,
+      points: Number(points) || 1,
+      order: Number(order) || 1
+    });
+    res.status(201).json({ question: q });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// UPDATE question
+router.patch('/quiz_questions/:questionId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { questionId } = req.params;
+  const role = req.user?.role || '';
+  if (!['Instructor', 'Admin', 'Super Admin'].includes(role)) {
+    return res.status(403).json({ error: 'Access denied.' });
+  }
+  const { question, optionA, optionB, optionC, optionD, correctOption, points, order } = req.body;
+  const update: Record<string, any> = {};
+  if (question !== undefined) update.question = question;
+  if (optionA !== undefined) update.optionA = optionA;
+  if (optionB !== undefined) update.optionB = optionB;
+  if (optionC !== undefined) update.optionC = optionC;
+  if (optionD !== undefined) update.optionD = optionD;
+  if (correctOption !== undefined) update.correctOption = correctOption;
+  if (points !== undefined) update.points = Number(points);
+  if (order !== undefined) update.order = Number(order);
+  try {
+    const q = await databases.updateDocument(DATABASE_ID, QUIZ_QUESTIONS_COLLECTION, questionId, update);
+    res.status(200).json({ question: q });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// DELETE question
+router.delete('/quiz_questions/:questionId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { questionId } = req.params;
+  const role = req.user?.role || '';
+  if (!['Instructor', 'Admin', 'Super Admin'].includes(role)) {
+    return res.status(403).json({ error: 'Access denied.' });
+  }
+  try {
+    await databases.deleteDocument(DATABASE_ID, QUIZ_QUESTIONS_COLLECTION, questionId);
+    res.status(200).json({ message: 'Question deleted.' });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// SUBMIT quiz attempt (student auto-grades)
+router.post('/quizzes/:quizId/submit', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { quizId } = req.params;
+  const studentId = req.user?.id || '';
+
+  try {
+    // Check if already attempted
+    const existing = await databases.listDocuments(DATABASE_ID, QUIZ_ATTEMPTS_COLLECTION, [
+      Query.equal('quizId', quizId),
+      Query.equal('studentId', studentId),
+      Query.limit(1)
+    ]);
+    if (existing.total > 0) {
+      return res.status(409).json({ error: 'You have already completed this quiz.', attempt: existing.documents[0] });
+    }
+
+    // Fetch quiz for passingScore + courseId
+    const quiz = await databases.getDocument(DATABASE_ID, QUIZZES_COLLECTION, quizId) as any;
+
+    // Fetch all questions with correct answers
+    const questionsResult = await databases.listDocuments(DATABASE_ID, QUIZ_QUESTIONS_COLLECTION, [
+      Query.equal('quizId', quizId),
+      Query.limit(100)
+    ]);
+    const questions = questionsResult.documents as any[];
+
+    // answers: { [questionId]: 'A'|'B'|'C'|'D' }
+    const { answers } = req.body;
+    if (!answers || typeof answers !== 'object') {
+      return res.status(400).json({ error: 'answers object is required.' });
+    }
+
+    // Auto-grade
+    let score = 0;
+    let maxScore = 0;
+    for (const q of questions) {
+      maxScore += q.points || 1;
+      if (answers[q.$id] === q.correctOption) {
+        score += q.points || 1;
+      }
+    }
+
+    const passed = maxScore > 0 ? (score / maxScore) * 100 >= quiz.passingScore : false;
+
+    const attempt = await databases.createDocument(DATABASE_ID, QUIZ_ATTEMPTS_COLLECTION, ID.unique(), {
+      quizId,
+      studentId,
+      courseId: quiz.courseId,
+      score,
+      maxScore,
+      passed,
+      answersJson: JSON.stringify(answers),
+      completedAt: new Date().toISOString()
+    });
+
+    // Include correct answers in response so student sees what they got right
+    const breakdown = questions.map((q: any) => ({
+      questionId: q.$id,
+      question: q.question,
+      selected: answers[q.$id] || null,
+      correct: q.correctOption,
+      isCorrect: answers[q.$id] === q.correctOption,
+      points: q.points || 1
+    }));
+
+    res.status(201).json({ attempt, score, maxScore, passed, passingScore: quiz.passingScore, breakdown });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// GET student's own attempt for a quiz
+router.get('/quizzes/:quizId/attempt', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { quizId } = req.params;
+  const studentId = req.user?.id || '';
+  try {
+    const result = await databases.listDocuments(DATABASE_ID, QUIZ_ATTEMPTS_COLLECTION, [
+      Query.equal('quizId', quizId),
+      Query.equal('studentId', studentId),
+      Query.limit(1)
+    ]);
+    if (result.total === 0) return res.status(200).json({ attempt: null });
+    res.status(200).json({ attempt: result.documents[0] });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET all quiz attempts (admin)
+router.get('/admin/quiz-attempts', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const role = req.user?.role || '';
+  if (!['Admin', 'Super Admin'].includes(role)) return res.status(403).json({ error: 'Admin access required.' });
+  try {
+    const result = await databases.listDocuments(DATABASE_ID, QUIZ_ATTEMPTS_COLLECTION, [
+      Query.orderDesc('$createdAt'), Query.limit(200)
+    ]);
+    res.status(200).json({ attempts: result.documents, total: result.total });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.patch('/testimonials/:testimonialId/approve', authenticateJWT, async (req: AuthenticatedRequest, res) => {
   if (!(await ensureAcademyReviewer(req.user?.role))) return res.status(403).json({ error: 'Access denied.' });
   const { testimonialId } = req.params;
@@ -1733,3 +2029,42 @@ router.patch('/testimonials/:testimonialId/approve', authenticateJWT, async (req
     res.status(400).json({ error: err.message });
   }
 });
+
+// DELETE a course
+router.delete('/admin/courses/:courseId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (!(await ensureAcademyReviewer(req.user?.role))) {
+    return res.status(403).json({ error: 'Access denied.' });
+  }
+
+  const { courseId } = req.params;
+
+  try {
+    // 1. Delete course
+    await databases.deleteDocument(DATABASE_ID, COURSES_COLLECTION, courseId);
+    
+    // 2. Delete all lessons for this course
+    try {
+      const lessons = await databases.listDocuments(DATABASE_ID, LESSONS_COLLECTION, [
+        Query.equal('courseId', courseId),
+        Query.limit(100)
+      ]);
+      await Promise.all(lessons.documents.map(l => databases.deleteDocument(DATABASE_ID, LESSONS_COLLECTION, l.$id)));
+    } catch (_) {}
+
+    // 3. Delete all enrollments for this course
+    try {
+      const enrollments = await databases.listDocuments(DATABASE_ID, ENROLLMENTS_COLLECTION, [
+        Query.equal('courseId', courseId),
+        Query.limit(100)
+      ]);
+      await Promise.all(enrollments.documents.map(e => databases.deleteDocument(DATABASE_ID, ENROLLMENTS_COLLECTION, e.$id)));
+    } catch (_) {}
+
+    res.status(200).json({ message: 'Course deleted successfully' });
+  } catch (err: any) {
+    console.error('[Academy] Error deleting course:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+export default router;

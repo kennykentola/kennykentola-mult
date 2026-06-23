@@ -514,8 +514,10 @@ router.post('/admin/:paymentId/verify', authenticateJWT, async (req: Authenticat
           }
         }
       }
-    } else if (payment.type === 'printing') {
-      await databases.updateDocument(DATABASE_ID, PRINT_ORDERS_COLLECTION, payment.referenceId, {
+    } else {
+      // For all other dynamic modules (solar_jobs, print_orders, agency_projects, etc.)
+      // the payment.type is the collection name itself!
+      await databases.updateDocument(DATABASE_ID, payment.type, payment.referenceId, {
         status: 'paid',
         paymentId
       });
@@ -571,6 +573,11 @@ router.post('/admin/:paymentId/reject', authenticateJWT, async (req: Authenticat
         // Delete pending enrollment
         await databases.deleteDocument(DATABASE_ID, ENROLLMENTS_COLLECTION, enrollments.documents[0].$id);
       }
+    } else {
+      // Revert status for dynamic modules
+      await databases.updateDocument(DATABASE_ID, payment.type, payment.referenceId, {
+        status: 'payment-failed'
+      });
     }
 
     res.status(200).json({

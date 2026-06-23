@@ -65,7 +65,7 @@ export default function AdminCoursesPage() {
     if (!deletingCourseId) return;
     setDeletingLoading(true);
     try {
-      await fetchWithAuth(`${API_BASE}/academy/courses/${deletingCourseId}`, {
+      await fetchWithAuth(`${API_BASE}/academy/admin/courses/${deletingCourseId}`, {
         method: 'DELETE',
       });
       setCourses(prev => prev.filter(c => c.id !== deletingCourseId));

@@ -66,7 +66,7 @@ import { Query } from 'node-appwrite';
 router.get('/profile', authenticateJWT, async (req: AuthenticatedRequest, res) => {
   try {
     const userId = req.user?.id;
-    
+
     // Fetch profile document matching the user ID
     const profiles = await databases.listDocuments(
       DATABASE_ID,
@@ -74,11 +74,58 @@ router.get('/profile', authenticateJWT, async (req: AuthenticatedRequest, res) =
       [Query.equal('userId', userId || '')]
     );
 
-    if (profiles.total === 0) {
-      return res.status(404).json({ error: 'User profile not found' });
-    }
+    let profileDoc: any;
 
-    let profileDoc = profiles.documents[0];
+    if (profiles.total === 0) {
+      // No profile found — this is an OAuth user (e.g. Google sign-in) whose profile
+      // was never created. Auto-create one now using the Appwrite account data.
+      try {
+        const client = new Client()
+          .setEndpoint(process.env.APPWRITE_ENDPOINT || 'https://fra.cloud.appwrite.io/v1')
+          .setProject(process.env.APPWRITE_PROJECT_ID || '')
+          .setJWT(req.headers.authorization!.split(' ')[1]);
+
+        const accountClient = new Account(client);
+        const oauthUser = await accountClient.get();
+
+        let rawName = (oauthUser.name || '').trim();
+        if (rawName === userId) {
+          rawName = ''; // Appwrite defaults name to ID if missing
+        }
+        
+        const emailPrefix = (oauthUser.email || '').split('@')[0];
+        const nameParts = rawName ? rawName.split(' ') : [];
+        
+        const firstName = nameParts[0] || emailPrefix || 'User';
+        const lastName = nameParts.slice(1).join(' ') || '';
+        const email = oauthUser.email || '';
+
+        profileDoc = await databases.createDocument(
+          DATABASE_ID,
+          'users_profile',
+          ID.unique(),
+          {
+            userId: userId,
+            email,
+            firstName,
+            lastName,
+            phoneNumber: '',
+            role: 'Student',
+            avatarUrl: '',
+            purpose: 'learn',
+            enrollments: [],
+            activeProjects: []
+          }
+        );
+
+        console.log(`[Auth] Auto-created profile for OAuth user ${userId} (${email})`);
+      } catch (createErr: any) {
+        console.error('[Auth] Failed to auto-create OAuth profile:', createErr.message);
+        return res.status(404).json({ error: 'User profile not found and could not be created.' });
+      }
+    } else {
+      profileDoc = profiles.documents[0];
+    }
 
     // Optional: Sync prefs.role with profile.role if they differ, treating prefs as source of truth for Super Admin
     try {
@@ -86,9 +133,9 @@ router.get('/profile', authenticateJWT, async (req: AuthenticatedRequest, res) =
         .setEndpoint(process.env.APPWRITE_ENDPOINT || 'https://fra.cloud.appwrite.io/v1')
         .setProject(process.env.APPWRITE_PROJECT_ID || '')
         .setJWT(req.headers.authorization!.split(' ')[1]);
-      
-      const account = new Account(client);
-      const user = await account.get();
+
+      const accountClient = new Account(client);
+      const user = await accountClient.get();
       const prefsRole = (user.prefs as any)?.role;
 
       if (prefsRole && prefsRole !== profileDoc.role) {
@@ -112,6 +159,7 @@ router.get('/profile', authenticateJWT, async (req: AuthenticatedRequest, res) =
     res.status(500).json({ error: err.message });
   }
 });
+
 
 router.patch('/profile', authenticateJWT, async (req: AuthenticatedRequest, res) => {
   try {
