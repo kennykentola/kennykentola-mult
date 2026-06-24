@@ -76,7 +76,7 @@ router.get('/:id', authenticateJWT, async (req: AuthenticatedRequest, res) => {
     const project = await databases.getDocument(DATABASE_ID, STUDENT_PROJECTS_COLLECTION, id);
     
     // Only allow access if user is the student who requested it (admins handled in admin.ts usually, but if needed, we can check role)
-    if (project.studentId !== userId && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    if ((project as any).studentId !== userId && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
        return res.status(403).json({ error: 'Access denied' });
     }
 

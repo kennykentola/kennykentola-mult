@@ -17,6 +17,12 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v
 type SAData = {
   metrics: {
     usersCount: number;
+    userBreakdown: {
+      students: number;
+      instructors: number;
+      admins: number;
+      clients: number;
+    };
     revenue: number;
     activeSessions: number;
   };
@@ -24,6 +30,17 @@ type SAData = {
     msg: string;
     time: string;
     type: 'success' | 'info' | 'warning';
+  }[];
+  allProfiles: {
+    $id: string;
+    userId: string;
+    firstName: string;
+    lastName: string;
+    email?: string;
+    role: string;
+    purpose?: string;
+    clientType?: string;
+    $createdAt: string;
   }[];
 };
 
@@ -116,6 +133,66 @@ export default function SuperAdminDashboard() {
             </div>
           );
         })}
+      </div>
+
+      {/* Breakdown Metrics */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {[
+          { label: 'Students', value: metrics.userBreakdown.students, color: 'text-indigo-400', bg: 'bg-indigo-400/10' },
+          { label: 'Instructors', value: metrics.userBreakdown.instructors, color: 'text-orange-400', bg: 'bg-orange-400/10' },
+          { label: 'Admins', value: metrics.userBreakdown.admins, color: 'text-rose-400', bg: 'bg-rose-400/10' },
+          { label: 'Clients', value: metrics.userBreakdown.clients, color: 'text-sky-400', bg: 'bg-sky-400/10' },
+        ].map((item, idx) => (
+          <div key={idx} className={`rounded-2xl border border-white/5 p-4 flex flex-col justify-center items-center ${item.bg}`}>
+            <span className={`text-2xl font-black tracking-tight ${item.color}`}>{item.value}</span>
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1">{item.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Platform Directory */}
+      <div className="rounded-3xl border border-white/5 bg-slate-900/30 p-8 shadow-xl overflow-hidden">
+        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+          <Users className="h-5 w-5 text-indigo-400" /> Platform Directory
+        </h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-slate-800">
+                <th className="px-4 py-3 text-xs font-semibold text-slate-400 uppercase">User Name</th>
+                <th className="px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Email</th>
+                <th className="px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Role / Purpose</th>
+                <th className="px-4 py-3 text-xs font-semibold text-slate-400 uppercase text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800">
+              {data.allProfiles.map((user) => (
+                <tr key={user.$id} className="hover:bg-white/5 transition-colors">
+                  <td className="px-4 py-3">
+                    <div className="text-sm font-bold text-white">{user.firstName} {user.lastName}</div>
+                    <div className="text-xs text-slate-500">Joined {new Date(user.$createdAt).toLocaleDateString()}</div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-300">
+                    {user.email || 'No email provided'}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-slate-800 text-slate-300">
+                      {user.role} {user.purpose && `(${user.purpose})`}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <a 
+                      href={`/admin/chat?userId=${user.userId}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20 transition-colors"
+                    >
+                      Message
+                    </a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* System Status */}

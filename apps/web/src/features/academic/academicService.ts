@@ -24,7 +24,7 @@ export interface AcademicProjectDto {
 }
 
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
-  const token = getSessionJwt();
+  const token = await getSessionJwt();
   const headers = new Headers(options.headers || {});
   headers.set('Content-Type', 'application/json');
   if (token) {

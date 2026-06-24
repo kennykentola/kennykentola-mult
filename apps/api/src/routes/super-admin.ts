@@ -87,17 +87,46 @@ router.get('/overview', async (_req: AuthenticatedRequest, res) => {
       })
       .filter(Boolean);
 
-    res.status(200).json({
+    const allUsers = usersResult.documents as any[];
+    const userBreakdown = {
+      students: 0,
+      instructors: 0,
+      admins: 0,
+      clients: 0
+    };
+
+    allUsers.forEach(u => {
+      const role = (u.role || '').toLowerCase();
+      if (role === 'student') userBreakdown.students++;
+      else if (role === 'instructor') userBreakdown.instructors++;
+      else if (role.includes('admin')) userBreakdown.admins++;
+      else userBreakdown.clients++; // commercial, printing, maintenance, etc.
+    });
+
+
+    res.json({
       metrics: {
-        usersCount: usersResult.total,
+        usersCount: usersResult.total || usersResult.documents.length,
+        userBreakdown,
         revenue,
         activeSessions
       },
       recentActivity,
-      payouts
+      payouts,
+      allProfiles: allUsers.map(u => ({
+        $id: u.$id,
+        userId: u.userId,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        email: u.email,
+        role: u.role,
+        purpose: u.purpose,
+        clientType: u.clientType,
+        $createdAt: u.$createdAt
+      }))
     });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
   }
 });
 
