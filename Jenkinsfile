@@ -6,12 +6,27 @@ pipeline {
         }
     }
     options {
-        timeout(time: 15, unit: 'MINUTES')
+        timeout(time: 20, unit: 'MINUTES')
     }
     stages {
         stage('Install') {
             steps {
                 sh 'npm ci --no-audit --no-fund'
+            }
+        }
+        stage('Type Check Shared') {
+            steps {
+                sh 'npm run typecheck --workspace=packages/shared'
+            }
+        }
+        stage('Type Check API') {
+            steps {
+                sh 'npm run typecheck --workspace=apps/api'
+            }
+        }
+        stage('Type Check Web') {
+            steps {
+                sh 'npm run typecheck --workspace=apps/web'
             }
         }
         stage('Build Shared') {

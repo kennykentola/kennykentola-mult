@@ -7,7 +7,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "init:appwrite": "ts-node-dev --transpile-only src/scripts/initAppwrite.ts"
+    "init:appwrite": "ts-node-dev --transpile-only src/scripts/initAppwrite.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@company/shared": "*",
