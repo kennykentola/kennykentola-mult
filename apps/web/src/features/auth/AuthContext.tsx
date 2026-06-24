@@ -19,7 +19,7 @@ export interface Profile {
   lastName: string;
   phoneNumber: string;
   role: string;
-  purpose: 'learn' | 'hire' | 'print' | 'both' | 'academic';
+  purpose: 'learn' | 'hire' | 'print' | 'both' | 'academic' | 'maintenance';
   avatarUrl?: string;
   emailNotifications?: boolean;
   smsNotifications?: boolean;

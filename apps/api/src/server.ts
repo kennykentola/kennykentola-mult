@@ -65,6 +65,9 @@ import chatRouter from './routes/chat';
 import uploadRouter from './routes/upload';
 import projectsRouter from './routes/projects';
 import academicProjectsRouter from './routes/academicProjects';
+import maintenanceRouter from './routes/maintenance';
+import solarRouter from './routes/solar';
+import telemetryRouter from './routes/telemetry';
 
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/printing', printingRouter);
@@ -76,6 +79,9 @@ app.use('/api/v1/chat', chatRouter);
 app.use('/api/v1/upload', uploadRouter);
 app.use('/api/v1/projects', projectsRouter);
 app.use('/api/v1/academic-projects', academicProjectsRouter);
+app.use('/api/v1/maintenance', maintenanceRouter);
+app.use('/api/v1/solar', solarRouter);
+app.use('/api/v1/telemetry', telemetryRouter);
 
 // Basic Health Check Endpoint
 app.get('/api/health', (req, res) => {

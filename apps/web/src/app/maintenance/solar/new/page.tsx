@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth';
-import { client } from '@/lib/appwrite';
-import { Databases, ID } from 'appwrite';
+import { solarService } from '../../../../features/solar/solarService';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -108,23 +107,18 @@ export default function NewSolarJobPage() {
 
       setUploadProgress(90);
 
-      // Create DB Document
-      const databases = new Databases(client);
-      const dbId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || 'multicompany';
-
-      await databases.createDocument(dbId, 'solar_jobs', ID.unique(), {
-        clientId: user.$id,
+      // Submit via API
+      await solarService.requestJob({
         jobType,
-        description,
-        address,
-        status: 'pending-quote',
-        quotePrice: 0,
-        siteImageUrls: uploadedUrls,
+        description: uploadedUrls.length > 0 
+          ? `${description}\n\n[Site Images Attached: ${uploadedUrls.join(', ')}]` 
+          : description,
+        address
       });
 
       setUploadProgress(100);
       alert('Installation request submitted successfully! Our engineers will review it and provide a quote.');
-      router.push('/dashboard/solar');
+      router.push('/maintenance/solar');
 
     } catch (err: any) {
       console.error('Failed to submit solar request:', err);
@@ -137,28 +131,28 @@ export default function NewSolarJobPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-8 pb-12">
-      <Link href="/dashboard/solar" className="text-sm text-muted hover:text-primary transition-colors flex items-center space-x-1 mb-4">
+      <Link href="/maintenance/solar" className="text-sm text-slate-400 hover:text-amber-500 transition-colors flex items-center space-x-1 mb-4">
         <span>&larr;</span> <span>Back to Dashboard</span>
       </Link>
 
       <div>
-        <h1 className="text-3xl font-bold text-primary-foreground tracking-tight">Request Installation / Repair</h1>
-        <p className="text-muted mt-1 text-sm">Get a quote for solar panels, inverter setups, or electrical wiring.</p>
+        <h1 className="text-3xl font-bold text-white tracking-tight">Request Installation / Repair</h1>
+        <p className="text-slate-400 mt-1 text-sm">Get a quote for solar panels, inverter setups, or electrical wiring.</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="glass-panel border border-border rounded-xl p-6 lg:p-10 space-y-8">
+      <form onSubmit={handleSubmit} className="glass-panel border border-slate-800 bg-slate-900/50 rounded-xl p-6 lg:p-10 space-y-8">
         
         <section className="space-y-6">
-          <h2 className="text-xl font-bold text-primary-foreground border-b border-border pb-2">Service Details</h2>
+          <h2 className="text-xl font-bold text-white border-b border-slate-800 pb-2">Service Details</h2>
           
           <div className="space-y-2">
-            <label htmlFor="jobType" className="text-sm font-medium text-muted">Service Type <span className="text-red-500">*</span></label>
+            <label htmlFor="jobType" className="text-sm font-medium text-slate-400">Service Type <span className="text-rose-500">*</span></label>
             <select 
               id="jobType"
               title="Service Type"
               value={jobType}
               onChange={e => setJobType(e.target.value)}
-              className="w-full p-3 bg-white/5 border border-border rounded-lg text-primary-foreground focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+              className="w-full p-3 bg-slate-950/50 border border-slate-800 rounded-lg text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-all"
             >
               <option value="solar-installation">Solar Panel Installation</option>
               <option value="inverter-setup">Inverter / Battery Setup</option>
@@ -168,7 +162,7 @@ export default function NewSolarJobPage() {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="address" className="text-sm font-medium text-muted">Physical Address <span className="text-red-500">*</span></label>
+            <label htmlFor="address" className="text-sm font-medium text-slate-400">Physical Address <span className="text-rose-500">*</span></label>
             <input 
               id="address"
               title="Installation Address"
@@ -177,12 +171,12 @@ export default function NewSolarJobPage() {
               placeholder="e.g., 123 Tech Avenue, Lagos"
               value={address}
               onChange={e => setAddress(e.target.value)}
-              className="w-full p-3 bg-white/5 border border-border rounded-lg text-primary-foreground focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+              className="w-full p-3 bg-slate-950/50 border border-slate-800 rounded-lg text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-all"
             />
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="description" className="text-sm font-medium text-muted">Description of Work Needed <span className="text-red-500">*</span></label>
+            <label htmlFor="description" className="text-sm font-medium text-slate-400">Description of Work Needed <span className="text-rose-500">*</span></label>
             <textarea 
               id="description"
               required
@@ -190,19 +184,19 @@ export default function NewSolarJobPage() {
               placeholder="Detail your requirements (e.g., I need a 5kVA inverter setup with 4 solar panels to power my home office...)"
               value={description}
               onChange={e => setDescription(e.target.value)}
-              className="w-full p-4 bg-white/5 border border-border rounded-lg text-primary-foreground focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-none"
+              className="w-full p-4 bg-slate-950/50 border border-slate-800 rounded-lg text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-all resize-none"
             />
           </div>
         </section>
 
         <section className="space-y-6">
-          <div className="flex justify-between items-end border-b border-border pb-2">
-            <h2 className="text-xl font-bold text-primary-foreground">Site Photos (Optional)</h2>
-            <span className="text-xs text-yellow-500/80 bg-yellow-500/10 px-2 py-1 rounded">Powered by Cloudinary</span>
+          <div className="flex justify-between items-end border-b border-slate-800 pb-2">
+            <h2 className="text-xl font-bold text-white">Site Photos (Optional)</h2>
+            <span className="text-xs text-amber-500/80 bg-amber-500/10 px-2 py-1 rounded">Powered by Cloudinary</span>
           </div>
           
           <div className="space-y-2">
-            <label className="text-sm font-medium text-muted">Upload photos of the installation site, roof, or electrical box (Max 3)</label>
+            <label className="text-sm font-medium text-slate-400">Upload photos of the installation site, roof, or electrical box (Max 3)</label>
             <div className="flex items-center gap-4">
               <input 
                 type="file" 
@@ -215,18 +209,18 @@ export default function NewSolarJobPage() {
               />
               <label 
                 htmlFor="site-images" 
-                className="cursor-pointer px-4 py-2 bg-white/5 hover:bg-white/10 text-primary-foreground border border-border font-medium rounded-lg transition-colors inline-block"
+                className="cursor-pointer px-4 py-2 bg-slate-950/50 hover:bg-slate-800 text-white border border-slate-800 font-medium rounded-lg transition-colors inline-block"
               >
                 Choose Photos
               </label>
-              <span className="text-sm text-muted line-clamp-1">
+              <span className="text-sm text-slate-400 line-clamp-1">
                 {files.length > 0 ? `${files.length} file(s) selected` : 'No photos chosen'}
               </span>
             </div>
             {files.length > 0 && (
               <div className="flex gap-2 mt-4">
                 {files.map((f, i) => (
-                  <div key={i} className="text-xs px-2 py-1 bg-white/5 border border-border rounded text-muted">
+                  <div key={i} className="text-xs px-2 py-1 bg-slate-950/50 border border-slate-800 rounded text-slate-400">
                     {f.name}
                   </div>
                 ))}
@@ -237,20 +231,20 @@ export default function NewSolarJobPage() {
 
         {isSubmitting && (
           <div className="space-y-2">
-            <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+            <div className="h-2 w-full bg-slate-950/50 rounded-full overflow-hidden">
               <div 
-                className={`h-full bg-yellow-500 transition-all duration-300 ease-out ${getProgressWidthClass(uploadProgress)}`}
+                className={`h-full bg-amber-500 transition-all duration-300 ease-out ${getProgressWidthClass(uploadProgress)}`}
               />
             </div>
-            <p className="text-xs text-center text-muted">Processing request... {Math.round(uploadProgress)}%</p>
+            <p className="text-xs text-center text-slate-400">Processing request... {Math.round(uploadProgress)}%</p>
           </div>
         )}
 
-        <div className="pt-6 border-t border-border flex justify-end">
+        <div className="pt-6 border-t border-slate-800 flex justify-end">
           <button 
             type="submit"
             disabled={isSubmitting}
-            className="px-8 py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg transition-all shadow-[0_0_15px_rgba(234,179,8,0.3)] disabled:opacity-50"
+            className="px-8 py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg transition-all shadow-[0_0_15px_rgba(217,119,6,0.3)] disabled:opacity-50"
           >
             {isSubmitting ? 'Submitting Request...' : 'Submit Request'}
           </button>

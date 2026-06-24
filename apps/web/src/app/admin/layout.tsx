@@ -6,21 +6,20 @@ import { useAuth } from '../../features/auth/AuthContext';
 import { getLandingRoute, isRouteAllowed } from '../../lib/routeAccess';
 import { getAdminPendingPayments } from '../../features/payments/paymentsService';
 import { 
-  Shield, 
+  LayoutDashboard, 
   Users, 
-  BookOpen, 
-  Layers, 
-  Printer,
-  FileCheck, 
   Settings, 
-  ArrowLeft,
+  Briefcase, 
+  BookOpen,
+  Printer,
+  ShieldAlert,
+  HardHat,
+  GraduationCap,
+  Hammer,
+  Zap,
   Menu,
   X,
-  ShieldAlert,
-  BarChart3,
-  Inbox,
-  Zap,
-  Code2,
+  FileCheck, 
   MessageSquare
 } from 'lucide-react';
 import Link from 'next/link';
@@ -96,29 +95,6 @@ export default function AdminLayout({
     );
   }
 
-  const navItems = [
-    { name: 'Admin Overview', href: '/admin', icon: Shield },
-    { name: 'Service Requests', href: '/admin/requests', icon: Inbox },
-    { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-    { name: 'Client Chat', href: '/admin/chat', icon: MessageSquare },
-    { name: 'Community', href: '/admin/community', icon: Users },
-    { name: 'Configure Users', href: '/admin/users', icon: Users },
-    { name: 'Course Manager', href: '/admin/courses', icon: BookOpen },
-    { name: 'Academy Review', href: '/admin/assignments', icon: FileCheck },
-    { name: 'Project Board', href: '/admin/projects', icon: Layers },
-    { name: 'CS Projects', href: '/admin/academic', icon: BookOpen },
-    { name: 'Print Orders', href: '/admin/printing', icon: Printer },
-    { name: 'Verify Payments', href: '/admin/payments', icon: FileCheck, badgeCount: pendingCount },
-    { name: 'System Settings', href: '/admin/settings', icon: Settings },
-  ];
-
-  const workerItems = [
-    { name: 'Electrician Desk', href: '/admin/worker/solar', icon: Zap },
-    { name: 'Developer Desk', href: '/admin/worker/agency', icon: Code2 },
-    { name: 'Writer Desk', href: '/admin/worker/academic', icon: BookOpen },
-    { name: 'Printer Desk', href: '/admin/worker/printing', icon: Printer },
-  ];
-
   return (
     <div className="min-h-screen bg-slate-950 font-sans flex text-slate-200">
       {/* Decorative Glow */}
@@ -146,56 +122,64 @@ export default function AdminLayout({
           </button>
         </div>
 
-          <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-            <div className="px-3 mb-2 mt-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-              Management
-            </div>
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all group ${
-                    isActive
-                      ? 'bg-rose-500/10 text-rose-450 font-bold'
-                      : 'text-slate-400 hover:bg-slate-900/50 hover:text-slate-200'
-                  }`}
-                >
-                  <Icon className={`h-4 w-4 ${isActive ? 'text-rose-500' : 'text-slate-500 group-hover:text-slate-400'}`} />
-                  {item.name}
-                  {item.badgeCount ? (
-                    <span className="ml-auto bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                      {item.badgeCount}
-                    </span>
-                  ) : null}
-                </Link>
-              );
-            })}
+        <nav className="flex-1 px-4 space-y-6 overflow-y-auto">
+          {/* Main Dash */}
+          <div className="space-y-1">
+            <Link href="/admin" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname === '/admin' ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+              <LayoutDashboard className="h-4 w-4" />
+              Overview
+            </Link>
+          </div>
 
-            <div className="px-3 mb-2 mt-6 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-              Worker Desks
-            </div>
-            {workerItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all group ${
-                    isActive
-                      ? 'bg-indigo-500/10 text-indigo-400 font-bold'
-                      : 'text-slate-400 hover:bg-slate-900/50 hover:text-slate-200'
-                  }`}
-                >
-                  <Icon className={`h-4 w-4 ${isActive ? 'text-indigo-400' : 'text-slate-500 group-hover:text-slate-400'}`} />
-                  {item.name}
-                </Link>
-              );
-            })}
-          </nav>
+          {/* Software Agency Pipeline */}
+          <div className="space-y-1">
+            <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Software Agency</p>
+            <Link href="/admin/projects" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/projects') ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+              <Briefcase className="h-4 w-4" />
+              Agency Projects
+            </Link>
+          </div>
+
+          {/* Academic Projects Pipeline */}
+          <div className="space-y-1">
+            <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Academic & Thesis</p>
+            <Link href="/admin/academic" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/academic') ? 'bg-sky-500/10 text-sky-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+              <GraduationCap className="h-4 w-4" />
+              CS Projects
+            </Link>
+          </div>
+
+          {/* Printing Pipeline */}
+          <div className="space-y-1">
+            <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Printing Press</p>
+            <Link href="/admin/printing" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/printing') ? 'bg-fuchsia-500/10 text-fuchsia-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+              <Printer className="h-4 w-4" />
+              Print Jobs
+            </Link>
+          </div>
+
+          {/* Maintenance & Solar Pipeline */}
+          <div className="space-y-1">
+            <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Maintenance & IT</p>
+            <Link href="/admin/maintenance" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/maintenance') ? 'bg-amber-500/10 text-amber-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+              <Hammer className="h-4 w-4" />
+              IT Contracts
+            </Link>
+            <Link href="/admin/solar" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/solar') ? 'bg-yellow-500/10 text-yellow-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+              <Zap className="h-4 w-4" />
+              Solar & Network
+            </Link>
+          </div>
+
+          {/* Internal Tools */}
+          <div className="space-y-1">
+            <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Internal</p>
+            <Link href="/admin/courses" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+              <BookOpen className="h-4 w-4" />
+              Academy Content
+            </Link>
+          </div>
+        </nav>
 
         {/* Back to User Dashboard */}
         <div className="p-4 border-t border-slate-900">
@@ -203,97 +187,10 @@ export default function AdminLayout({
             onClick={() => router.replace(getLandingRoute(profile))}
             className="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 py-2.5 text-xs font-semibold text-slate-450 transition-all duration-200"
           >
-            <ArrowLeft className="h-3 w-3" />
             Back to Dashboard
           </button>
         </div>
       </aside>
-
-      {/* Sidebar - Mobile Toggle Menu */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden flex">
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
-          <aside className="relative flex flex-col w-64 bg-slate-950 border-r border-slate-900 h-full p-4 z-50 animate-in slide-in-from-left duration-200">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-900">
-              <span className="font-bold text-white">Admin Workspace</span>
-              <button
-                onClick={() => setSidebarOpen(false)}
-                className="text-slate-400 hover:text-white"
-                title="Close menu"
-                aria-label="Close menu"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-              <div className="px-3 mb-2 mt-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                Management
-              </div>
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all group ${
-                      isActive
-                        ? 'bg-rose-500/10 text-rose-450 font-bold border border-rose-500/20'
-                        : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
-                    }`}
-                  >
-                    <Icon className={`h-4 w-4 ${isActive ? 'text-rose-500' : 'text-slate-500'}`} />
-                    {item.name}
-                    {item.badgeCount ? (
-                      <span className="ml-auto bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                        {item.badgeCount}
-                      </span>
-                    ) : null}
-                  </Link>
-                );
-              })}
-
-              <div className="px-3 mb-2 mt-6 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                Worker Desks
-              </div>
-              {workerItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all group ${
-                      isActive
-                        ? 'bg-indigo-500/10 text-indigo-400 font-bold border border-indigo-500/20'
-                        : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
-                    }`}
-                  >
-                    <Icon className={`h-4 w-4 ${isActive ? 'text-indigo-400' : 'text-slate-500'}`} />
-                    {item.name}
-                  </Link>
-                );
-              })}
-            </nav>
-
-            <div className="pt-4 border-t border-slate-900">
-              <button
-                onClick={() => {
-                  setSidebarOpen(false);
-                  router.replace(getLandingRoute(profile));
-                }}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-900 border border-slate-800 py-2.5 text-xs font-semibold text-slate-400 hover:text-white transition-all duration-200"
-              >
-                <ArrowLeft className="h-3 w-3" />
-                Back to Dashboard
-              </button>
-            </div>
-          </aside>
-        </div>
-      )}
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto min-h-screen">

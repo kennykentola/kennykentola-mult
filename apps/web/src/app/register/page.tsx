@@ -41,6 +41,8 @@ export default function Register() {
       app: { role: 'Client', purpose: 'hire' },
       academic: { role: 'University Student', purpose: 'academic' },
       thesis: { role: 'University Student', purpose: 'academic' },
+      maintenance: { role: 'IT & Maintenance Client', purpose: 'maintenance' },
+      solar: { role: 'IT & Maintenance Client', purpose: 'maintenance' },
       all: { role: 'Student', purpose: 'both' }
     };
 
@@ -254,14 +256,16 @@ export default function Register() {
                   if (role === 'Student') purpose = 'learn';
                   else if (role === 'University Student') purpose = 'academic';
                   else if (role === 'Client') purpose = 'hire';
+                  else if (role === 'IT & Maintenance Client') purpose = 'maintenance';
                   else if (role === 'Printer Operator') purpose = 'print';
                   setFormData({ ...formData, role, purpose });
                 }}
               >
                 <option value="Student">Student (Academy Portal)</option>
                 <option value="University Student">University Student (CS Thesis/Projects)</option>
-                <option value="Client">Client (Agency & Solar Contracts)</option>
-                <option value="Electrician">Electrician / Technician</option>
+                <option value="Client">Client (Software Agency)</option>
+                <option value="IT & Maintenance Client">Client (IT Maintenance & Solar)</option>
+                <option value="Electrician">Electrician / Technician (Worker)</option>
                 <option value="Printer Operator">Printer Operator (Printing Portal)</option>
               </select>
             </div>
@@ -277,6 +281,7 @@ export default function Register() {
                 <option value="learn">Academy Portal</option>
                 <option value="academic">University Projects / Thesis Help</option>
                 <option value="hire">Project / App Build Portal</option>
+                <option value="maintenance">IT Maintenance & Solar Portal</option>
                 <option value="print">Printing Portal</option>
                 <option value="both">All Services Portal</option>
               </select>
