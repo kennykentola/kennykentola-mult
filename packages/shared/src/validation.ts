@@ -63,9 +63,9 @@ export const CourseCreateValidation = z.object({
 });
 
 export const CreatePostValidation = z.object({
-  content: z.string().min(1, 'Post content cannot be empty').max(5000, 'Post content cannot exceed 5000 characters').trim()
+  content: z.string().trim().min(1, 'Post content cannot be empty').max(5000, 'Post content cannot exceed 5000 characters')
 });
 
 export const CreateCommentValidation = z.object({
-  content: z.string().min(1, 'Comment content cannot be empty').max(2000, 'Comment content cannot exceed 2000 characters').trim()
+  content: z.string().trim().min(1, 'Comment content cannot be empty').max(2000, 'Comment content cannot exceed 2000 characters')
 });
