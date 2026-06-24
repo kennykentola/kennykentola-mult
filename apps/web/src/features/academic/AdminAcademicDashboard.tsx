@@ -180,14 +180,22 @@ export default function AdminAcademicDashboard() {
                     </div>
                   ) : (
                     <div className="flex flex-col items-end gap-2">
-                      <button 
-                        onClick={() => handleEditClick(project)}
-                        className="flex items-center gap-1 text-xs font-semibold text-indigo-400 hover:text-indigo-300"
-                      >
-                        <Edit className="h-3.5 w-3.5" /> Edit & Attach
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button 
+                          onClick={() => handleEditClick(project)}
+                          className="flex items-center gap-1 text-xs font-semibold text-indigo-400 hover:text-indigo-300"
+                        >
+                          <Edit className="h-3.5 w-3.5" /> Edit & Attach
+                        </button>
+                        <a 
+                          href={`/admin/chat?userId=${project.studentId}`}
+                          className="flex items-center gap-1 text-xs font-semibold text-emerald-400 hover:text-emerald-300"
+                        >
+                          Message
+                        </a>
+                      </div>
                       {(project.proposalUrl || project.documentationUrl || project.sourceCodeUrl) && (
-                        <div className="text-[10px] text-emerald-500/70 flex items-center gap-1">
+                        <div className="text-[10px] text-emerald-500/70 flex items-center gap-1 mt-1">
                           <CheckCircle className="h-3 w-3" /> Deliverables Attached
                         </div>
                       )}

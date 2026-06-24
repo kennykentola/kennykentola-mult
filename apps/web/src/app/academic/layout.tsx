@@ -33,11 +33,11 @@ export default function AcademicLayout({ children }: { children: React.ReactNode
             My Projects
           </Link>
           
-          <Link href="/dashboard/chat" className="block px-4 py-2 rounded-md text-slate-400 hover:bg-slate-800 hover:text-white transition-colors">
+          <Link href="/chat" className="block px-4 py-2 rounded-md text-slate-400 hover:bg-slate-800 hover:text-white transition-colors">
             Messages
           </Link>
 
-          <Link href="/dashboard/settings" className="block px-4 py-2 rounded-md text-slate-400 hover:bg-slate-800 hover:text-white transition-colors">
+          <Link href="/dashboard/profile" className="block px-4 py-2 rounded-md text-slate-400 hover:bg-slate-800 hover:text-white transition-colors">
             Settings
           </Link>
         </nav>
