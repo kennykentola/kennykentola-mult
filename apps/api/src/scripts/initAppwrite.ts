@@ -96,6 +96,7 @@ const collections: CollectionDef[] = [
       { key: 'completedLessons', type: 'integer', required: false, defaultValue: 0 },
       { key: 'lastLessonId', type: 'string', size: 50, required: false },
       { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'active' },
+      { key: 'paymentStatus', type: 'string', size: 50, required: true, defaultValue: 'free' },
       { key: 'enrolledAt', type: 'datetime', required: false },
       { key: 'updatedAt', type: 'datetime', required: false }
     ]
@@ -194,6 +195,17 @@ const collections: CollectionDef[] = [
       { key: 'commentsCount', type: 'integer', required: false, defaultValue: 0 },
       { key: 'createdAt', type: 'datetime', required: true },
       { key: 'likes', type: 'string', size: 50, required: false, array: true }
+    ]
+  },
+  {
+    id: 'student_workspaces',
+    name: 'Student Workspaces',
+    attributes: [
+      { key: 'userId', type: 'string', size: 50, required: true },
+      { key: 'courseId', type: 'string', size: 50, required: true },
+      { key: 'lessonId', type: 'string', size: 50, required: true },
+      { key: 'language', type: 'string', size: 50, required: true },
+      { key: 'code', type: 'string', size: 65535, required: false }
     ]
   },
   {
@@ -532,7 +544,7 @@ const academySeedCourses = [
     level: 'Intermediate',
     summary: 'Learn API architecture, authentication, and deployment-friendly backend patterns.',
     coverImage: '',
-    price: 0,
+    price: 15000,
     isPublished: true,
     lessonCount: 3
   },

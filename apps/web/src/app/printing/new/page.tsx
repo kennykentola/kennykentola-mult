@@ -20,12 +20,16 @@ export default function NewPrintOrderPage() {
     colorMode: 'bw' as ColorMode,
     sides: 'single' as Sides,
     specialInstructions: '',
-    deliveryMethod: 'pickup' as DeliveryMethod
+    deliveryMethod: 'pickup' as DeliveryMethod,
+    pageCount: 0
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: name === 'quantity' ? parseInt(value) || 1 : value }));
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: (name === 'quantity' || name === 'pageCount') ? parseInt(value) || 0 : value 
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -117,6 +121,26 @@ export default function NewPrintOrderPage() {
               />
             </div>
 
+            {formData.serviceType === 'document' && (
+              <div className="space-y-2">
+                <label htmlFor="pageCount" className="text-sm font-semibold text-slate-300">Total Pages per Copy (Optional)</label>
+                <input
+                  id="pageCount"
+                  title="Page Count"
+                  placeholder="e.g. 50"
+                  type="number"
+                  min="0"
+                  name="pageCount"
+                  value={formData.pageCount || ''}
+                  onChange={handleChange}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-rose-500 transition-all"
+                />
+                <p className="text-xs text-slate-500">
+                  If left blank or for mixed colors, your order will be submitted for a manual price quote.
+                </p>
+              </div>
+            )}
+
             {formData.serviceType !== 'graphic' && (
               <>
                 <div className="space-y-2">
@@ -204,7 +228,7 @@ export default function NewPrintOrderPage() {
               className="flex items-center gap-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white px-8 py-3 text-sm font-bold transition-all shadow-lg shadow-rose-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle className="h-5 w-5" />}
-              {loading ? 'Submitting...' : 'Request Quote'}
+              {loading ? 'Submitting...' : formData.pageCount > 0 ? 'Calculate Price & Submit' : 'Request Manual Quote'}
             </button>
           </div>
         </form>

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { ID, Query } from 'node-appwrite';
 import { databases } from '../services/appwrite';
-import { authenticateJWT, AuthenticatedRequest } from '../middleware/auth';
+import { authenticateJWT, optionalAuthenticateJWT, AuthenticatedRequest } from '../middleware/auth';
 import communityRouter from './community';
 
 const router = Router();
@@ -16,6 +16,7 @@ const ASSIGNMENTS_COLLECTION = 'assignments';
 const SUBMISSIONS_COLLECTION = 'submissions';
 const LIVE_CLASSES_COLLECTION = 'live_classes';
 const MODULES_COLLECTION = 'modules';
+const STUDENT_WORKSPACES_COLLECTION = 'student_workspaces';
 
 type ApiCourse = {
   id: string;
@@ -42,6 +43,7 @@ type ApiLesson = {
   order: number;
   durationMinutes?: number;
   isPreview?: boolean;
+  isLocked?: boolean;
 };
 
 type EnrollmentDoc = {
@@ -52,6 +54,7 @@ type EnrollmentDoc = {
   completedLessons: number;
   lastLessonId?: string;
   status: string;
+  paymentStatus?: string;
   enrolledAt?: string;
   updatedAt?: string;
 };
@@ -117,15 +120,16 @@ const mapCourse = (course: any, lessonCount: number): ApiCourse => ({
   lessonCount
 });
 
-const mapLesson = (lesson: any): ApiLesson => ({
+const mapLesson = (lesson: any, isLocked = false): ApiLesson => ({
   id: lesson.$id,
   courseId: lesson.courseId,
   title: lesson.title,
-  content: lesson.content,
-  videoUrl: lesson.videoUrl,
+  content: isLocked ? undefined : lesson.content,
+  videoUrl: isLocked ? undefined : lesson.videoUrl,
   order: Number(lesson.order || 0),
   durationMinutes: Number(lesson.durationMinutes || 0),
-  isPreview: Boolean(lesson.isPreview)
+  isPreview: Boolean(lesson.isPreview),
+  isLocked
 });
 
 async function getLessonCount(courseId: string, fallbackCount = 0) {
@@ -140,14 +144,39 @@ async function getLessonCount(courseId: string, fallbackCount = 0) {
   }
 }
 
-async function listCourseLessons(courseId: string) {
-  const lessons = await databases.listDocuments(DATABASE_ID, LESSONS_COLLECTION, [
+async function listCourseLessons(courseId: string, user?: AuthenticatedRequest['user']) {
+  const lessonsReq = databases.listDocuments(DATABASE_ID, LESSONS_COLLECTION, [
     Query.equal('courseId', courseId),
     Query.orderAsc('order'),
     Query.limit(100)
   ]);
+  const courseReq = databases.getDocument(DATABASE_ID, COURSES_COLLECTION, courseId).catch(() => null);
+  
+  const [lessons, course] = await Promise.all([lessonsReq, courseReq]);
+  
+  let isPurchased = false;
+  const isFreeCourse = course ? Number((course as any).price || 0) === 0 : true;
 
-  return lessons.documents.map(mapLesson);
+  if (!isFreeCourse && user) {
+    if (user.role === 'Admin' || user.role === 'Super Admin' || (course && (course as any).instructorId === user.id)) {
+      isPurchased = true;
+    } else {
+      const enrollments = await databases.listDocuments(DATABASE_ID, ENROLLMENTS_COLLECTION, [
+        Query.equal('userId', user.id),
+        Query.equal('courseId', courseId),
+        Query.limit(1)
+      ]);
+      if (enrollments.total > 0 && (enrollments.documents[0] as any).paymentStatus === 'paid') {
+        isPurchased = true;
+      }
+    }
+  }
+
+  return lessons.documents.map((lesson: any) => {
+    const isPreview = Boolean(lesson.isPreview);
+    const isLocked = !isFreeCourse && !isPurchased && !isPreview;
+    return mapLesson(lesson, isLocked);
+  });
 }
 
 async function getProfileDoc(userId: string) {
@@ -313,15 +342,15 @@ router.get('/courses', async (_req, res) => {
   }
 });
 
-router.get('/courses/:courseId', async (req, res) => {
+router.get('/courses/:courseId', optionalAuthenticateJWT, async (req: AuthenticatedRequest, res) => {
   const { courseId } = req.params;
 
   try {
-    const course = await canViewCourse(courseId);
+    const course = await canViewCourse(courseId, req.user);
     if (!course) {
       return res.status(403).json({ error: 'Access denied.' });
     }
-    const lessons = await listCourseLessons(courseId);
+    const lessons = await listCourseLessons(courseId, req.user);
 
     // Fetch modules
     const modules = await databases.listDocuments(DATABASE_ID, MODULES_COLLECTION, [
@@ -592,6 +621,8 @@ router.post('/courses/:courseId/enroll', authenticateJWT, async (req: Authentica
       return res.status(200).json({ message: 'Already enrolled', enrollment: existing.documents[0] });
     }
 
+    const paymentStatus = Number((course as any).price || 0) > 0 ? 'unpaid' : 'free';
+
     const enrollment = await databases.createDocument(DATABASE_ID, ENROLLMENTS_COLLECTION, ID.unique(), {
       userId,
       courseId,
@@ -599,6 +630,7 @@ router.post('/courses/:courseId/enroll', authenticateJWT, async (req: Authentica
       completedLessons: 0,
       lastLessonId: '',
       status: 'active',
+      paymentStatus,
       enrolledAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     });
@@ -2062,6 +2094,79 @@ router.delete('/admin/courses/:courseId', authenticateJWT, async (req: Authentic
     res.status(200).json({ message: 'Course deleted successfully' });
   } catch (err: any) {
     console.error('[Academy] Error deleting course:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ──────────────────────────────────────────────────
+// WORKSPACE ENDPOINTS
+// ──────────────────────────────────────────────────
+
+// GET saved workspace for a specific lesson
+router.get('/courses/:courseId/lessons/:lessonId/workspace', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { courseId, lessonId } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+  try {
+    const existing = await databases.listDocuments(DATABASE_ID, STUDENT_WORKSPACES_COLLECTION, [
+      Query.equal('userId', userId),
+      Query.equal('courseId', courseId),
+      Query.equal('lessonId', lessonId),
+      Query.limit(1)
+    ]);
+
+    if (existing.total > 0) {
+      return res.status(200).json({ workspace: existing.documents[0] });
+    }
+    
+    return res.status(200).json({ workspace: null });
+  } catch (err: any) {
+    console.error('[Academy] Error fetching workspace:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST save workspace for a specific lesson
+router.post('/courses/:courseId/lessons/:lessonId/workspace', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { courseId, lessonId } = req.params;
+  const { code, language } = req.body;
+  const userId = req.user?.id;
+
+  if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+  if (typeof code !== 'string' || typeof language !== 'string') {
+    return res.status(400).json({ error: 'Code and language are required' });
+  }
+
+  try {
+    const existing = await databases.listDocuments(DATABASE_ID, STUDENT_WORKSPACES_COLLECTION, [
+      Query.equal('userId', userId),
+      Query.equal('courseId', courseId),
+      Query.equal('lessonId', lessonId),
+      Query.limit(1)
+    ]);
+
+    if (existing.total > 0) {
+      // Update
+      const doc = await databases.updateDocument(DATABASE_ID, STUDENT_WORKSPACES_COLLECTION, existing.documents[0].$id, {
+        code,
+        language
+      });
+      return res.status(200).json({ message: 'Workspace updated', workspace: doc });
+    } else {
+      // Create
+      const doc = await databases.createDocument(DATABASE_ID, STUDENT_WORKSPACES_COLLECTION, ID.unique(), {
+        userId,
+        courseId,
+        lessonId,
+        language,
+        code
+      });
+      return res.status(201).json({ message: 'Workspace created', workspace: doc });
+    }
+  } catch (err: any) {
+    console.error('[Academy] Error saving workspace:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

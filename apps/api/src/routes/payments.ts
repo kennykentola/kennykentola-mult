@@ -285,13 +285,14 @@ router.post('/submit', authenticateJWT, async (req: AuthenticatedRequest, res) =
           progress: 0,
           completedLessons: 0,
           lastLessonId: '',
-          status: 'pending-payment',
+          status: 'active',
+          paymentStatus: 'verifying',
           enrolledAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         });
       } else {
         await databases.updateDocument(DATABASE_ID, ENROLLMENTS_COLLECTION, existing.documents[0].$id, {
-          status: 'pending-payment',
+          paymentStatus: 'verifying',
           updatedAt: new Date().toISOString()
         });
       }
@@ -501,6 +502,7 @@ router.post('/admin/:paymentId/verify', authenticateJWT, async (req: Authenticat
       if (enrollments.total > 0) {
         await databases.updateDocument(DATABASE_ID, ENROLLMENTS_COLLECTION, enrollments.documents[0].$id, {
           status: 'active',
+          paymentStatus: 'paid',
           updatedAt: new Date().toISOString()
         });
 

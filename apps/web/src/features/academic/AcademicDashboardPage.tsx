@@ -2,8 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
-import { AcademicProjectDto, fetchMyAcademicProjects, requestAcademicProject } from './academicService';
-import { BookOpen, Loader2, FileText, Send, CheckCircle2, Clock } from 'lucide-react';
+import { AcademicProjectDto, fetchMyAcademicProjects, requestAcademicProject, approveAcademicProject, submitAcademicPaymentReceipt } from './academicService';
+import { BookOpen, Loader2, FileText, Send, CheckCircle2, Clock, Upload } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function AcademicDashboardPage() {
   const { profile } = useAuth();
@@ -12,6 +13,9 @@ export default function AcademicDashboardPage() {
   const [error, setError] = useState('');
   
   const [isRequesting, setIsRequesting] = useState(false);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [submittingReceiptId, setSubmittingReceiptId] = useState<string | null>(null);
+  const [receiptUrls, setReceiptUrls] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -43,6 +47,34 @@ export default function AcademicDashboardPage() {
       cancelled = true;
     };
   }, []);
+
+  const handleApprove = async (id: string) => {
+    try {
+      setApprovingId(id);
+      const updated = await approveAcademicProject(id);
+      setProjects((prev) => prev.map(p => p.$id === id ? updated : p));
+      toast.success('Project approved successfully!');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to approve project');
+    } finally {
+      setApprovingId(null);
+    }
+  };
+
+  const handleReceiptSubmit = async (id: string) => {
+    const url = receiptUrls[id];
+    if (!url) return toast.error('Please enter a receipt URL');
+    try {
+      setSubmittingReceiptId(id);
+      const updated = await submitAcademicPaymentReceipt(id, url);
+      setProjects((prev) => prev.map(p => p.$id === id ? updated : p));
+      toast.success('Receipt submitted for verification!');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to submit receipt');
+    } finally {
+      setSubmittingReceiptId(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -227,7 +259,7 @@ export default function AcademicDashboardPage() {
                       <p className="mt-1 text-xs text-slate-400 line-clamp-2">{project.description}</p>
                     </div>
                     <span className="rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-300 whitespace-nowrap">
-                      {project.status.replace('-', ' ')}
+                      {project.status.replace(/[-_]/g, ' ')}
                     </span>
                   </div>
                   
@@ -241,6 +273,36 @@ export default function AcademicDashboardPage() {
                       </span>
                     )}
                   </div>
+
+                  {/* Payment Receipt Upload */}
+                  {project.price > 0 && !project.paymentReceiptUrl && project.status !== 'completed' && project.status !== 'approved_by_student' && (
+                    <div className="mt-4 flex flex-col gap-2 rounded-xl bg-slate-950/30 p-4 border border-indigo-500/20">
+                      <p className="text-xs text-slate-400 font-semibold">Admin has set a price. Please upload your payment receipt link (e.g. Google Drive link):</p>
+                      <div className="flex gap-2">
+                        <input
+                          type="url"
+                          placeholder="https://link-to-receipt..."
+                          className="flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                          value={receiptUrls[project.$id] || ''}
+                          onChange={(e) => setReceiptUrls(prev => ({ ...prev, [project.$id]: e.target.value }))}
+                        />
+                        <button
+                          onClick={() => handleReceiptSubmit(project.$id)}
+                          disabled={submittingReceiptId === project.$id}
+                          className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-indigo-500 disabled:opacity-50"
+                        >
+                          {submittingReceiptId === project.$id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                          Submit
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {project.paymentReceiptUrl && (
+                    <div className="mt-3 text-xs text-emerald-400/80 flex items-center gap-1">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Receipt submitted. {project.status === 'payment-verifying' ? 'Awaiting verification.' : 'Payment verified.'}
+                    </div>
+                  )}
 
                   {/* Deliverables Section */}
                   {(project.proposalUrl || project.documentationUrl || project.sourceCodeUrl) && (
@@ -260,6 +322,19 @@ export default function AcademicDashboardPage() {
                         <a href={project.sourceCodeUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300">
                           <CheckCircle2 className="h-4 w-4" /> Download Source Code
                         </a>
+                      )}
+                      
+                      {project.status !== 'approved_by_student' && (
+                        <div className="pt-3 mt-3 border-t border-slate-800/50">
+                          <button
+                            onClick={() => handleApprove(project.$id)}
+                            disabled={approvingId === project.$id}
+                            className="flex items-center gap-2 px-4 py-2 bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+                          >
+                            {approvingId === project.$id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                            {approvingId === project.$id ? 'Approving...' : 'Approve Deliverables'}
+                          </button>
+                        </div>
                       )}
                     </div>
                   )}

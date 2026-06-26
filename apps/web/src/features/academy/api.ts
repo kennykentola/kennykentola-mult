@@ -27,6 +27,7 @@ export type AcademyLessonDto = {
   order: number;
   durationMinutes?: number;
   isPreview?: boolean;
+  isLocked?: boolean;
 };
 
 export type AcademySubmissionDto = {
@@ -118,6 +119,7 @@ export type AcademyCatalogResponse = {
 export type AcademyCourseDetailResponse = {
   course: AcademyCourseDto;
   lessons: AcademyLessonDto[];
+  enrollment?: any;
 };
 
 export type AcademyAssignmentsResponse = {
@@ -206,6 +208,25 @@ export function updateAcademyCourseProgress(
   );
 }
 
+export function fetchWorkspaceCode(courseId: string, lessonId: string) {
+  return academyFetch<{ workspace: { code: string; language: string } | null }>(
+    `/courses/${courseId}/lessons/${lessonId}/workspace`,
+    {},
+    true
+  );
+}
+
+export function saveWorkspaceCode(courseId: string, lessonId: string, code: string, language: string) {
+  return academyFetch<{ message: string }>(
+    `/courses/${courseId}/lessons/${lessonId}/workspace`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ code, language })
+    },
+    true
+  );
+}
+
 export function submitAcademyAssignment(
   assignmentId: string,
   payload: { fileUrls: string[]; studentNote?: string }
@@ -214,10 +235,51 @@ export function submitAcademyAssignment(
     `/assignments/${assignmentId}/submissions`,
     {
       method: 'POST',
-      body: JSON.stringify(payload)
     },
     true
   );
+}
+
+export async function submitCoursePayment(courseId: string, base64Image: string, amount: number) {
+  const token = await getSessionJwt();
+  if (!token) throw new Error('Not authenticated');
+
+  const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/payments/upload-receipt`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ file: base64Image, filename: `course-receipt-${Date.now()}.jpg` })
+  });
+  if (!uploadRes.ok) {
+    const errorData = await uploadRes.json();
+    throw new Error(errorData?.error || 'Failed to upload receipt');
+  }
+  const { url } = await uploadRes.json();
+
+  const submitRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/payments/submit`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      type: 'course',
+      referenceId: courseId,
+      amount: amount,
+      receiptImage: url,
+      referenceNumber: `TRX-${Date.now()}`,
+      bankAccountId: 'default'
+    })
+  });
+
+  if (!submitRes.ok) {
+    const errorData = await submitRes.json();
+    throw new Error(errorData?.error || 'Failed to submit payment');
+  }
+  
+  return await submitRes.json();
 }
 
 export function fetchAcademySubmissions(filters?: {

@@ -1,6 +1,6 @@
 // Printing Service — API communication layer
 
-import type { PrintOrder, PricingConfig, CreateOrderPayload } from './types';
+import type { PrintOrder, PricingConfig, CreateOrderPayload, PrintMessage } from './types';
 import { getSessionJwt } from '../../lib/sessionJwt';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
@@ -58,6 +58,30 @@ export async function getOrder(orderId: string): Promise<PrintOrder> {
   return data.order;
 }
 
+/** Upload payment receipt */
+export async function uploadReceipt(orderId: string, receiptUrl: string): Promise<PrintOrder> {
+  const data = await fetchWithAuth(`${API_BASE}/printing/orders/${orderId}/receipt`, {
+    method: 'PATCH',
+    body: JSON.stringify({ receiptUrl })
+  });
+  return data.order;
+}
+
+/** Get order messages */
+export async function getMessages(orderId: string): Promise<PrintMessage[]> {
+  const data = await fetchWithAuth(`${API_BASE}/printing/orders/${orderId}/messages`);
+  return data.messages;
+}
+
+/** Send message */
+export async function sendMessage(orderId: string, message: string): Promise<PrintMessage> {
+  const data = await fetchWithAuth(`${API_BASE}/printing/orders/${orderId}/messages`, {
+    method: 'POST',
+    body: JSON.stringify({ message })
+  });
+  return data.message;
+}
+
 // ──────────────────────────────────────────────
 // Admin
 // ──────────────────────────────────────────────
@@ -81,6 +105,15 @@ export async function updateOrderStatus(
   const data = await fetchWithAuth(`${API_BASE}/printing/admin/orders/${orderId}`, {
     method: 'PATCH',
     body: JSON.stringify(update),
+  });
+  return data.order;
+}
+
+/** Admin: verify payment */
+export async function verifyPayment(orderId: string, paymentStatus: 'paid' | 'rejected'): Promise<PrintOrder> {
+  const data = await fetchWithAuth(`${API_BASE}/printing/admin/orders/${orderId}/verify-payment`, {
+    method: 'PATCH',
+    body: JSON.stringify({ paymentStatus })
   });
   return data.order;
 }

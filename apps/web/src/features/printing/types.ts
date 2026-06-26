@@ -25,6 +25,20 @@ export interface PrintOrder {
   deliveryMethod: DeliveryMethod;
   estimatedReadyAt?: string;
   completedAt?: string;
+  paymentStatus: 'pending' | 'awaiting_verification' | 'paid' | 'rejected';
+  receiptUrl?: string;
+  pricingType: 'auto' | 'manual';
+  pageCount: number;
+}
+
+export interface PrintMessage {
+  $id: string;
+  $createdAt: string;
+  orderId: string;
+  senderId: string;
+  senderRole: 'customer' | 'admin';
+  message: string;
+  timestamp: string;
 }
 
 export interface PricingConfig {
@@ -49,6 +63,7 @@ export interface CreateOrderPayload {
   specialInstructions?: string;
   fileUrls?: string[];
   deliveryMethod?: DeliveryMethod;
+  pageCount?: number;
 }
 
 export const SERVICE_TYPE_LABELS: Record<ServiceType, string> = {

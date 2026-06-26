@@ -30,7 +30,7 @@ export default function Register() {
       return;
     }
 
-    const portalPreset: Record<string, { role: string; purpose: 'learn' | 'hire' | 'print' | 'both' }> = {
+    const portalPreset: Record<string, { role: string; purpose: 'learn' | 'hire' | 'print' | 'both' | 'academic' | 'maintenance' }> = {
       academy: { role: 'Student', purpose: 'learn' },
       learn: { role: 'Student', purpose: 'learn' },
       print: { role: 'Printer Operator', purpose: 'print' },

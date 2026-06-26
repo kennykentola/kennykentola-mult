@@ -2,17 +2,27 @@ import { Router } from 'express';
 import { users, databases } from '../services/appwrite';
 import { ID, Client, Account } from 'node-appwrite';
 
+import { z } from 'zod';
+import { validateRequest } from '../middleware/validate';
+
 const router = Router();
 const DATABASE_ID = process.env.APPWRITE_DATABASE_ID || 'multicompany';
 
+const registerSchema = z.object({
+  body: z.object({
+    email: z.string().email('Invalid email format'),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    firstName: z.string().min(1, 'First name is required'),
+    lastName: z.string().min(1, 'Last name is required'),
+    phoneNumber: z.string().optional(),
+    purpose: z.string().optional().default('learn')
+  })
+});
+
 // Register Route
-router.post('/register', async (req, res) => {
+router.post('/register', validateRequest(registerSchema), async (req, res) => {
   const { email, password, firstName, lastName, phoneNumber, purpose } = req.body;
   const role = 'Student';
-
-  if (!email || !password || !firstName || !lastName) {
-    return res.status(400).json({ error: 'Missing required registration fields' });
-  }
 
   try {
     const user = await users.create(
@@ -161,7 +171,17 @@ router.get('/profile', authenticateJWT, async (req: AuthenticatedRequest, res) =
 });
 
 
-router.patch('/profile', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+const updateProfileSchema = z.object({
+  body: z.object({
+    firstName: z.string().min(1, 'First name is required').optional(),
+    lastName: z.string().min(1, 'Last name is required').optional(),
+    phoneNumber: z.string().optional(),
+    emailNotifications: z.boolean().optional(),
+    smsNotifications: z.boolean().optional()
+  })
+});
+
+router.patch('/profile', authenticateJWT, validateRequest(updateProfileSchema), async (req: AuthenticatedRequest, res) => {
   try {
     const userId = req.user?.id;
     const { firstName, lastName, phoneNumber, emailNotifications, smsNotifications } = req.body;
@@ -182,13 +202,6 @@ router.patch('/profile', authenticateJWT, async (req: AuthenticatedRequest, res)
     if (phoneNumber !== undefined) updateData.phoneNumber = String(phoneNumber).trim();
     if (emailNotifications !== undefined) updateData.emailNotifications = Boolean(emailNotifications);
     if (smsNotifications !== undefined) updateData.smsNotifications = Boolean(smsNotifications);
-
-    if (!updateData.firstName && firstName !== undefined) {
-      return res.status(400).json({ error: 'First name is required.' });
-    }
-    if (!updateData.lastName && lastName !== undefined) {
-      return res.status(400).json({ error: 'Last name is required.' });
-    }
 
     const updated = await databases.updateDocument(
       DATABASE_ID,
@@ -239,8 +252,16 @@ router.get('/admin/users', authenticateJWT, async (req: AuthenticatedRequest, re
   }
 });
 
+const updateRoleSchema = z.object({
+  body: z.object({
+    role: z.string().optional(),
+    purpose: z.string().optional(),
+    clientType: z.string().optional()
+  })
+});
+
 // ADMIN: Update user role, purpose, and clientType
-router.patch('/admin/users/:profileId/role', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+router.patch('/admin/users/:profileId/role', authenticateJWT, validateRequest(updateRoleSchema), async (req: AuthenticatedRequest, res) => {
   if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
     return res.status(403).json({ error: 'Admin access required.' });
   }

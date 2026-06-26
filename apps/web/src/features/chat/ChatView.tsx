@@ -28,6 +28,10 @@ interface UserProfile {
   firstName: string;
   lastName: string;
   role?: string;
+  purpose?: string;
+  email?: string;
+  phoneNumber?: string;
+  location?: string;
 }
 
 export function ChatView() {
@@ -236,6 +240,16 @@ export function ChatView() {
     return 'Unknown User';
   };
 
+  const getOtherParticipantId = () => {
+    if (!activeRoomId || activeRoomId === 'community_global') return null;
+    const room = rooms.find(r => r.$id === activeRoomId);
+    if (!room) return null;
+    return room.participants.find(p => p !== user?.id) || null;
+  };
+
+  const otherParticipantId = getOtherParticipantId();
+  const directChatUser = otherParticipantId ? (communityMembers.find(m => m.userId === otherParticipantId) || users.find(u => u.userId === otherParticipantId)) : null;
+
   return (
     <div className="flex h-[calc(100vh-120px)] border border-white/5 rounded-2xl overflow-hidden bg-slate-900/40 backdrop-blur-md">
       {/* Sidebar */}
@@ -417,25 +431,23 @@ export function ChatView() {
                 )}
                 <div>
                   <h3 className="font-bold text-white">
-                    {activeRoomId === 'community_global' ? 'Ecosystem Community' : 'Direct Chat'}
+                    {activeRoomId === 'community_global' ? 'Ecosystem Community' : (directChatUser ? `${directChatUser.firstName} ${directChatUser.lastName}` : 'Direct Chat')}
                   </h3>
                   <p className="text-xs text-slate-400">
                     {activeRoomId === 'community_global' 
                       ? `${communityMembers.length} participants` 
-                      : 'Secure end-to-end connection'}
+                      : (directChatUser?.role ? directChatUser.role : 'Secure end-to-end connection')}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {activeRoomId === 'community_global' && (
-                  <button 
-                    onClick={() => setShowCommunityInfo(!showCommunityInfo)}
-                    className={`p-2 rounded-lg transition-colors ${showCommunityInfo ? 'bg-indigo-500/20 text-indigo-400' : 'hover:bg-slate-800 text-slate-400'}`}
-                    title="Group Info"
-                  >
-                    <Users className="h-4 w-4" />
-                  </button>
-                )}
+                <button 
+                  onClick={() => setShowCommunityInfo(!showCommunityInfo)}
+                  className={`p-2 rounded-lg transition-colors ${showCommunityInfo ? 'bg-indigo-500/20 text-indigo-400' : 'hover:bg-slate-800 text-slate-400'}`}
+                  title={activeRoomId === 'community_global' ? "Group Info" : "User Profile"}
+                >
+                  {activeRoomId === 'community_global' ? <Users className="h-4 w-4" /> : <User className="h-4 w-4" />}
+                </button>
                 <button title="Voice Call" className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors"><Phone className="h-4 w-4" /></button>
                 <button title="Video Call" className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors"><Video className="h-4 w-4" /></button>
               </div>
@@ -504,48 +516,77 @@ export function ChatView() {
             </div>
           </div>
 
-          {/* Group Info Sidebar (Only visible for community chat) */}
-          {activeRoomId === 'community_global' && showCommunityInfo && (
+          {/* Group Info or Direct User Profile Sidebar */}
+          {showCommunityInfo && (
             <div className="w-72 border-l border-white/5 bg-slate-950/50 flex flex-col">
-              <div className="p-4 border-b border-white/5">
-                <h3 className="font-bold text-white">Group Info</h3>
-                <p className="text-xs text-slate-400">{communityMembers.length} Participants</p>
-              </div>
-              <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                {communityMembers.map(member => {
-                  const isMe = member.userId === user?.id;
-                  const isOnline = onlineUsers.has(member.userId);
-                  
-                  return (
-                    <div key={member.userId} className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-800/50 transition-colors group">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="relative flex-shrink-0">
-                          <div className="w-10 h-10 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center font-bold">
-                            {member.firstName?.[0]}{member.lastName?.[0]}
-                          </div>
-                          <div className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-slate-950 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-slate-500'}`} />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-white truncate">
-                            {member.firstName} {member.lastName} {isMe && '(You)'}
-                          </p>
-                          <p className="text-xs text-indigo-400 font-medium truncate">{member.role}</p>
-                        </div>
-                      </div>
+              {activeRoomId === 'community_global' ? (
+                <>
+                  <div className="p-4 border-b border-white/5">
+                    <h3 className="font-bold text-white">Group Info</h3>
+                    <p className="text-xs text-slate-400">{communityMembers.length} Participants</p>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                    {communityMembers.map(member => {
+                      const isMe = member.userId === user?.id;
+                      const isOnline = onlineUsers.has(member.userId);
                       
-                      {!isMe && (
-                        <button 
-                          onClick={() => startChatWithUser(member.userId)}
-                          className="opacity-0 group-hover:opacity-100 p-2 text-slate-400 hover:text-white bg-slate-800 rounded-full transition-all"
-                          title="Message directly"
-                        >
-                          <Send className="h-3 w-3" />
-                        </button>
-                      )}
+                      return (
+                        <div key={member.userId} className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-800/50 transition-colors group">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="relative flex-shrink-0">
+                              <div className="w-10 h-10 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center font-bold">
+                                {member.firstName?.[0]}{member.lastName?.[0]}
+                              </div>
+                              <div className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-slate-950 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-slate-500'}`} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-white truncate">
+                                {member.firstName} {member.lastName} {isMe && '(You)'}
+                              </p>
+                              <p className="text-xs text-indigo-400 font-medium truncate">{member.role}</p>
+                            </div>
+                          </div>
+                          
+                          {!isMe && (
+                            <button 
+                              onClick={() => startChatWithUser(member.userId)}
+                              className="opacity-0 group-hover:opacity-100 p-2 text-slate-400 hover:text-white bg-slate-800 rounded-full transition-all"
+                              title="Message directly"
+                            >
+                              <Send className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col h-full overflow-y-auto">
+                  <div className="p-4 border-b border-white/5 flex flex-col items-center pt-8 pb-6">
+                    <div className="w-24 h-24 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-bold text-3xl mb-4">
+                      {directChatUser?.firstName?.[0]}{directChatUser?.lastName?.[0]}
                     </div>
-                  )
-                })}
-              </div>
+                    <h3 className="font-bold text-white text-lg text-center">{directChatUser?.firstName} {directChatUser?.lastName}</h3>
+                    <p className="text-sm text-indigo-400 font-medium mt-1 text-center">{directChatUser?.role}</p>
+                    {directChatUser?.purpose && <p className="text-xs text-slate-500 mt-2 text-center px-4 leading-relaxed">{directChatUser.purpose}</p>}
+                  </div>
+                  <div className="p-6 space-y-5">
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Email Address</p>
+                      <p className="text-sm text-slate-300 truncate" title={directChatUser?.email}>{directChatUser?.email || 'Private'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Phone Number</p>
+                      <p className="text-sm text-slate-300">{directChatUser?.phoneNumber || 'Private'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Location</p>
+                      <p className="text-sm text-slate-300">{directChatUser?.location || 'Not specified'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </>

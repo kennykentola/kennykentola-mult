@@ -1,8 +1,22 @@
 import { Router, Request, Response } from 'express';
 import { Query } from 'node-appwrite';
 import { databases } from '../services/appwrite';
+import { z } from 'zod';
+import { validateRequest } from '../middleware/validate';
 
 const router = Router();
+
+const getSystemsSchema = z.object({
+  params: z.object({
+    clientId: z.string().min(1, 'Client ID is required')
+  })
+});
+
+const getTelemetrySchema = z.object({
+  params: z.object({
+    systemId: z.string().min(1, 'System ID is required')
+  })
+});
 
 // Simulated data generation function
 const generateTelemetry = (systemId: string) => {
@@ -50,7 +64,7 @@ const generateTelemetry = (systemId: string) => {
   };
 };
 
-router.get('/systems/:clientId', async (req: Request, res: Response) => {
+router.get('/systems/:clientId', validateRequest(getSystemsSchema), async (req: Request, res: Response) => {
   try {
     const { clientId } = req.params;
     const dbId = process.env.APPWRITE_DATABASE_ID || 'multicompany';
@@ -78,7 +92,7 @@ router.get('/systems/:clientId', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/data/:systemId', async (req: Request, res: Response) => {
+router.get('/data/:systemId', validateRequest(getTelemetrySchema), async (req: Request, res: Response) => {
   try {
     const { systemId } = req.params;
     // In a real app, this would query a time-series DB (like InfluxDB or AWS Timestream)

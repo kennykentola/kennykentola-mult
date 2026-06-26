@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { AcademicProjectDto, fetchAllAcademicProjects, updateAcademicProject } from './academicService';
 import { Loader2, GraduationCap, DollarSign, Edit, CheckCircle, ExternalLink } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { getSessionJwt } from '../../lib/sessionJwt';
 
 export default function AdminAcademicDashboard() {
   const [projects, setProjects] = useState<AcademicProjectDto[]>([]);
@@ -119,6 +121,8 @@ export default function AdminAcademicDashboard() {
                       >
                         <option value="pending-proposal">Pending Proposal</option>
                         <option value="quoting">Quoting</option>
+                        <option value="awaiting-payment">Awaiting Payment</option>
+                        <option value="payment-verifying">Verifying Payment</option>
                         <option value="in-progress">In Progress</option>
                         <option value="completed">Completed</option>
                       </select>
@@ -133,7 +137,7 @@ export default function AdminAcademicDashboard() {
                   ) : (
                     <div className="space-y-1">
                       <span className="inline-block rounded-full bg-slate-800 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-300">
-                        {project.status.replace('-', ' ')}
+                        {project.status.replace(/[-_]/g, ' ')}
                       </span>
                       <div className="flex items-center gap-1 font-bold text-emerald-400">
                         <DollarSign className="h-3.5 w-3.5" />
@@ -194,6 +198,41 @@ export default function AdminAcademicDashboard() {
                           Message
                         </a>
                       </div>
+                      {project.paymentReceiptUrl && project.status === 'payment-verifying' && (
+                        <div className="flex flex-col gap-2 mt-2 items-end">
+                          <a 
+                            href={project.paymentReceiptUrl} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="text-xs font-bold text-blue-400 underline"
+                          >
+                            View Receipt
+                          </a>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const token = await getSessionJwt();
+                                await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/academic-projects/admin/${project.$id}`, {
+                                  method: 'PATCH',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                  },
+                                  body: JSON.stringify({ status: 'in-progress' })
+                                });
+                                toast.success('Payment approved!');
+                                // Ideally we'd update local state here without refresh, but forcing reload for simplicity in admin panel
+                                window.location.reload();
+                              } catch (err: any) {
+                                toast.error('Failed to approve payment');
+                              }
+                            }}
+                            className="rounded bg-emerald-600 px-3 py-1 text-xs font-bold text-white hover:bg-emerald-500"
+                          >
+                            Approve Payment
+                          </button>
+                        </div>
+                      )}
                       {(project.proposalUrl || project.documentationUrl || project.sourceCodeUrl) && (
                         <div className="text-[10px] text-emerald-500/70 flex items-center gap-1 mt-1">
                           <CheckCircle className="h-3 w-3" /> Deliverables Attached

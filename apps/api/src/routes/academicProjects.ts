@@ -2,21 +2,31 @@ import { Router } from 'express';
 import { databases } from '../services/appwrite';
 import { ID, Query } from 'node-appwrite';
 import { authenticateJWT, AuthenticatedRequest } from '../middleware/auth';
+import { z } from 'zod';
+import { validateRequest } from '../middleware/validate';
 
 const router = Router();
 const DATABASE_ID = process.env.APPWRITE_DATABASE_ID || 'multicompany';
 const STUDENT_PROJECTS_COLLECTION = 'student_projects';
 
+const createProjectSchema = z.object({
+  body: z.object({
+    title: z.string().min(1, 'Title is required'),
+    description: z.string().min(1, 'Description is required'),
+    universityName: z.string().optional().default(''),
+    department: z.string().optional().default(''),
+    degree: z.string().optional().default(''),
+    level: z.string().optional().default(''),
+    serviceScope: z.string().optional().default('Full Process')
+  })
+});
+
 // ──────────────────────────────────────────────────
 // AUTHENTICATED: Create a new academic project request
 // ──────────────────────────────────────────────────
-router.post('/requests', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+router.post('/requests', authenticateJWT, validateRequest(createProjectSchema), async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
   const { title, description, universityName, department, degree, level, serviceScope } = req.body;
-
-  if (!title || !description) {
-    return res.status(400).json({ error: 'Title and description are required.' });
-  }
 
   try {
     const project = await databases.createDocument(
@@ -27,12 +37,12 @@ router.post('/requests', authenticateJWT, async (req: AuthenticatedRequest, res)
         studentId: userId,
         title,
         description,
-        universityName: universityName || '',
-        department: department || '',
-        degree: degree || '',
-        level: level || '',
+        universityName,
+        department,
+        degree,
+        level,
         status: 'pending-proposal',
-        serviceScope: serviceScope || 'Full Process',
+        serviceScope,
         price: 0
       }
     );
@@ -88,6 +98,62 @@ router.get('/:id', authenticateJWT, async (req: AuthenticatedRequest, res) => {
 });
 
 // ──────────────────────────────────────────────────
+// AUTHENTICATED: Student approves deliverables
+// ──────────────────────────────────────────────────
+router.patch('/:id/approve', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  try {
+    const project = await databases.getDocument(DATABASE_ID, STUDENT_PROJECTS_COLLECTION, id);
+    
+    if ((project as any).studentId !== userId) {
+       return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const updated = await databases.updateDocument(DATABASE_ID, STUDENT_PROJECTS_COLLECTION, id, {
+      status: 'approved_by_student'
+    });
+
+    res.status(200).json({ project: updated });
+  } catch (err: any) {
+    console.error('[Academic Projects] Error approving project:', err.message);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+const submitReceiptSchema = z.object({
+  body: z.object({
+    paymentReceiptUrl: z.string().url('Must be a valid URL')
+  })
+});
+
+// ──────────────────────────────────────────────────
+// AUTHENTICATED: Student uploads payment receipt
+// ──────────────────────────────────────────────────
+router.patch('/:id/payment', authenticateJWT, validateRequest(submitReceiptSchema), async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+  const { paymentReceiptUrl } = req.body;
+  try {
+    const project = await databases.getDocument(DATABASE_ID, STUDENT_PROJECTS_COLLECTION, id);
+    
+    if ((project as any).studentId !== userId) {
+       return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const updated = await databases.updateDocument(DATABASE_ID, STUDENT_PROJECTS_COLLECTION, id, {
+      paymentReceiptUrl,
+      status: 'payment-verifying'
+    });
+
+    res.status(200).json({ project: updated });
+  } catch (err: any) {
+    console.error('[Academic Projects] Error uploading receipt:', err.message);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ──────────────────────────────────────────────────
 // ADMIN ONLY: Get all academic projects globally
 // ──────────────────────────────────────────────────
 router.get('/admin/all', authenticateJWT, async (req: AuthenticatedRequest, res) => {
@@ -106,10 +172,21 @@ router.get('/admin/all', authenticateJWT, async (req: AuthenticatedRequest, res)
   }
 });
 
+const updateAdminProjectSchema = z.object({
+  body: z.object({
+    status: z.enum(['pending-proposal', 'quoting', 'awaiting-payment', 'payment-verifying', 'in-progress', 'completed', 'approved_by_student']).optional(),
+    price: z.coerce.number().min(0).optional(),
+    assignedDeveloper: z.string().optional(),
+    proposalUrl: z.string().url().or(z.literal('')).optional(),
+    documentationUrl: z.string().url().or(z.literal('')).optional(),
+    sourceCodeUrl: z.string().url().or(z.literal('')).optional()
+  })
+});
+
 // ──────────────────────────────────────────────────
 // ADMIN ONLY: Update academic project status/price
 // ──────────────────────────────────────────────────
-router.patch('/admin/:id', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+router.patch('/admin/:id', authenticateJWT, validateRequest(updateAdminProjectSchema), async (req: AuthenticatedRequest, res) => {
   if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
     return res.status(403).json({ error: 'Unauthorized. Admins only.' });
   }

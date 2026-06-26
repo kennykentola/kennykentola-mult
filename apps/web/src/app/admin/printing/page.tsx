@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import {
   Printer,
   Search,
@@ -26,6 +27,7 @@ interface AdminPrintOrder {
   price: string;
   date: string;
   files: number;
+  paymentStatus: string;
 }
 
 const statusConfig: Record<OrderStatus, { label: string; color: string; dotColor: string }> = {
@@ -58,7 +60,8 @@ export default function AdminPrintingPage() {
             status: o.status as OrderStatus,
             price: o.price > 0 ? `₦${o.price.toLocaleString()}` : 'Pending Quote',
             date: new Date(o.$createdAt).toLocaleDateString(),
-            files: Array.isArray(o.fileUrls) ? o.fileUrls.length : 0
+            files: Array.isArray(o.fileUrls) ? o.fileUrls.length : 0,
+            paymentStatus: o.paymentStatus || 'pending'
           })));
         }
       } catch (err) {
@@ -183,19 +186,25 @@ export default function AdminPrintingPage() {
                 <p className="text-sm text-slate-300">{order.customer}</p>
                 <p className="text-xs text-slate-400">{order.type}</p>
                 <p className="text-xs text-slate-400 text-center">{order.files}</p>
-                <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold whitespace-nowrap ${status.color}`}>
-                  <span className={`h-1.5 w-1.5 rounded-full ${status.dotColor}`} />
-                  {status.label}
-                </span>
+                <div className="flex flex-col">
+                  <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-semibold whitespace-nowrap mb-1 w-fit ${status.color}`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${status.dotColor}`} />
+                    {status.label}
+                  </span>
+                  <span className={`text-[10px] font-medium ${order.paymentStatus === 'awaiting_verification' ? 'text-amber-400' : 'text-slate-500'}`}>
+                    Payment: {order.paymentStatus}
+                  </span>
+                </div>
                 <span className="text-sm font-bold text-white">{order.price}</span>
                 <div className="flex items-center gap-2">
-                  <button
+                  <Link
+                    href={`/admin/printing/${order.id}`}
                     className="rounded-lg p-2 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
                     title="View order details"
                     aria-label={`View details for ${order.id}`}
                   >
                     <Eye className="h-4 w-4" />
-                  </button>
+                  </Link>
                   {order.status === 'pending' && (
                     <>
                       <button

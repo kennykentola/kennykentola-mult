@@ -18,6 +18,7 @@ export interface AcademicProjectDto {
   proposalUrl: string;
   documentationUrl: string;
   sourceCodeUrl: string;
+  paymentReceiptUrl?: string;
   paymentId: string;
   $createdAt: string;
   $updatedAt: string;
@@ -55,6 +56,14 @@ export async function requestAcademicProject(data: {
   return response.project;
 }
 
+export async function submitAcademicPaymentReceipt(id: string, paymentReceiptUrl: string): Promise<AcademicProjectDto> {
+  const response = await fetchWithAuth(`${API_BASE}/academic-projects/${id}/payment`, {
+    method: 'PATCH',
+    body: JSON.stringify({ paymentReceiptUrl })
+  });
+  return response.project;
+}
+
 export async function fetchMyAcademicProjects(): Promise<AcademicProjectDto[]> {
   const response = await fetchWithAuth(`${API_BASE}/academic-projects`);
   return response.projects;
@@ -62,6 +71,13 @@ export async function fetchMyAcademicProjects(): Promise<AcademicProjectDto[]> {
 
 export async function fetchAcademicProjectById(id: string): Promise<AcademicProjectDto> {
   const response = await fetchWithAuth(`${API_BASE}/academic-projects/${id}`);
+  return response.project;
+}
+
+export async function approveAcademicProject(id: string): Promise<AcademicProjectDto> {
+  const response = await fetchWithAuth(`${API_BASE}/academic-projects/${id}/approve`, {
+    method: 'PATCH'
+  });
   return response.project;
 }
 
