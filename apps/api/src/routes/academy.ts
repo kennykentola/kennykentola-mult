@@ -359,8 +359,20 @@ router.get('/courses/:courseId', optionalAuthenticateJWT, async (req: Authentica
       Query.limit(100)
     ]).catch(() => ({ documents: [] }));
 
+    // Fetch enrollment if user exists
+    let enrollment = null;
+    if (req.user) {
+      const enrolls = await databases.listDocuments(DATABASE_ID, ENROLLMENTS_COLLECTION, [
+        Query.equal('userId', req.user.id),
+        Query.equal('courseId', courseId),
+        Query.limit(1)
+      ]).catch(() => ({ documents: [] }));
+      enrollment = enrolls.documents[0] || null;
+    }
+
     res.status(200).json({
       course: mapCourse(course, lessons.length),
+      enrollment,
       lessons,
       modules: modules.documents.map((m: any) => ({
         id: m.$id,

@@ -115,7 +115,7 @@ export default function CourseWorkspacePage() {
           setSelectedLanguage(res.workspace.language || 'javascript');
           setOutput('');
         } else {
-          setEditorCode(getDefaultCode(res.workspace.language || 'javascript'));
+          setEditorCode(getDefaultCode('javascript'));
           setOutput('');
         }
       } catch (err) {
