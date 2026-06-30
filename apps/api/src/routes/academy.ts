@@ -160,17 +160,24 @@ async function listCourseLessons(courseId: string, user?: AuthenticatedRequest['
   if (!isFreeCourse && user) {
     if (user.role === 'Admin' || user.role === 'Super Admin' || (course && (course as any).instructorId === user.id)) {
       isPurchased = true;
+      console.log(`[listCourseLessons] User ${user.id} has Admin/Instructor access. isPurchased=true`);
     } else {
       const enrollments = await databases.listDocuments(DATABASE_ID, ENROLLMENTS_COLLECTION, [
         Query.equal('userId', user.id),
         Query.equal('courseId', courseId),
         Query.limit(1)
       ]);
-      if (enrollments.total > 0 && (enrollments.documents[0] as any).paymentStatus === 'paid') {
-        isPurchased = true;
+      console.log(`[listCourseLessons] User ${user.id} enrollments total: ${enrollments.total}`);
+      if (enrollments.total > 0) {
+        console.log(`[listCourseLessons] Enrollment paymentStatus: ${(enrollments.documents[0] as any).paymentStatus}`);
+        if ((enrollments.documents[0] as any).paymentStatus === 'paid') {
+          isPurchased = true;
+        }
       }
     }
   }
+
+  console.log(`[listCourseLessons] Final isPurchased: ${isPurchased}, isFreeCourse: ${isFreeCourse}`);
 
   return lessons.documents.map((lesson: any) => {
     const isPreview = Boolean(lesson.isPreview);
