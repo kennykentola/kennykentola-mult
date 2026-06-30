@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Award, Download, ExternalLink, Calendar, Loader2, AlertCircle } from 'lucide-react';
+import { Award, Download, ExternalLink, Calendar, Loader2, AlertCircle, Share2, Linkedin, MessageCircle } from 'lucide-react';
 import { getSessionJwt } from '../../../lib/sessionJwt';
 
 interface Certificate {
@@ -102,6 +102,10 @@ export default function CertificatesPage() {
               day: 'numeric',
             });
 
+            const whatsappText = `I just earned a certificate for completing ${courseName} at KENNYKENTOLA-DIGITAL ACADEMY! Check it out: ${cert.pdfUrl}`;
+            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappText)}`;
+            const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(cert.pdfUrl)}`;
+
             return (
               <div
                 key={cert.$id}
@@ -133,22 +137,36 @@ export default function CertificatesPage() {
                   <Award className="h-10 w-10 text-amber-500/20 group-hover:text-amber-500/40 group-hover:scale-110 transition-all shrink-0" />
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-slate-900 flex justify-end gap-3">
-                  <a
-                    href={cert.pdfUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 px-4 py-2.5 text-xs font-semibold text-slate-300 transition-all"
-                  >
-                    View Online <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
-                  <a
-                    href={cert.pdfUrl}
-                    download
-                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-amber-500/10 hover:opacity-90 transition-opacity"
-                  >
-                    Download PDF <Download className="h-3.5 w-3.5" />
-                  </a>
+                <div className="mt-6 pt-4 border-t border-slate-900 flex flex-col sm:flex-row justify-between items-center gap-4">
+                  {/* Share buttons (Left side) */}
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <span className="text-xs text-slate-500 font-medium mr-1 flex items-center gap-1"><Share2 className="h-3.5 w-3.5" /> Share:</span>
+                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-colors" title="Share to WhatsApp">
+                      <MessageCircle className="h-4 w-4" />
+                    </a>
+                    <a href={linkedinUrl} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-[#0A66C2]/10 text-[#0A66C2] hover:bg-[#0A66C2]/20 transition-colors" title="Share to LinkedIn">
+                      <Linkedin className="h-4 w-4" />
+                    </a>
+                  </div>
+
+                  {/* Action buttons (Right side) */}
+                  <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                    <a
+                      href={cert.pdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 px-4 py-2.5 text-xs font-semibold text-slate-300 transition-all"
+                    >
+                      View Online <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                    <a
+                      href={cert.pdfUrl}
+                      download
+                      className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-amber-500/10 hover:opacity-90 transition-opacity"
+                    >
+                      Download PDF <Download className="h-3.5 w-3.5" />
+                    </a>
+                  </div>
                 </div>
               </div>
             );
