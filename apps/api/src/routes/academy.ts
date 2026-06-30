@@ -1174,6 +1174,95 @@ router.get('/instructor/revenue', authenticateJWT, async (req: AuthenticatedRequ
   }
 });
 
+// INSTRUCTOR: Analytics summary
+router.get('/instructor/analytics', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Instructor access required.' });
+  }
+
+  const userId = req.user?.id;
+
+  try {
+    const queries: any[] = [Query.limit(100)];
+    if (req.user?.role === 'Instructor') {
+      queries.push(Query.equal('instructorId', userId || ''));
+    }
+    const coursesResult = await databases.listDocuments(DATABASE_ID, COURSES_COLLECTION, queries);
+    const courses = coursesResult.documents as any[];
+
+    if (courses.length === 0) {
+      return res.status(200).json({
+        totalStudents: 0,
+        totalCourses: 0,
+        averageCompletionRate: 0,
+        monthlyEnrollments: [],
+        coursePerformance: []
+      });
+    }
+
+    const coursePerformance = [];
+    const monthlyMap: Record<string, number> = {};
+    let totalStudents = 0;
+    let totalProgress = 0;
+    let totalEnrollmentsWithProgress = 0;
+
+    for (const course of courses) {
+      const enrollments = await databases.listDocuments(DATABASE_ID, ENROLLMENTS_COLLECTION, [
+        Query.equal('courseId', course.$id),
+        Query.limit(1000)
+      ]);
+
+      const count = enrollments.total;
+      totalStudents += count;
+
+      let courseProgressSum = 0;
+      let courseEnrollmentCount = 0;
+
+      for (const enr of enrollments.documents as any[]) {
+        const date = new Date(enr.$createdAt);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        monthlyMap[monthKey] = (monthlyMap[monthKey] || 0) + 1;
+
+        if (enr.progress !== undefined) {
+          courseProgressSum += Number(enr.progress);
+          courseEnrollmentCount++;
+        }
+      }
+
+      totalProgress += courseProgressSum;
+      totalEnrollmentsWithProgress += courseEnrollmentCount;
+
+      coursePerformance.push({
+        courseId: course.$id,
+        title: course.title,
+        enrollments: count,
+        completionRate: courseEnrollmentCount > 0 ? Math.round(courseProgressSum / courseEnrollmentCount) : 0,
+        revenue: count * Number(course.price || 0)
+      });
+    }
+
+    const monthlyEnrollments = Object.entries(monthlyMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-12)
+      .map(([month, count]) => ({
+        month,
+        label: new Date(month + '-01').toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+        enrollments: count
+      }));
+
+    res.status(200).json({
+      totalStudents,
+      totalCourses: courses.length,
+      averageCompletionRate: totalEnrollmentsWithProgress > 0 ? Math.round(totalProgress / totalEnrollmentsWithProgress) : 0,
+      monthlyEnrollments,
+      coursePerformance
+    });
+  } catch (err: any) {
+    console.error('[Academy Instructor Analytics] Error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // INSTRUCTOR: Get lessons for a course
 router.get('/courses/:courseId/lessons', authenticateJWT, async (req: AuthenticatedRequest, res) => {
   if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {

@@ -16,7 +16,8 @@ import {
   X,
   ShieldAlert,
   DollarSign,
-  MessageSquare
+  MessageSquare,
+  BarChart3
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -77,6 +78,7 @@ export default function InstructorLayout({
     { name: 'Lessons', href: '/instructor/lessons', icon: Video },
     { name: 'Grading Workspace', href: '/instructor/assignments', icon: FileCheck },
     { name: 'Student Progress', href: '/instructor/students', icon: Users },
+    { name: 'Analytics', href: '/instructor/analytics', icon: BarChart3 },
     { name: 'Revenue', href: '/instructor/revenue', icon: DollarSign },
     { name: 'Messages', href: '/instructor/messages', icon: MessageSquare },
     { name: 'Settings', href: '/instructor/settings', icon: Settings },

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@company/shared": "*",
+    "@hello-pangea/dnd": "^18.0.1",
     "@monaco-editor/react": "^4.7.0",
     "@types/canvas-confetti": "^1.9.0",
     "appwrite": "^25.2.0",
@@ -26,6 +27,7 @@
     "react-hot-toast": "^2.6.0",
     "react-paystack": "^6.0.0",
     "react-player": "^3.4.0",
+    "recharts": "^3.9.1",
     "socket.io-client": "^4.8.3",
     "tailwind-merge": "^2.2.1"
   },
