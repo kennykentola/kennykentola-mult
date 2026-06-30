@@ -99,12 +99,12 @@ export async function generateAndUploadCertificate(
           align: 'center',
           valign: 'center'
         });
-        
+
         // Print the name right below the logo
         doc.fillColor('#e2e8f0');
         doc.font('Helvetica-Bold');
         doc.fontSize(20);
-        doc.text('KENNYKENTOLA PROGRAMMING ACADEMY', 0, 105, {
+        doc.text('KENNYKENTOLA-DIGITAL ACADEMY', 0, 105, {
           align: 'center',
           width: width,
         });
@@ -112,7 +112,7 @@ export async function generateAndUploadCertificate(
         doc.fillColor('#e2e8f0');
         doc.font('Helvetica-Bold');
         doc.fontSize(24);
-        doc.text('KENNYKENTOLA PROGRAMMING ACADEMY', 0, 100, {
+        doc.text('KENNYKENTOLA-DIGITAL ACADEMY', 0, 100, {
           align: 'center',
           width: width,
         });
@@ -196,7 +196,7 @@ export async function generateAndUploadCertificate(
       // Right: Instructor Signature
       const signaturePath = path.join(__dirname, '../../src/assets/signature.png');
       const directorName = 'Ademola Peter Kehinde';
-      
+
       if (fs.existsSync(signaturePath)) {
         // Draw the image signature
         // The image is scaled to fit in a 150x50 box centered above the line
@@ -217,7 +217,7 @@ export async function generateAndUploadCertificate(
       doc.lineWidth(1);
       doc.strokeColor('#475569');
       doc.moveTo(width - 300, footerY + 20).lineTo(width - 100, footerY + 20).stroke();
-      
+
       // Printed Name
       doc.fillColor('#e2e8f0');
       doc.font('Helvetica-Bold');
@@ -293,7 +293,7 @@ export async function generateAndUploadReceipt(
   itemName: string
 ): Promise<string> {
   const receiptBucket = 'certificates';
-  
+
   // Create temporary directory if it doesn't exist
   const tempDir = path.join(__dirname, '../../temp');
   if (!fs.existsSync(tempDir)) {
@@ -416,7 +416,7 @@ export async function generateAndUploadReceipt(
       doc.lineWidth(2);
       doc.strokeColor('#34d399'); // Mint outline
       doc.circle(120, sealY + 20, 31).stroke();
-      
+
       doc.fillColor('#34d399');
       doc.font('Helvetica-Bold');
       doc.fontSize(14);
