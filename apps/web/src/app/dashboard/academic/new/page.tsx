@@ -12,7 +12,7 @@ type RequestType = 'Topic Selection' | 'Proposal Development' | 'Chapter Assista
 export default function RequestAcademicProjectPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const defaultType = searchParams.get('type');
+  const defaultType = searchParams?.get('type');
 
   const [loading, setLoading] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
