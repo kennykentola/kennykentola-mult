@@ -23,8 +23,10 @@ import {
 import Link from 'next/link';
 import Editor from '@monaco-editor/react';
 import AITutorChat from '../academy/AITutorChat';
+import CourseQna from './CourseQna';
+import CourseRatingModal from './CourseRatingModal';
 
-type Tab = 'lessons' | 'assignments' | 'live' | 'quizzes';
+type Tab = 'lessons' | 'assignments' | 'live' | 'quizzes' | 'qna';
 
 function formatDateTime(value?: string) {
   if (!value) return 'Not scheduled';
@@ -53,6 +55,7 @@ export default function CourseWorkspacePage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [showRatingModal, setShowRatingModal] = useState(false);
 
   // Workspace State
   const [editorCode, setEditorCode] = useState(getDefaultCode('javascript'));
@@ -97,6 +100,14 @@ export default function CourseWorkspacePage() {
       cancelled = true;
     };
   }, [courseId]);
+
+  useEffect(() => {
+    if (courseData?.enrollment?.progress >= 100 && !sessionStorage.getItem(`rating_skipped_${courseId}`)) {
+      // Small delay so they can enjoy the 100% first
+      const t = setTimeout(() => setShowRatingModal(true), 1500);
+      return () => clearTimeout(t);
+    }
+  }, [courseData?.enrollment?.progress, courseId]);
 
   const activeLesson = useMemo(
     () => courseData?.lessons.find((lesson) => lesson.id === activeLessonId) || courseData?.lessons[0] || null,
@@ -343,7 +354,8 @@ export default function CourseWorkspacePage() {
           { key: 'lessons', label: 'Lessons', icon: Video },
           { key: 'assignments', label: 'Assignments', icon: FileText },
           { key: 'live', label: 'Live Classes', icon: MessageSquare },
-          { key: 'quizzes', label: 'Quizzes', icon: CheckCircle2 }
+          { key: 'quizzes', label: 'Quizzes', icon: CheckCircle2 },
+          { key: 'qna', label: 'Q&A', icon: MessageSquare }
         ].map((tab) => {
           const Icon = tab.icon;
           const active = activeTab === tab.key;
@@ -561,6 +573,32 @@ export default function CourseWorkspacePage() {
         </div>
       )}
 
+      {activeTab === 'qna' && courseId && (
+        <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+          <aside className="space-y-2">
+            <button
+              onClick={() => setActiveLessonId('')}
+              className={`w-full rounded-2xl border p-4 text-left text-sm transition-colors ${!activeLessonId ? 'border-indigo-500/30 bg-indigo-500/10 text-white' : 'border-white/5 bg-slate-900/30 text-slate-400 hover:text-white'}`}
+            >
+              <span className="mt-1 block font-bold">General Course Q&A</span>
+            </button>
+            {courseData?.lessons.map((lesson) => (
+              <button
+                key={lesson.id}
+                onClick={() => setActiveLessonId(lesson.id)}
+                className={`w-full rounded-2xl border p-4 text-left text-sm transition-colors ${activeLesson?.id === lesson.id ? 'border-indigo-500/30 bg-indigo-500/10 text-white' : 'border-white/5 bg-slate-900/30 text-slate-400 hover:text-white'}`}
+              >
+                <span className="block text-xs font-semibold text-indigo-300">Lesson {lesson.order}</span>
+                <span className="mt-1 block font-bold">{lesson.title}</span>
+              </button>
+            ))}
+          </aside>
+          <section className="rounded-3xl border border-white/5 bg-slate-900/30 p-6">
+            <CourseQna courseId={courseId} lessonId={activeLessonId || undefined} />
+          </section>
+        </div>
+      )}
+
       {activeTab === 'assignments' && (
         <div className="grid gap-4 md:grid-cols-2">
           {assignments.map((assignment) => (
@@ -681,6 +719,18 @@ export default function CourseWorkspacePage() {
         courseTitle={courseData?.course?.title} 
         lessonTitle={activeLesson?.title} 
       />
+
+      {showRatingModal && courseData && (
+        <CourseRatingModal 
+          courseId={courseData.course.id} 
+          courseTitle={courseData.course.title}
+          onClose={() => {
+            sessionStorage.setItem(`rating_skipped_${courseId}`, 'true');
+            setShowRatingModal(false);
+          }}
+          onSubmitted={() => setShowRatingModal(false)}
+        />
+      )}
     </div>
   );
 }

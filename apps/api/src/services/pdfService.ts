@@ -104,7 +104,7 @@ export async function generateAndUploadCertificate(
         doc.fillColor('#e2e8f0');
         doc.font('Helvetica-Bold');
         doc.fontSize(20);
-        doc.text('KENNYKENTOLA-DIGITAL ACADEMY', 0, 105, {
+        doc.text('KENNYKENTOLA PROGRAMMING ACADEMY', 0, 105, {
           align: 'center',
           width: width,
         });
@@ -112,7 +112,7 @@ export async function generateAndUploadCertificate(
         doc.fillColor('#e2e8f0');
         doc.font('Helvetica-Bold');
         doc.fontSize(24);
-        doc.text('KENNYKENTOLA-DIGITAL ACADEMY', 0, 100, {
+        doc.text('KENNYKENTOLA PROGRAMMING ACADEMY', 0, 100, {
           align: 'center',
           width: width,
         });
@@ -221,13 +221,13 @@ export async function generateAndUploadCertificate(
       // Printed Name
       doc.fillColor('#e2e8f0');
       doc.font('Helvetica-Bold');
-      doc.fontSize(10);
+      doc.fontSize(12);
       doc.text(directorName.toUpperCase(), width - 300, footerY + 26, { width: 200, align: 'center' });
 
       // Title
       doc.fillColor('#64748b');
       doc.font('Helvetica');
-      doc.fontSize(8);
+      doc.fontSize(10);
       doc.text('ACADEMY DIRECTOR', width - 300, footerY + 40, { width: 200, align: 'center', characterSpacing: 1 });
 
       // 8. Certificate ID at the bottom

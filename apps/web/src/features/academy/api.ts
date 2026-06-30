@@ -476,9 +476,56 @@ export function fetchCourseTestimonials(courseId: string) {
   return academyFetch<{ testimonials: TestimonialDto[] }>(`/courses/${courseId}/testimonials`);
 }
 
+export function fetchCourseRatingsAggregate() {
+  return academyFetch<{ ratings: Record<string, { averageRating: number; ratingCount: number }> }>('/courses/ratings/aggregate');
+}
+
 export function submitTestimonial(courseId: string, payload: { content: string; rating: number }) {
   return academyFetch<{ message: string; testimonial: TestimonialDto }>(`/courses/${courseId}/testimonials`, {
     method: 'POST',
     body: JSON.stringify(payload)
+  }, true);
+}
+
+export type QnaThreadDto = {
+  $id: string;
+  courseId: string;
+  lessonId: string;
+  userId: string;
+  authorName: string;
+  content: string;
+  repliesCount: number;
+  createdAt: string;
+};
+
+export type QnaReplyDto = {
+  $id: string;
+  qnaId: string;
+  userId: string;
+  authorName: string;
+  content: string;
+  createdAt: string;
+};
+
+export function fetchCourseQna(courseId: string, lessonId?: string) {
+  const query = lessonId ? '?lessonId=' + lessonId : '';
+  return academyFetch<{ threads: QnaThreadDto[] }>(/courses/ + courseId + /qna + query, undefined, true);
+}
+
+export function createQnaThread(courseId: string, lessonId: string, content: string) {
+  return academyFetch<{ thread: QnaThreadDto }>(/courses/ + courseId + /qna, {
+    method: 'POST',
+    body: JSON.stringify({ lessonId, content })
+  }, true);
+}
+
+export function fetchQnaReplies(qnaId: string) {
+  return academyFetch<{ replies: QnaReplyDto[] }>(/qna/ + qnaId + /replies, undefined, true);
+}
+
+export function createQnaReply(qnaId: string, content: string) {
+  return academyFetch<{ reply: QnaReplyDto }>(/qna/ + qnaId + /replies, {
+    method: 'POST',
+    body: JSON.stringify({ content })
   }, true);
 }

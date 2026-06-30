@@ -17,6 +17,8 @@ const SUBMISSIONS_COLLECTION = 'submissions';
 const LIVE_CLASSES_COLLECTION = 'live_classes';
 const MODULES_COLLECTION = 'modules';
 const STUDENT_WORKSPACES_COLLECTION = 'student_workspaces';
+const COURSE_QNA_COLLECTION = 'course_qna';
+const COURSE_QNA_REPLIES_COLLECTION = 'course_qna_replies';
 
 type ApiCourse = {
   id: string;
@@ -326,6 +328,38 @@ async function listSubmissionReviews(filters: {
 async function ensureAcademyReviewer(role?: string) {
   return role === 'Admin' || role === 'Super Admin' || role === 'Instructor';
 }
+
+router.get('/courses/ratings/aggregate', async (_req, res) => {
+  try {
+    const testimonials = await databases.listDocuments(DATABASE_ID, 'testimonials', [
+      Query.limit(1000)
+    ]);
+    
+    const aggregates: Record<string, { ratingSum: number; count: number }> = {};
+    
+    testimonials.documents.forEach((t: any) => {
+      if (!t.courseId || !t.rating) return;
+      if (!aggregates[t.courseId]) {
+        aggregates[t.courseId] = { ratingSum: 0, count: 0 };
+      }
+      aggregates[t.courseId].ratingSum += Number(t.rating);
+      aggregates[t.courseId].count += 1;
+    });
+    
+    const results: Record<string, { averageRating: number; ratingCount: number }> = {};
+    for (const [courseId, data] of Object.entries(aggregates)) {
+      results[courseId] = {
+        averageRating: Number((data.ratingSum / data.count).toFixed(1)),
+        ratingCount: data.count
+      };
+    }
+    
+    res.status(200).json({ ratings: results });
+  } catch (err: any) {
+    console.error('[Academy] Error fetching aggregated ratings:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 router.get('/courses', async (_req, res) => {
   try {
@@ -2254,6 +2288,117 @@ router.delete('/admin/courses/:courseId', authenticateJWT, async (req: Authentic
 // ──────────────────────────────────────────────────
 
 // GET saved workspace for a specific lesson
+// --- COURSE Q&A DISCUSSIONS ---
+
+router.get('/courses/:courseId/qna', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { courseId } = req.params;
+  const { lessonId } = req.query;
+
+  try {
+    const queries = [
+      Query.equal('courseId', courseId),
+      Query.orderDesc('createdAt'),
+      Query.limit(50)
+    ];
+
+    if (lessonId) {
+      queries.push(Query.equal('lessonId', String(lessonId)));
+    }
+
+    const threads = await databases.listDocuments(DATABASE_ID, COURSE_QNA_COLLECTION, queries);
+    res.status(200).json({ threads: threads.documents });
+  } catch (err: any) {
+    console.error('[Academy QnA] Error fetching threads:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/courses/:courseId/qna', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { courseId } = req.params;
+  const { lessonId, content } = req.body;
+  const userId = req.user?.id;
+
+  if (!content) return res.status(400).json({ error: 'Content is required.' });
+
+  try {
+    // Fetch profile for author name
+    const profiles = await databases.listDocuments(DATABASE_ID, 'users_profile', [
+      Query.equal('userId', userId || ''),
+      Query.limit(1)
+    ]);
+    const profile = profiles.documents[0] as any;
+    const authorName = profile ? `${profile.firstName} ${profile.lastName}` : req.user?.name || 'Anonymous';
+
+    const thread = await databases.createDocument(DATABASE_ID, COURSE_QNA_COLLECTION, ID.unique(), {
+      courseId,
+      lessonId: lessonId || '',
+      userId,
+      authorName,
+      content,
+      repliesCount: 0,
+      createdAt: new Date().toISOString()
+    });
+
+    res.status(201).json({ thread });
+  } catch (err: any) {
+    console.error('[Academy QnA] Error creating thread:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/qna/:qnaId/replies', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { qnaId } = req.params;
+
+  try {
+    const replies = await databases.listDocuments(DATABASE_ID, COURSE_QNA_REPLIES_COLLECTION, [
+      Query.equal('qnaId', qnaId),
+      Query.orderAsc('createdAt'),
+      Query.limit(100)
+    ]);
+    res.status(200).json({ replies: replies.documents });
+  } catch (err: any) {
+    console.error('[Academy QnA] Error fetching replies:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/qna/:qnaId/replies', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { qnaId } = req.params;
+  const { content } = req.body;
+  const userId = req.user?.id;
+
+  if (!content) return res.status(400).json({ error: 'Content is required.' });
+
+  try {
+    const profiles = await databases.listDocuments(DATABASE_ID, 'users_profile', [
+      Query.equal('userId', userId || ''),
+      Query.limit(1)
+    ]);
+    const profile = profiles.documents[0] as any;
+    const authorName = profile ? `${profile.firstName} ${profile.lastName}` : req.user?.name || 'Anonymous';
+
+    const reply = await databases.createDocument(DATABASE_ID, COURSE_QNA_REPLIES_COLLECTION, ID.unique(), {
+      qnaId,
+      userId,
+      authorName,
+      content,
+      createdAt: new Date().toISOString()
+    });
+
+    // Update reply count
+    const thread = await databases.getDocument(DATABASE_ID, COURSE_QNA_COLLECTION, qnaId) as any;
+    await databases.updateDocument(DATABASE_ID, COURSE_QNA_COLLECTION, qnaId, {
+      repliesCount: (thread.repliesCount || 0) + 1
+    });
+
+    res.status(201).json({ reply });
+  } catch (err: any) {
+    console.error('[Academy QnA] Error posting reply:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- WORKSPACES ---
 router.get('/courses/:courseId/lessons/:lessonId/workspace', authenticateJWT, async (req: AuthenticatedRequest, res) => {
   const { courseId, lessonId } = req.params;
   const userId = req.user?.id;

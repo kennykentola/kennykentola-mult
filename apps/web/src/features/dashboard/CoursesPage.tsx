@@ -1,8 +1,9 @@
+/* eslint-disable react/forbid-dom-props */
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { BookOpen, Loader2, Play, Search, Sparkles } from 'lucide-react';
+import { BookOpen, Loader2, Play, Search, Sparkles, Star } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import {
   academyOverview,
@@ -14,7 +15,8 @@ import {
   AcademyProgressResponse,
   enrollInAcademyCourse,
   fetchAcademyCatalog,
-  fetchAcademyProgress
+  fetchAcademyProgress,
+  fetchCourseRatingsAggregate
 } from '../academy/api';
 
 const coverColors = [
@@ -51,6 +53,7 @@ export default function CoursesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [catalog, setCatalog] = useState<AcademyCatalogResponse['courses'] | null>(null);
   const [progress, setProgress] = useState<AcademyProgressResponse | null>(null);
+  const [ratings, setRatings] = useState<Record<string, { averageRating: number; ratingCount: number }>>({});
   const [loading, setLoading] = useState(true);
   const [enrollingCourseId, setEnrollingCourseId] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -64,13 +67,15 @@ export default function CoursesPage() {
       setError('');
 
       try {
-        const [catalogData, progressData] = await Promise.all([
+        const [catalogData, progressData, ratingsData] = await Promise.all([
           fetchAcademyCatalog(),
-          fetchAcademyProgress()
+          fetchAcademyProgress(),
+          fetchCourseRatingsAggregate()
         ]);
         if (!cancelled) {
           setCatalog(catalogData.courses);
           setProgress(progressData);
+          setRatings(ratingsData.ratings || {});
         }
       } catch (err: any) {
         if (!cancelled) {
@@ -206,6 +211,17 @@ export default function CoursesPage() {
                   {course.title}
                 </Link>
                 <p className="min-h-12 text-xs leading-relaxed text-slate-400">{course.description}</p>
+                
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center text-amber-400">
+                    <Star className="h-3.5 w-3.5 fill-current" />
+                    <span className="ml-1 text-xs font-bold text-white">{ratings[course.id]?.averageRating || 'New'}</span>
+                  </div>
+                  <span className="text-xs text-slate-500">
+                    {ratings[course.id]?.ratingCount ? `(${ratings[course.id].ratingCount} reviews)` : ''}
+                  </span>
+                </div>
+
                 <p className="text-xs text-slate-500">{getCourseLessonCount(course)} lessons - Full Lifetime Access</p>
                 <button
                   onClick={() => handleEnroll(course.id)}

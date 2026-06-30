@@ -1,3 +1,4 @@
+/* eslint-disable react/forbid-dom-props */
 'use client';
 import { useEffect, useState } from 'react';
 import { Network, ArrowRight, Layers, Clock, Award, BookOpen } from 'lucide-react';
