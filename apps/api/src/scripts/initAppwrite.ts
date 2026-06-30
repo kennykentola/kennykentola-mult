@@ -774,14 +774,14 @@ async function seedBankAccountsData() {
   }
 }
 
-async function ensureBucket(bucketId: string, bucketName: string) {
+async function ensureBucket(bucketId: string, bucketName: string, permissions?: string[]) {
   try {
     await storage.getBucket(bucketId);
     console.log(`[Storage] Bucket '${bucketId}' found.`);
   } catch (err) {
     console.log(`[Storage] Bucket '${bucketId}' not found. Creating...`);
     try {
-      await storage.createBucket(bucketId, bucketName);
+      await storage.createBucket(bucketId, bucketName, permissions);
     } catch (createErr: any) {
       console.warn(`[Storage] Failed to create bucket '${bucketId}':`, createErr.message);
     }
@@ -922,7 +922,9 @@ export async function initializeDatabase() {
   await seedBankAccountsData();
   console.log('[Appwrite Init] Bank accounts seed content ensured.');
 
-  await ensureBucket('certificates', 'Student Certificates');
+  await ensureBucket('certificates', 'Student Certificates', [
+    Permission.read(Role.any())
+  ]);
   console.log('[Appwrite Init] Certificates storage bucket verified/created.');
 
   await ensureBucket('print_orders', 'Print Orders Files');

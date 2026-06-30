@@ -180,7 +180,13 @@ export default function CourseWorkspacePage() {
           const pyLogs: string[] = [];
           pyodide.setStdout({ batched: (msg: string) => { pyLogs.push(msg); } });
           pyodide.setStderr({ batched: (msg: string) => { pyLogs.push('[ERROR] ' + msg); } });
-          await pyodide.runPythonAsync(editorCode);
+          
+          let codeToRun = editorCode;
+          if (codeToRun.includes('// Write your code here...')) {
+            codeToRun = codeToRun.replace('// Write your code here...', '').trim();
+          }
+          
+          await pyodide.runPythonAsync(codeToRun);
           setOutput(pyLogs.length > 0 ? pyLogs.join('\n') : '(No output)');
         } catch (pyErr: any) {
           setOutput('[ERROR] ' + (pyErr?.message || String(pyErr)));
