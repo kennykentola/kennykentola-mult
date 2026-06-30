@@ -80,6 +80,7 @@ export async function requestAcademicProject(data: {
   degree?: string;
   level?: string;
   serviceScope: string;
+  initialDocumentUrl?: string;
 }): Promise<AcademicProjectDto> {
   const response = await fetchWithAuth(`${API_BASE}/academic-projects/requests`, {
     method: 'POST',
