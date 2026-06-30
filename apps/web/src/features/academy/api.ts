@@ -169,7 +169,7 @@ export function fetchAcademyCatalog() {
 }
 
 export function fetchAcademyCourse(courseId: string) {
-  return academyFetch<AcademyCourseDetailResponse>(`/courses/${courseId}`);
+  return academyFetch<AcademyCourseDetailResponse>(`/courses/${courseId}`, undefined, true);
 }
 
 export function fetchAcademyProgress() {
