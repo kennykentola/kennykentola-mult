@@ -94,11 +94,19 @@ export async function generateAndUploadCertificate(
 
       if (fs.existsSync(logoPath)) {
         // Draw the logo centered at the top
-        // Scale it to fit within a 200x60 box
-        doc.image(logoPath, width / 2 - 100, 70, {
-          fit: [200, 60],
+        doc.image(logoPath, width / 2 - 100, 50, {
+          fit: [200, 50],
           align: 'center',
           valign: 'center'
+        });
+        
+        // Print the name right below the logo
+        doc.fillColor('#e2e8f0');
+        doc.font('Helvetica-Bold');
+        doc.fontSize(20);
+        doc.text('KENNYKENTOLA PROGRAMMING ACADEMY', 0, 105, {
+          align: 'center',
+          width: width,
         });
       } else {
         doc.fillColor('#e2e8f0');
