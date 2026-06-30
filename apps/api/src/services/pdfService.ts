@@ -187,6 +187,7 @@ export async function generateAndUploadCertificate(
 
       // Right: Instructor Signature
       const signaturePath = path.join(__dirname, '../../src/assets/signature.png');
+      const directorName = 'Ademola Peter Kehinde';
       
       if (fs.existsSync(signaturePath)) {
         // Draw the image signature
@@ -201,16 +202,25 @@ export async function generateAndUploadCertificate(
         doc.fillColor('#e2e8f0');
         doc.font('Times-Italic');
         doc.fontSize(16);
-        doc.text('Kenny Kentola', width - 300, footerY - 5, { width: 200, align: 'center' });
+        doc.text(directorName, width - 300, footerY - 5, { width: 200, align: 'center' });
       }
 
+      // Signature Line
       doc.lineWidth(1);
       doc.strokeColor('#475569');
       doc.moveTo(width - 300, footerY + 20).lineTo(width - 100, footerY + 20).stroke();
+      
+      // Printed Name
+      doc.fillColor('#e2e8f0');
+      doc.font('Helvetica-Bold');
+      doc.fontSize(10);
+      doc.text(directorName.toUpperCase(), width - 300, footerY + 26, { width: 200, align: 'center' });
+
+      // Title
       doc.fillColor('#64748b');
       doc.font('Helvetica');
-      doc.fontSize(10);
-      doc.text('ACADEMY DIRECTOR', width - 300, footerY + 26, { width: 200, align: 'center' });
+      doc.fontSize(8);
+      doc.text('ACADEMY DIRECTOR', width - 300, footerY + 40, { width: 200, align: 'center', characterSpacing: 1 });
 
       // 8. Certificate ID at the bottom
       doc.fillColor('#475569');
