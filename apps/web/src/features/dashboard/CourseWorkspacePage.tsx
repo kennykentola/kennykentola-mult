@@ -660,7 +660,7 @@ export default function CourseWorkspacePage() {
 
       {/* AI Tutor Chat */}
       <AITutorChat 
-        courseTitle={courseData?.title} 
+        courseTitle={courseData?.course?.title} 
         lessonTitle={activeLesson?.title} 
       />
     </div>
