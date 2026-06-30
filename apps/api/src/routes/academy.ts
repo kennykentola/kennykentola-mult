@@ -1493,6 +1493,49 @@ router.post('/courses/:courseId/modules', authenticateJWT, async (req: Authentic
   }
 });
 
+// INSTRUCTOR: Reorder modules or lessons (Drag-and-Drop)
+router.patch('/courses/:courseId/reorder', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Instructor access required.' });
+  }
+
+  const { courseId } = req.params;
+  const { items, type } = req.body; // type: 'modules' | 'lessons'
+
+  try {
+    const course = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION, courseId);
+    if (req.user.role === 'Instructor' && (course as any).instructorId !== req.user.id) {
+      return res.status(403).json({ error: 'You do not own this course.' });
+    }
+
+    if (!items || !Array.isArray(items)) {
+      return res.status(400).json({ error: 'Invalid items array' });
+    }
+
+    const collection = type === 'modules' ? MODULES_COLLECTION : LESSONS_COLLECTION;
+
+    // Update each item's order and optionally moduleId
+    for (const item of items) {
+      const updateData: any = { order: item.order };
+      if (type === 'lessons' && item.moduleId !== undefined) {
+        updateData.moduleId = item.moduleId || null;
+      }
+      
+      await databases.updateDocument(
+        DATABASE_ID,
+        collection,
+        item.id,
+        updateData
+      );
+    }
+
+    res.json({ success: true, message: 'Reordered successfully' });
+  } catch (err: any) {
+    console.error('[Academy Instructor] Error reordering items:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // INSTRUCTOR: Update module
 router.patch('/modules/:moduleId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
   if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {

@@ -16,8 +16,11 @@ import {
   X,
   ChevronDown,
   ChevronUp,
-  ArrowLeft
+  ArrowLeft,
+  GripVertical,
+  UploadCloud
 } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import Link from 'next/link';
 import { getSessionJwt } from '../../../../../lib/sessionJwt';
 
@@ -65,6 +68,7 @@ export default function AdminCurriculumPage({ params }: { params: Promise<{ id: 
   const [form, setForm] = useState<LessonForm>(emptyForm());
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   // Load lessons for course
   const loadLessons = useCallback(() => {
@@ -163,6 +167,35 @@ export default function AdminCurriculumPage({ params }: { params: Promise<{ id: 
     }
   }
 
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    
+    setUploading(true);
+    setError('');
+    try {
+      const jwt = await getSessionJwt();
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const res = await fetch(`${API_BASE}/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${jwt}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      
+      setForm(prev => ({ ...prev, videoUrl: data.url }));
+      setSuccessMsg('Media uploaded to Cloudinary successfully!');
+      setTimeout(() => setSuccessMsg(''), 3000);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setUploading(false);
+    }
+  }
+
   async function handleDelete(lessonId: string) {
     if (!confirm('Delete this lesson? This cannot be undone.')) return;
     setDeletingId(lessonId);
@@ -185,31 +218,32 @@ export default function AdminCurriculumPage({ params }: { params: Promise<{ id: 
     }
   }
 
-  async function moveLesson(lesson: Lesson, direction: 'up' | 'down') {
-    const idx = lessons.findIndex((l) => l.id === lesson.id);
-    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-    if (swapIdx < 0 || swapIdx >= lessons.length) return;
-
+  async function handleDragEnd(result: DropResult) {
+    if (!result.destination) return;
+    
+    const items = Array.from(lessons);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    
+    // Update order values locally
+    const updatedItems = items.map((item, index) => ({
+      ...item,
+      order: index + 1
+    }));
+    
+    setLessons(updatedItems);
+    
+    // Send to backend
     const jwt = await getSessionJwt();
-    const newOrder = lessons[swapIdx].order;
-    const swapOrder = lesson.order;
-
     try {
-      await Promise.all([
-        fetch(`${API_BASE}/academy/lessons/${lesson.id}`, {
-          method: 'PATCH',
-          headers: { Authorization: `Bearer ${jwt}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ order: newOrder }),
-        }),
-        fetch(`${API_BASE}/academy/lessons/${lessons[swapIdx].id}`, {
-          method: 'PATCH',
-          headers: { Authorization: `Bearer ${jwt}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ order: swapOrder }),
-        }),
-      ]);
-      loadLessons();
-    } catch (e: any) {
-      setError(e.message);
+      const res = await fetch(`${API_BASE}/academy/courses/${id}/reorder`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${jwt}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: updatedItems, type: 'lessons' }),
+      });
+      if (!res.ok) throw new Error('Failed to save new order to server');
+    } catch (err: any) {
+      setError(err.message);
     }
   }
 
@@ -282,14 +316,22 @@ export default function AdminCurriculumPage({ params }: { params: Promise<{ id: 
             </div>
 
             <div>
-              <label htmlFor="lesson-video-url" className="block text-xs font-semibold text-slate-400 mb-1.5">Video URL</label>
-              <input
-                id="lesson-video-url"
-                value={form.videoUrl}
-                onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
-                className="w-full rounded-xl border border-white/5 bg-slate-900/60 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none transition-all"
-                placeholder="https://youtube.com/watch?v=..."
-              />
+              <label htmlFor="lesson-video-url" className="block text-xs font-semibold text-slate-400 mb-1.5">Video/File URL</label>
+              <div className="flex items-center gap-2">
+                <input
+                  id="lesson-video-url"
+                  value={form.videoUrl}
+                  onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
+                  className="flex-1 w-full rounded-xl border border-white/5 bg-slate-900/60 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none transition-all"
+                  placeholder="https://..."
+                />
+                <label className="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-4 py-3 text-sm font-semibold hover:bg-indigo-500/20 transition-all shrink-0">
+                  {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+                  {uploading ? 'Uploading...' : 'Upload'}
+                  <input type="file" accept="video/*,image/*,.pdf" className="hidden" onChange={handleFileUpload} disabled={uploading} />
+                </label>
+              </div>
+              <p className="text-[10px] text-slate-500 mt-1">Upload directly to Cloudinary or paste a link.</p>
             </div>
 
             <div>
@@ -372,65 +414,58 @@ export default function AdminCurriculumPage({ params }: { params: Promise<{ id: 
           <p className="mt-2 text-slate-400 text-sm">Click "Add Lesson" above to create your first lesson.</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {lessons.map((lesson, idx) => (
-            <div
-              key={lesson.id}
-              className="rounded-2xl border border-white/5 bg-slate-900/30 p-5 flex items-center gap-4 hover:bg-slate-900/40 transition-colors group"
-            >
-              {/* Order Badge */}
-              <div className="h-9 w-9 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-sm font-black text-indigo-400 shrink-0">
-                {lesson.order}
-              </div>
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="lessons-list">
+            {(provided) => (
+              <div className="space-y-3" {...provided.droppableProps} ref={provided.innerRef}>
+                {lessons.map((lesson, idx) => (
+                  <Draggable key={lesson.id} draggableId={lesson.id} index={idx}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        className={`rounded-2xl border border-white/5 bg-slate-900/30 p-5 flex items-center gap-4 transition-colors group ${snapshot.isDragging ? 'bg-slate-800 shadow-2xl ring-2 ring-indigo-500' : 'hover:bg-slate-900/40'}`}
+                      >
+                        {/* Drag Handle */}
+                        <div {...provided.dragHandleProps} className="text-slate-600 hover:text-white cursor-grab active:cursor-grabbing p-1">
+                          <GripVertical className="h-5 w-5" />
+                        </div>
+                        
+                        {/* Order Badge */}
+                        <div className="h-9 w-9 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-sm font-black text-indigo-400 shrink-0">
+                          {lesson.order}
+                        </div>
 
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold text-white truncate">{lesson.title}</span>
-                  {lesson.isPreview && (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-bold text-cyan-300">
-                      <Eye className="h-2.5 w-2.5" /> Free Preview
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-4 mt-1 text-xs text-slate-500">
-                  {lesson.videoUrl && (
-                    <span className="flex items-center gap-1">
-                      <Video className="h-3 w-3" /> Video attached
-                    </span>
-                  )}
-                  {lesson.durationMinutes > 0 && (
-                    <span>{lesson.durationMinutes} min</span>
-                  )}
-                  {lesson.content && (
-                    <span className="flex items-center gap-1">
-                      <BookOpen className="h-3 w-3" /> Has notes
-                    </span>
-                  )}
-                </div>
-              </div>
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-white truncate">{lesson.title}</span>
+                            {lesson.isPreview && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-bold text-cyan-300">
+                                <Eye className="h-2.5 w-2.5" /> Free Preview
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-4 mt-1 text-xs text-slate-500">
+                            {lesson.videoUrl && (
+                              <span className="flex items-center gap-1">
+                                <Video className="h-3 w-3" /> Media attached
+                              </span>
+                            )}
+                            {lesson.durationMinutes > 0 && (
+                              <span>{lesson.durationMinutes} min</span>
+                            )}
+                            {lesson.content && (
+                              <span className="flex items-center gap-1">
+                                <BookOpen className="h-3 w-3" /> Has notes
+                              </span>
+                            )}
+                          </div>
+                        </div>
 
-              {/* Actions */}
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={() => moveLesson(lesson, 'up')}
-                  disabled={idx === 0}
-                  className="p-2 rounded-lg text-slate-500 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                  title="Move up"
-                  aria-label="Move lesson up"
-                >
-                  <ChevronUp className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => moveLesson(lesson, 'down')}
-                  disabled={idx === lessons.length - 1}
-                  className="p-2 rounded-lg text-slate-500 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                  title="Move down"
-                  aria-label="Move lesson down"
-                >
-                  <ChevronDown className="h-4 w-4" />
-                </button>
-                <button
+                        {/* Actions */}
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
                   onClick={() => openEditForm(lesson)}
                   className="p-2 rounded-lg text-slate-500 hover:text-indigo-400 hover:bg-slate-800 transition-all"
                   title="Edit lesson"
@@ -445,25 +480,31 @@ export default function AdminCurriculumPage({ params }: { params: Promise<{ id: 
                   title="Delete lesson"
                   aria-label="Delete lesson"
                 >
-                  {deletingId === lesson.id
-                    ? <Loader2 className="h-4 w-4 animate-spin" />
-                    : <Trash2 className="h-4 w-4" />
-                  }
-                </button>
-                <a
-                  href={lesson.videoUrl || '#'}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={`p-2 rounded-lg text-slate-500 hover:text-cyan-400 hover:bg-slate-800 transition-all ${!lesson.videoUrl ? 'pointer-events-none opacity-30' : ''}`}
-                  title="Preview video"
-                  aria-label="Preview video"
-                >
-                  <EyeOff className="h-4 w-4" />
-                </a>
+                          {deletingId === lesson.id
+                            ? <Loader2 className="h-4 w-4 animate-spin" />
+                            : <Trash2 className="h-4 w-4" />
+                          }
+                          </button>
+                          <a
+                            href={lesson.videoUrl || '#'}
+                            target="_blank"
+                            rel="noreferrer"
+                            className={`p-2 rounded-lg text-slate-500 hover:text-cyan-400 hover:bg-slate-800 transition-all ${!lesson.videoUrl ? 'pointer-events-none opacity-30' : ''}`}
+                            title="Preview video"
+                            aria-label="Preview video"
+                          >
+                            <EyeOff className="h-4 w-4" />
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
               </div>
-            </div>
-          ))}
-        </div>
+            )}
+          </Droppable>
+        </DragDropContext>
       )}
     </div>
   );

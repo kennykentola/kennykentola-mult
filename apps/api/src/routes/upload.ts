@@ -49,7 +49,7 @@ router.post('/', authenticateJWT, upload.single('file'), async (req: Authenticat
     try {
       if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME !== 'mock') {
         const result = await cloudinary.uploader.upload(filePath, {
-          resource_type: 'video',
+          resource_type: 'auto',
           folder: 'academy_lessons'
         });
         videoUrl = result.secure_url;
