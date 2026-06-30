@@ -32,6 +32,12 @@ function formatDateTime(value?: string) {
 }
 
 export default function CourseWorkspacePage() {
+  const getDefaultCode = (lang: string) => {
+    if (lang === 'python') return '# Write your Python code here...';
+    if (lang === 'html') return '<!-- Write your HTML code here... -->';
+    return '// Write your code here...';
+  };
+
   const params = useParams<{ courseId: string }>();
   const courseId = params?.courseId;
   const [courseData, setCourseData] = useState<AcademyCourseDetailResponse | null>(null);
@@ -49,7 +55,7 @@ export default function CourseWorkspacePage() {
   const [error, setError] = useState('');
 
   // Workspace State
-  const [editorCode, setEditorCode] = useState('// Write your code here...');
+  const [editorCode, setEditorCode] = useState(getDefaultCode('javascript'));
   const [selectedLanguage, setSelectedLanguage] = useState('javascript');
   const [output, setOutput] = useState('');
   const [isExecuting, setIsExecuting] = useState(false);
@@ -109,7 +115,7 @@ export default function CourseWorkspacePage() {
           setSelectedLanguage(res.workspace.language || 'javascript');
           setOutput('');
         } else {
-          setEditorCode('// Write your code here...');
+          setEditorCode(getDefaultCode(res.workspace.language || 'javascript'));
           setOutput('');
         }
       } catch (err) {
@@ -465,7 +471,13 @@ export default function CourseWorkspacePage() {
                           aria-label="Programming Language" 
                           className="bg-slate-800 rounded px-2 py-1.5 border-none outline-none text-slate-300 cursor-pointer shrink-0"
                           value={selectedLanguage}
-                          onChange={(e) => setSelectedLanguage(e.target.value)}
+                          onChange={(e) => {
+                            const newLang = e.target.value;
+                            if (!editorCode || editorCode === getDefaultCode(selectedLanguage) || editorCode === '// Write your code here...') {
+                              setEditorCode(getDefaultCode(newLang));
+                            }
+                            setSelectedLanguage(newLang);
+                          }}
                         >
                           <option value="javascript">JavaScript</option>
                           <option value="typescript">TypeScript</option>
