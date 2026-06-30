@@ -435,7 +435,7 @@ router.patch('/:id/payments/:paymentId/approve', authenticateJWT, async (req: Au
     
     // Update the project's amountPaid
     const project = await databases.getDocument(DATABASE_ID, STUDENT_PROJECTS_COLLECTION, req.params.id);
-    const newAmountPaid = (project as any).amountPaid + payment.amount;
+    const newAmountPaid = (project as any).amountPaid + (payment as any).amount;
     await databases.updateDocument(DATABASE_ID, STUDENT_PROJECTS_COLLECTION, req.params.id, {
       amountPaid: newAmountPaid
     });

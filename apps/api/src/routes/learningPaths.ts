@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { databases } from '../services/appwrite';
 import { ID, Query } from 'node-appwrite';
 import { requireAdmin } from '../middleware/auth';
@@ -39,7 +39,7 @@ router.get('/:slug', async (req, res) => {
 });
 
 // POST create learning path (Admin Only)
-router.post('/', requireAdmin, async (req, res) => {
+router.post('/', requireAdmin, async (req: Request, res: Response) => {
   try {
     const { 
       title, slug, description, iconName, color, borderColor, 
@@ -74,7 +74,7 @@ router.post('/', requireAdmin, async (req, res) => {
 });
 
 // PUT update learning path (Admin Only)
-router.put('/:id', requireAdmin, async (req, res) => {
+router.put('/:id', requireAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const payload = req.body;
@@ -96,7 +96,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
 });
 
 // DELETE learning path (Admin Only)
-router.delete('/:id', requireAdmin, async (req, res) => {
+router.delete('/:id', requireAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, id);
