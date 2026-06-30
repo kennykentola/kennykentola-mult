@@ -10,10 +10,10 @@
     "packages/shared"
   ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
-    "dev": "npm run dev --workspaces --parallel",
+    "build": "turbo run build",
+    "dev": "turbo run dev",
     "init:appwrite": "npm run init:appwrite --workspace api",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
     "turbo": "^2.9.18",

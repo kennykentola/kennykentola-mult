@@ -189,7 +189,8 @@ const updateAdminOrderSchema = z.object({
   body: z.object({
     status: z.enum(['pending', 'processing', 'ready', 'delivered', 'cancelled']).optional(),
     price: z.coerce.number().min(0).optional(),
-    estimatedReadyAt: z.string().datetime().optional()
+    estimatedReadyAt: z.string().datetime().optional(),
+    deliverableUrl: z.string().url().optional()
   })
 });
 
@@ -202,7 +203,7 @@ router.patch('/admin/orders/:orderId', authenticateJWT, validateRequest(updateAd
   }
 
   const { orderId } = req.params;
-  const { status, price, estimatedReadyAt } = req.body;
+  const { status, price, estimatedReadyAt, deliverableUrl } = req.body;
 
   try {
     const updateData: Record<string, any> = {};
@@ -210,6 +211,7 @@ router.patch('/admin/orders/:orderId', authenticateJWT, validateRequest(updateAd
     if (status) updateData.status = status;
     if (price !== undefined) updateData.price = price;
     if (estimatedReadyAt) updateData.estimatedReadyAt = estimatedReadyAt;
+    if (deliverableUrl) updateData.deliverableUrl = deliverableUrl;
     if (status === 'delivered') updateData.completedAt = new Date().toISOString();
 
     const order = await databases.updateDocument(

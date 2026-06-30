@@ -15,13 +15,45 @@ export interface AcademicProjectDto {
   serviceScope: string;
   assignedDeveloper: string;
   price: number;
+  amountPaid?: number;
+  assignedMentorId?: string;
+  assignedMentorName?: string;
   proposalUrl: string;
   documentationUrl: string;
   sourceCodeUrl: string;
   paymentReceiptUrl?: string;
+  initialDocumentUrl?: string;
   paymentId: string;
   $createdAt: string;
   $updatedAt: string;
+}
+
+export interface AcademicMessageDto {
+  $id: string;
+  roomId: string;
+  senderId: string;
+  senderName: string;
+  content: string;
+  fileUrl?: string;
+  $createdAt: string;
+}
+
+export interface AcademicTaskDto {
+  $id: string;
+  projectId: string;
+  title: string;
+  completed: boolean;
+  $createdAt: string;
+}
+
+export interface AcademicPaymentDto {
+  $id: string;
+  projectId: string;
+  amount: number;
+  receiptUrl: string;
+  status: 'pending' | 'approved' | 'rejected';
+  installmentNumber: number;
+  $createdAt: string;
 }
 
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
@@ -69,9 +101,70 @@ export async function fetchMyAcademicProjects(): Promise<AcademicProjectDto[]> {
   return response.projects;
 }
 
-export async function fetchAcademicProjectById(id: string): Promise<AcademicProjectDto> {
+export async function fetchAcademicProjectById(id: string): Promise<{ project: AcademicProjectDto, messages: AcademicMessageDto[] }> {
   const response = await fetchWithAuth(`${API_BASE}/academic-projects/${id}`);
-  return response.project;
+  return { project: response.project, messages: response.messages || [] };
+}
+
+export async function sendAcademicMessage(projectId: string, content: string, fileUrl?: string): Promise<AcademicMessageDto> {
+  const data = await fetchWithAuth(`${API_BASE}/academic-projects/${projectId}/messages`, {
+    method: 'POST',
+    body: JSON.stringify({ content, fileUrl }),
+  });
+  return data.message;
+}
+
+// ──────────────────────────────────────────────────
+// TASKS
+// ──────────────────────────────────────────────────
+
+export async function fetchProjectTasks(projectId: string): Promise<AcademicTaskDto[]> {
+  const data = await fetchWithAuth(`${API_BASE}/academic-projects/${projectId}/tasks`);
+  return data.tasks;
+}
+
+export async function createProjectTask(projectId: string, title: string): Promise<AcademicTaskDto> {
+  const data = await fetchWithAuth(`${API_BASE}/academic-projects/${projectId}/tasks`, {
+    method: 'POST',
+    body: JSON.stringify({ title }),
+  });
+  return data.task;
+}
+
+export async function updateProjectTask(projectId: string, taskId: string, completed: boolean): Promise<AcademicTaskDto> {
+  const data = await fetchWithAuth(`${API_BASE}/academic-projects/${projectId}/tasks/${taskId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ completed }),
+  });
+  return data.task;
+}
+
+export async function deleteProjectTask(projectId: string, taskId: string): Promise<void> {
+  await fetchWithAuth(`${API_BASE}/academic-projects/${projectId}/tasks/${taskId}`, { method: 'DELETE' });
+}
+
+// ──────────────────────────────────────────────────
+// PAYMENTS
+// ──────────────────────────────────────────────────
+
+export async function fetchProjectPayments(projectId: string): Promise<AcademicPaymentDto[]> {
+  const data = await fetchWithAuth(`${API_BASE}/academic-projects/${projectId}/payments`);
+  return data.payments;
+}
+
+export async function createProjectPayment(projectId: string, amount: number, receiptUrl: string): Promise<AcademicPaymentDto> {
+  const data = await fetchWithAuth(`${API_BASE}/academic-projects/${projectId}/payments`, {
+    method: 'POST',
+    body: JSON.stringify({ amount, receiptUrl }),
+  });
+  return data.payment;
+}
+
+export async function approveProjectPayment(projectId: string, paymentId: string): Promise<AcademicPaymentDto> {
+  const data = await fetchWithAuth(`${API_BASE}/academic-projects/${projectId}/payments/${paymentId}/approve`, {
+    method: 'PATCH'
+  });
+  return data.payment;
 }
 
 export async function approveAcademicProject(id: string): Promise<AcademicProjectDto> {
@@ -82,6 +175,24 @@ export async function approveAcademicProject(id: string): Promise<AcademicProjec
 }
 
 // ADMIN METHODS
+
+export async function fetchAllAdminAcademicProjects() {
+  const data = await fetchWithAuth(`${API_BASE}/academic-projects/admin/all`);
+  return data.projects as AcademicProjectDto[];
+}
+
+export async function fetchMentorAcademicProjects() {
+  const data = await fetchWithAuth(`${API_BASE}/academic-projects/mentor/all`);
+  return data.projects as AcademicProjectDto[];
+}
+
+export async function updateMentorProject(projectId: string, payload: Partial<AcademicProjectDto>) {
+  const data = await fetchWithAuth(`${API_BASE}/academic-projects/mentor/${projectId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+  return data.project as AcademicProjectDto;
+}
 
 export async function fetchAllAcademicProjects(): Promise<AcademicProjectDto[]> {
   const response = await fetchWithAuth(`${API_BASE}/academic-projects/admin/all`);

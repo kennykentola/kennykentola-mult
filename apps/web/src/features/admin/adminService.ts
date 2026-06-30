@@ -25,3 +25,8 @@ export async function getAdminAnalytics() {
   const data = await fetchWithAuth(`${API_BASE}/admin/analytics`);
   return data;
 }
+
+export async function fetchAdminUsers() {
+  const data = await fetchWithAuth(`${API_BASE}/admin/users`);
+  return data;
+}

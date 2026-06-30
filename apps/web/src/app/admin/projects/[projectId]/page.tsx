@@ -63,6 +63,7 @@ export default function AdminProjectDetailsPage() {
   const [sBudget, setSBudget] = useState(0);
   const [sPmName, setSPmName] = useState('');
   const [savingSettings, setSavingSettings] = useState(false);
+  const [uploadingAsset, setUploadingAsset] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -101,17 +102,32 @@ export default function AdminProjectDetailsPage() {
       setSendingMsg(false);
     }
   };
-
-  const handleUploadAsset = async () => {
-    const fileUrl = prompt('Enter the secure URL of the uploaded file (e.g. from Google Drive or Cloudinary):');
-    if (!fileUrl) return;
-    const fileName = prompt('Enter a name for this file:') || 'Document';
-    
+  const handleUploadAsset = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    setUploadingAsset(true);
     try {
-      await uploadProjectAsset(params.projectId, fileName, fileUrl);
+      const cloudFormData = new FormData();
+      cloudFormData.append('file', file);
+      cloudFormData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'ml_default');
+
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/auto/upload`, {
+        method: 'POST',
+        body: cloudFormData,
+      });
+
+      if (!res.ok) throw new Error('Failed to upload file to cloud');
+      const uploadData = await res.json();
+
+      await uploadProjectAsset(params.projectId, file.name, uploadData.secure_url);
       await fetchData();
     } catch (err) {
+      console.error(err);
       alert('Failed to add asset');
+    } finally {
+      setUploadingAsset(false);
+      // Reset input
+      e.target.value = '';
     }
   };
 
@@ -344,12 +360,22 @@ export default function AdminProjectDetailsPage() {
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-bold text-white">Project Files & Deliverables</h3>
-            <button 
-              onClick={handleUploadAsset}
-              className="flex items-center gap-2 text-xs font-bold bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20 px-4 py-2 rounded-lg transition-colors"
-            >
-              <UploadCloud className="h-4 w-4" /> Upload Deliverable
-            </button>
+            <div className="relative">
+              <input 
+                type="file" 
+                onChange={handleUploadAsset} 
+                disabled={uploadingAsset}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed" 
+                title="Upload File"
+              />
+              <button 
+                disabled={uploadingAsset}
+                className="flex items-center gap-2 text-xs font-bold bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <UploadCloud className="h-4 w-4" /> 
+                {uploadingAsset ? 'Uploading...' : 'Upload Deliverable'}
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

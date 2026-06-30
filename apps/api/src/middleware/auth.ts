@@ -104,3 +104,13 @@ export const optionalAuthenticateJWT = async (
     next();
   }
 };
+
+export const requireAdmin = [
+  authenticateJWT,
+  (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    if (req.user?.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden: Admin access required' });
+    }
+    next();
+  }
+];

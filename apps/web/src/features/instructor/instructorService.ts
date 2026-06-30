@@ -65,6 +65,18 @@ export async function updateCourse(courseId: string, payload: Partial<{
   return data.course;
 }
 
+/** Get lessons for a course */
+export async function getCourseLessons(courseId: string) {
+  const data = await fetchWithAuth(`${API_BASE}/academy/courses/${courseId}/lessons`);
+  return data.lessons || [];
+}
+
+/** Get assignments for a course */
+export async function getCourseAssignments(courseId: string) {
+  const data = await fetchWithAuth(`${API_BASE}/academy/courses/${courseId}/assignments`);
+  return data.assignments || [];
+}
+
 /** Get modules for a course */
 export async function getCourseModules(courseId: string) {
   const data = await fetchWithAuth(`${API_BASE}/academy/courses/${courseId}/modules`);

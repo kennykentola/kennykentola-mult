@@ -18,7 +18,7 @@ export interface Profile {
   firstName: string;
   lastName: string;
   phoneNumber: string;
-  role: string;
+  role?: 'Super Admin' | 'Admin' | 'Instructor' | 'Printer Operator' | 'Mentor' | null;
   purpose: 'learn' | 'hire' | 'print' | 'both' | 'academic' | 'maintenance';
   avatarUrl?: string;
   emailNotifications?: boolean;

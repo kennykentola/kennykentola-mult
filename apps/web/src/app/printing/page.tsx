@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../features/auth/AuthContext';
 import { getMyOrders } from '../../features/printing/printingService';
 import { PrintOrder, ORDER_STATUS_LABELS, SERVICE_TYPE_LABELS } from '../../features/printing/types';
-import { Printer, Plus, Package, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Package, Clock, Printer, Plus, Download } from 'lucide-react';
 import Link from 'next/link';
 
 export default function PrintingDashboardPage() {
@@ -96,6 +96,34 @@ export default function PrintingDashboardPage() {
                     )}
                   </div>
                 </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs mt-4 mb-2">
+                  {order.paperSize && (
+                    <div>
+                      <span className="text-slate-500 block">Paper Size</span>
+                      <span className="font-semibold text-slate-300 uppercase">{order.paperSize}</span>
+                    </div>
+                  )}
+                  {order.colorMode && (
+                    <div>
+                      <span className="text-slate-500 block">Color Mode</span>
+                      <span className="font-semibold text-slate-300 capitalize">{order.colorMode}</span>
+                    </div>
+                  )}
+                  {order.sides && (
+                    <div>
+                      <span className="text-slate-500 block">Sides</span>
+                      <span className="font-semibold text-slate-300 capitalize">{order.sides}</span>
+                    </div>
+                  )}
+                  {order.deliveryMethod && (
+                    <div>
+                      <span className="text-slate-500 block">Delivery</span>
+                      <span className="font-semibold text-slate-300 capitalize">{order.deliveryMethod}</span>
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex items-center gap-4 text-xs text-slate-500 mt-4 pt-4 border-t border-white/5">
                   <span className="flex items-center gap-1">
                     <Package className="h-3.5 w-3.5" /> {serviceLabel} (x{order.quantity})
@@ -103,6 +131,16 @@ export default function PrintingDashboardPage() {
                   <span className="flex items-center gap-1">
                     <Clock className="h-3.5 w-3.5" /> {new Date(order.$createdAt).toLocaleDateString()}
                   </span>
+                  {order.deliverableUrl && (
+                    <a 
+                      href={order.deliverableUrl} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="ml-auto flex items-center gap-1 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 px-3 py-1 rounded-full font-bold transition-colors"
+                    >
+                      <Download className="h-3.5 w-3.5" /> Download Softcopy
+                    </a>
+                  )}
                 </div>
               </div>
             );

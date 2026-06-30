@@ -15,7 +15,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET || 'mock'
 });
 
-const APPWRITE_BUCKET_ID = process.env.APPWRITE_BUCKET_ID || 'videos';
+const APPWRITE_BUCKET_ID = process.env.APPWRITE_BUCKET_ID || 'project_files';
 
 // Set up multer using disk storage
 const diskStorage = multer.diskStorage({

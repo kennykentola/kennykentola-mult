@@ -189,6 +189,7 @@ export default function SolarDashboardPage() {
               </div>
             </div>
             <div className="mt-4 w-full bg-slate-800 rounded-full h-1.5">
+              {/* eslint-disable-next-line react/forbid-dom-props */}
               <div 
                 className={`h-1.5 rounded-full ${
                   metrics.batterySoC > 50 ? 'bg-emerald-500' : 

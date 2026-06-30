@@ -29,6 +29,7 @@ export interface PrintOrder {
   receiptUrl?: string;
   pricingType: 'auto' | 'manual';
   pageCount: number;
+  deliverableUrl?: string;
 }
 
 export interface PrintMessage {

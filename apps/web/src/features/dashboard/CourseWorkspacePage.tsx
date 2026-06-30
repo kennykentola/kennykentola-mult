@@ -22,6 +22,7 @@ import {
 } from '../academy/api';
 import Link from 'next/link';
 import Editor from '@monaco-editor/react';
+import AITutorChat from '../academy/AITutorChat';
 
 type Tab = 'lessons' | 'assignments' | 'live' | 'quizzes';
 
@@ -40,7 +41,7 @@ export default function CourseWorkspacePage() {
   const [quizAttempts, setQuizAttempts] = useState<QuizAttemptDto[]>([]);
   const [activeLessonId, setActiveLessonId] = useState('');
   const [activeTab, setActiveTab] = useState<Tab>('lessons');
-  const [fileUrls, setFileUrls] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [studentNote, setStudentNote] = useState('');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -163,7 +164,7 @@ export default function CourseWorkspacePage() {
                     document.head.appendChild(script);
                   });
                 }
-                win._pyodideInstance = await win.loadPyodide();
+                win._pyodideInstance = await win.loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/' });
                 win._pyodideReady = true;
               })();
             }
@@ -179,7 +180,31 @@ export default function CourseWorkspacePage() {
           setOutput('[ERROR] ' + (pyErr?.message || String(pyErr)));
         }
       } else {
-        setOutput(`Execution for "${selectedLanguage}" is not supported in the browser.`);
+        setOutput(`Executing ${selectedLanguage} on remote server...`);
+        try {
+          const { getSessionJwt } = require('@/lib/sessionJwt');
+          const token = await getSessionJwt();
+          const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+          
+          const res = await fetch(`${apiBase}/execute/execute-code`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ language: selectedLanguage, sourceCode: editorCode })
+          });
+          
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `Server error: ${res.status}`);
+          }
+          
+          const data = await res.json();
+          setOutput(data.run?.output || data.run?.stdout || data.run?.stderr || '(No output)');
+        } catch (err: any) {
+          setOutput(`[ERROR] ${err.message || 'Remote execution failed'}`);
+        }
       }
     } finally {
       setIsExecuting(false);
@@ -226,9 +251,9 @@ export default function CourseWorkspacePage() {
   }
 
   async function submitAssignment(assignmentId: string) {
-    const urls = fileUrls.split('\n').map((url) => url.trim()).filter(Boolean);
-    if (urls.length === 0) {
-      setError('Add at least one file URL before submitting.');
+    let uploadedUrls: string[] = [];
+    if (selectedFiles.length === 0 && !studentNote.trim()) {
+      setError('Please add at least one file or a note before submitting.');
       return;
     }
 
@@ -237,11 +262,31 @@ export default function CourseWorkspacePage() {
     setError('');
 
     try {
-      const response = await submitAcademyAssignment(assignmentId, { fileUrls: urls, studentNote });
+      if (selectedFiles.length > 0) {
+        for (const file of selectedFiles) {
+          const cloudFormData = new FormData();
+          cloudFormData.append('file', file);
+          cloudFormData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'ml_default');
+
+          const res = await fetch(`https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/auto/upload`, {
+            method: 'POST',
+            body: cloudFormData,
+          });
+
+          if (!res.ok) {
+            throw new Error('Failed to upload one or more files.');
+          }
+
+          const data = await res.json();
+          uploadedUrls.push(data.secure_url);
+        }
+      }
+
+      const response = await submitAcademyAssignment(assignmentId, { fileUrls: uploadedUrls, studentNote });
       setAssignments((current) =>
         current.map((assignment) => assignment.id === assignmentId ? { ...assignment, submission: response.submission } : assignment)
       );
-      setFileUrls('');
+      setSelectedFiles([]);
       setStudentNote('');
       setMessage('Assignment submitted.');
     } catch (err: any) {
@@ -335,6 +380,7 @@ export default function CourseWorkspacePage() {
                        <p className="text-sm text-slate-400">1. Transfer to: <strong className="text-white">UBA - 200XXXXXXX (KennyKentola)</strong></p>
                        <p className="text-sm text-slate-400">2. Upload your payment receipt screenshot below:</p>
                        <input 
+                         aria-label="Upload Payment Receipt"
                          type="file" 
                          accept="image/*" 
                          id="receipt-upload"
@@ -511,8 +557,31 @@ export default function CourseWorkspacePage() {
               <p className="mt-3 text-xs text-slate-500">Due: {formatDateTime(assignment.dueDate)} - {assignment.maxPoints} points</p>
               {assignment.submission?.feedback && <p className="mt-3 rounded-xl bg-slate-950/60 p-3 text-sm text-slate-300">{assignment.submission.feedback}</p>}
               <div className="mt-5 space-y-3">
-                <textarea value={fileUrls} onChange={(event) => setFileUrls(event.target.value)} placeholder="One file URL per line" className="h-20 w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-indigo-500" />
-                <textarea value={studentNote} onChange={(event) => setStudentNote(event.target.value)} placeholder="Notes to instructor" className="h-20 w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-indigo-500" />
+                <div className="border-2 border-dashed border-slate-800 rounded-xl p-4 hover:bg-slate-900/50 transition-colors">
+                  <p className="text-sm text-slate-400 mb-2">Upload Files (PDF, ZIP, DOCX, Images)</p>
+                  <input
+                    type="file"
+                    multiple
+                    title="Upload Assignment Files"
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        setSelectedFiles(Array.from(e.target.files));
+                      }
+                    }}
+                    className="w-full text-xs text-slate-400 file:mr-4 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 cursor-pointer"
+                  />
+                  {selectedFiles.length > 0 && (
+                    <ul className="mt-3 text-xs text-slate-400 space-y-1">
+                      {selectedFiles.map((f, i) => (
+                        <li key={i} className="flex items-center gap-2">
+                          <FileText className="h-3 w-3" />
+                          {f.name} ({(f.size / 1024 / 1024).toFixed(2)} MB)
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <textarea value={studentNote} onChange={(event) => setStudentNote(event.target.value)} placeholder="Notes to instructor (e.g. Github Repo Link)" className="h-20 w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-indigo-500" />
                 <button onClick={() => submitAssignment(assignment.id)} disabled={actionLoading} className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white hover:bg-indigo-500 disabled:opacity-60">
                   Submit Assignment
                 </button>
@@ -588,6 +657,12 @@ export default function CourseWorkspacePage() {
           {quizzes.length === 0 && <p className="text-sm text-slate-400 col-span-2">No quizzes are available for this course yet.</p>}
         </div>
       )}
+
+      {/* AI Tutor Chat */}
+      <AITutorChat 
+        courseTitle={courseData?.title} 
+        lessonTitle={activeLesson?.title} 
+      />
     </div>
   );
 }

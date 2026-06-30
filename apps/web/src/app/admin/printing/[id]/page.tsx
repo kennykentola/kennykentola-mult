@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getOrder, updateOrderStatus, verifyPayment, getMessages, sendMessage } from '../../../../features/printing/printingService';
 import { PrintOrder, PrintMessage } from '../../../../features/printing/types';
-import { Loader2, ArrowLeft, FileText, CheckCircle, XCircle, CreditCard, Send, ExternalLink, Image as ImageIcon } from 'lucide-react';
+import { Loader2, ArrowLeft, FileText, CheckCircle, XCircle, CreditCard, Send, ExternalLink, Image as ImageIcon, UploadCloud, DownloadCloud } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '../../../../lib/auth';
 
@@ -23,6 +23,7 @@ export default function AdminPrintOrderDetailPage() {
   const [manualPrice, setManualPrice] = useState('');
   const [isUpdatingPrice, setIsUpdatingPrice] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isUploadingDeliverable, setIsUploadingDeliverable] = useState(false);
 
   useEffect(() => {
     loadOrder();
@@ -85,6 +86,35 @@ export default function AdminPrintOrderDetailPage() {
       setOrder(updated);
     } catch (err) {
       alert('Failed to update status');
+    }
+  };
+
+  const handleUploadDeliverable = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    
+    setIsUploadingDeliverable(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'ml_default');
+      
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!res.ok) throw new Error('Cloudinary upload failed');
+      const data = await res.json();
+      
+      const updated = await updateOrderStatus(id, { deliverableUrl: data.secure_url });
+      setOrder(updated);
+      alert('Deliverable uploaded and sent to customer successfully!');
+    } catch (err: any) {
+      console.error(err);
+      alert('Failed to upload deliverable: ' + err.message);
+    } finally {
+      setIsUploadingDeliverable(false);
     }
   };
 
@@ -181,6 +211,31 @@ export default function AdminPrintOrderDetailPage() {
                 </div>
               ) : (
                 <p className="text-sm text-slate-500">No files uploaded.</p>
+              )}
+            </div>
+
+            <div className="pt-4 border-t border-white/5">
+              <span className="text-xs text-slate-500 block mb-2">Final Deliverable (To Customer)</span>
+              {order.deliverableUrl ? (
+                <a href={order.deliverableUrl} target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/30 hover:border-indigo-400 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <DownloadCloud className="h-5 w-5 text-indigo-400" />
+                    <span className="text-sm text-indigo-100 font-medium">Softcopy Sent</span>
+                  </div>
+                  <ExternalLink className="h-4 w-4 text-indigo-400" />
+                </a>
+              ) : (
+                <label className="flex items-center justify-center p-4 border-2 border-dashed border-slate-700 rounded-xl cursor-pointer hover:bg-slate-800 hover:border-slate-500 transition-colors relative">
+                  {isUploadingDeliverable ? (
+                    <Loader2 className="h-5 w-5 text-slate-400 animate-spin" />
+                  ) : (
+                    <>
+                      <UploadCloud className="h-5 w-5 text-slate-400 mr-2" />
+                      <span className="text-sm text-slate-300 font-medium">Upload Final Deliverable</span>
+                      <input type="file" className="hidden" accept="image/*,.pdf" onChange={handleUploadDeliverable} />
+                    </>
+                  )}
+                </label>
               )}
             </div>
           </div>

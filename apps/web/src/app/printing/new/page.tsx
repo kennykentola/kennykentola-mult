@@ -11,6 +11,7 @@ export default function NewPrintOrderPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -38,9 +39,30 @@ export default function NewPrintOrderPage() {
     setError('');
 
     try {
+      const fileUrls: string[] = [];
+      if (selectedFiles.length > 0) {
+        for (const file of selectedFiles) {
+          const cloudFormData = new FormData();
+          cloudFormData.append('file', file);
+          cloudFormData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'ml_default');
+
+          const res = await fetch(`https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/auto/upload`, {
+            method: 'POST',
+            body: cloudFormData,
+          });
+
+          if (!res.ok) {
+            throw new Error('Failed to upload one or more files.');
+          }
+
+          const data = await res.json();
+          fileUrls.push(data.secure_url);
+        }
+      }
+
       await createOrder({
         ...formData,
-        fileUrls: [] // We'll skip file upload for now to simplify
+        fileUrls
       });
       router.push('/printing');
     } catch (err: any) {
@@ -219,6 +241,39 @@ export default function NewPrintOrderPage() {
               placeholder="Any binding requests, paper thickness (e.g. 300gsm), or specific design requirements..."
               className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-all"
             />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="files" className="text-sm font-semibold text-slate-300">Upload Files (Optional)</label>
+            <div className="border-2 border-dashed border-slate-800 rounded-xl p-6 text-center hover:bg-slate-900/50 transition-colors">
+              <UploadCloud className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+              <p className="text-sm text-slate-400 mb-4">Upload documents, images, or designs (PDF, DOCX, JPG, PNG)</p>
+              <input
+                id="files"
+                type="file"
+                multiple
+                title="Upload Files"
+                onChange={(e) => {
+                  if (e.target.files) {
+                    setSelectedFiles(Array.from(e.target.files));
+                  }
+                }}
+                className="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-500/10 file:text-rose-400 hover:file:bg-rose-500/20"
+              />
+              {selectedFiles.length > 0 && (
+                <div className="mt-4 text-left">
+                  <p className="text-xs font-semibold text-slate-300 mb-2">Selected Files:</p>
+                  <ul className="text-xs text-slate-400 space-y-1">
+                    {selectedFiles.map((f, i) => (
+                      <li key={i} className="flex items-center gap-2">
+                        <FileText className="h-3 w-3" />
+                        {f.name} ({(f.size / 1024 / 1024).toFixed(2)} MB)
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="border-t border-slate-800 pt-6 flex justify-end">

@@ -20,7 +20,8 @@ import {
   Menu,
   X,
   FileCheck, 
-  MessageSquare
+  MessageSquare,
+  Layout
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -177,6 +178,10 @@ export default function AdminLayout({
             <Link href="/admin/courses" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
               <BookOpen className="h-4 w-4" />
               Academy Content
+            </Link>
+            <Link href="/admin/learning-paths" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/learning-paths') ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+              <Layout className="h-4 w-4" />
+              Learning Paths
             </Link>
           </div>
         </nav>

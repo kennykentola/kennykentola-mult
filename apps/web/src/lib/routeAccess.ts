@@ -8,6 +8,7 @@ const ROLE_LANDING: Record<string, string> = {
   Admin: '/admin',
   Instructor: '/instructor',
   'Printer Operator': '/printing',
+  Mentor: '/mentor/dashboard',
 };
 
 function getPurpose(profile: Profile) {
@@ -21,11 +22,11 @@ export function getLandingRoute(profile: Profile) {
   }
 
   const purpose = getPurpose(profile);
-  if (purpose === 'learn') return '/student/dashboard';
-  if (purpose === 'academic') return '/academic';
-  if (purpose === 'maintenance') return '/maintenance';
-  if (purpose === 'print') return '/printing';
-  if (purpose === 'hire') return '/projects';
+  if (purpose === 'learn') return '/student/dashboard'; // Wait, is it student/dashboard? Let's check below. If student portal uses /student
+  if (purpose === 'academic') return '/dashboard/academic';
+  if (purpose === 'maintenance') return '/dashboard/solar';
+  if (purpose === 'print') return '/dashboard/printing';
+  if (purpose === 'hire') return '/dashboard/projects';
   return '/student/dashboard';
 }
 
@@ -37,13 +38,15 @@ export function isRouteAllowed(pathname: string, profile: Profile) {
   if (role === 'Admin') return pathname.startsWith('/admin');
   if (role === 'Instructor') return pathname.startsWith('/instructor');
   if (role === 'Printer Operator') return pathname.startsWith('/printing');
+  if (role === 'Mentor') return pathname.startsWith('/mentor');
 
   if (pathname.startsWith('/student')) return purpose === 'learn' || purpose === 'both';
-  if (pathname.startsWith('/academic')) return purpose === 'academic' || purpose === 'both';
-  if (pathname.startsWith('/maintenance')) return purpose === 'maintenance' || purpose === 'both';
-  if (pathname.startsWith('/projects')) return purpose === 'hire' || purpose === 'both';
-  if (pathname.startsWith('/printing')) return purpose === 'print' || purpose === 'both';
-  if (pathname.startsWith('/dashboard')) return false;
+  if (pathname.startsWith('/dashboard/academic')) return purpose === 'academic' || purpose === 'both';
+  if (pathname.startsWith('/dashboard/solar') || pathname.startsWith('/dashboard/tickets')) return purpose === 'maintenance' || purpose === 'both';
+  if (pathname.startsWith('/dashboard/projects')) return purpose === 'hire' || purpose === 'both';
+  if (pathname.startsWith('/dashboard/printing')) return purpose === 'print' || purpose === 'both';
+  if (pathname === '/dashboard') return true; // Allow root dashboard page which might redirect or show generic UI
+
 
   return true;
 }

@@ -17,7 +17,8 @@ import {
   EyeOff, 
   DollarSign, 
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Settings
 } from 'lucide-react';
 import { 
   getInstructorCourses, 
@@ -31,46 +32,11 @@ import {
   getCourseModules,
   createModule,
   deleteModule,
-  uploadVideo
+  uploadVideo,
+  getCourseLessons,
+  getCourseAssignments
 } from '../../../features/instructor/instructorService';
 import { fetchCourseQuizzes, createQuiz, deleteQuiz } from '../../../features/academy/api';
-
-// Fallback loader for lesson list
-async function getLessonsForCourse(courseId: string) {
-  try {
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
-    const res = await fetch(`${API_BASE}/academy/courses/${courseId}`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.lessons || [];
-  } catch {
-    return [];
-  }
-}
-
-async function getModulesForCourse(courseId: string) {
-  try {
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
-    const res = await fetch(`${API_BASE}/academy/courses/${courseId}/modules`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.modules || [];
-  } catch {
-    return [];
-  }
-}
-
-async function getAssignmentsForCourse(courseId: string) {
-  try {
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
-    const res = await fetch(`${API_BASE}/academy/courses/${courseId}/assignments`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.assignments || [];
-  } catch {
-    return [];
-  }
-}
 
 
 export default function CourseManager() {
@@ -108,6 +74,7 @@ export default function CourseManager() {
     isPreview: false
   });
   const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [editLessonId, setEditLessonId] = useState<string | null>(null);
 
   const [showModuleModal, setShowModuleModal] = useState(false);
   const [moduleForm, setModuleForm] = useState({
@@ -160,9 +127,9 @@ export default function CourseManager() {
   const loadCourseDetails = async (courseId: string) => {
     try {
       const [lessons, assignments, modules, quizzesRes] = await Promise.all([
-        getLessonsForCourse(courseId),
-        getAssignmentsForCourse(courseId),
-        getModulesForCourse(courseId),
+        getCourseLessons(courseId).catch(() => []),
+        getCourseAssignments(courseId).catch(() => []),
+        getCourseModules(courseId).catch(() => []),
         fetchCourseQuizzes(courseId).catch(() => ({ quizzes: [] }))
       ]);
       setCourseLessons(prev => ({ ...prev, [courseId]: lessons }));
@@ -223,18 +190,19 @@ export default function CourseManager() {
     }
   };
 
-  const handleCreateLesson = async (e: React.FormEvent) => {
+  const handleSaveLesson = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setError('');
     try {
+      const courseId = lessonForm.courseId;
       let finalVideoUrl = lessonForm.videoUrl;
       if (videoFile) {
         const res = await uploadVideo(videoFile);
         finalVideoUrl = res.url;
       }
 
-      await createLesson(lessonForm.courseId, {
+      const payload = {
         title: lessonForm.title,
         content: lessonForm.content,
         videoUrl: finalVideoUrl,
@@ -242,8 +210,29 @@ export default function CourseManager() {
         durationMinutes: Number(lessonForm.durationMinutes),
         isPreview: lessonForm.isPreview,
         moduleId: lessonForm.moduleId || undefined
-      });
+      };
+
+      if (editLessonId) {
+        const updatedLesson = await updateLesson(editLessonId, payload);
+        // Optimistic update
+        setCourseLessons(prev => {
+          const currentList = prev[courseId] || [];
+          return {
+            ...prev,
+            [courseId]: currentList.map(l => l.id === editLessonId ? updatedLesson : l)
+          };
+        });
+      } else {
+        const newLesson = await createLesson(courseId, payload);
+        // Optimistic update
+        setCourseLessons(prev => ({
+          ...prev,
+          [courseId]: [...(prev[courseId] || []), newLesson].sort((a, b) => a.order - b.order)
+        }));
+      }
+      
       setShowLessonModal(false);
+      setEditLessonId(null);
       setLessonForm({
         courseId: '',
         moduleId: '',
@@ -255,13 +244,30 @@ export default function CourseManager() {
         isPreview: false
       });
       setVideoFile(null);
-      await loadCourseDetails(expandedCourse || lessonForm.courseId);
-      await loadCourses();
+      // Still load course details in the background, but we already updated state
+      loadCourseDetails(expandedCourse || courseId).catch(console.error);
+      loadCourses().catch(console.error);
     } catch (err: any) {
-      setError(err.message || 'Failed to add lesson.');
+      setError(err.message || 'Failed to save lesson.');
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const openEditLessonModal = (courseId: string, lesson: any) => {
+    setEditLessonId(lesson.id);
+    setLessonForm({
+      courseId,
+      moduleId: lesson.moduleId || '',
+      title: lesson.title || '',
+      content: lesson.content || '',
+      videoUrl: lesson.videoUrl || '',
+      order: lesson.order || 1,
+      durationMinutes: lesson.durationMinutes || 15,
+      isPreview: lesson.isPreview || false
+    });
+    setVideoFile(null);
+    setShowLessonModal(true);
   };
 
   const handleDeleteLesson = async (lessonId: string) => {
@@ -320,12 +326,18 @@ export default function CourseManager() {
     setSubmitting(true);
     setError('');
     try {
-      await createModule(moduleForm.courseId, {
+      const courseId = moduleForm.courseId;
+      const newModule = await createModule(courseId, {
         title: moduleForm.title,
         description: moduleForm.description,
         order: Number(moduleForm.order),
         isPublished: moduleForm.isPublished
       });
+      // Optimistic update
+      setCourseModules(prev => ({
+        ...prev,
+        [courseId]: [...(prev[courseId] || []), newModule].sort((a, b) => a.order - b.order)
+      }));
       setShowModuleModal(false);
       setModuleForm({
         courseId: '',
@@ -334,7 +346,8 @@ export default function CourseManager() {
         order: 1,
         isPublished: true
       });
-      await loadCourseDetails(expandedCourse || moduleForm.courseId);
+      // Refresh in background
+      loadCourseDetails(expandedCourse || courseId).catch(console.error);
     } catch (err: any) {
       setError(err.message || 'Failed to add module.');
     } finally {
@@ -596,9 +609,14 @@ export default function CourseManager() {
                                               </div>
                                             </div>
                                           </div>
-                                          <button onClick={() => handleDeleteLesson(lesson.id)} className="text-slate-500 hover:text-rose-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity" title="Delete Lesson">
-                                            <Trash2 className="h-3.5 w-3.5" />
-                                          </button>
+                                          <div className="flex gap-2">
+                                            <button onClick={() => openEditLessonModal(course.id, lesson)} className="text-slate-500 hover:text-indigo-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity" title="Edit Lesson">
+                                              <Settings className="h-3.5 w-3.5" />
+                                            </button>
+                                            <button onClick={() => handleDeleteLesson(lesson.id)} className="text-slate-500 hover:text-rose-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity" title="Delete Lesson">
+                                              <Trash2 className="h-3.5 w-3.5" />
+                                            </button>
+                                          </div>
                                         </div>
                                       ))
                                     )}
@@ -626,9 +644,14 @@ export default function CourseManager() {
                                           </div>
                                         </div>
                                       </div>
-                                      <button onClick={() => handleDeleteLesson(lesson.id)} className="text-slate-500 hover:text-rose-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity" title="Delete Lesson">
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                      </button>
+                                      <div className="flex gap-2">
+                                        <button onClick={() => openEditLessonModal(course.id, lesson)} className="text-slate-500 hover:text-indigo-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity" title="Edit Lesson">
+                                          <Settings className="h-3.5 w-3.5" />
+                                        </button>
+                                        <button onClick={() => handleDeleteLesson(lesson.id)} className="text-slate-500 hover:text-rose-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity" title="Delete Lesson">
+                                          <Trash2 className="h-3.5 w-3.5" />
+                                        </button>
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
@@ -849,10 +872,10 @@ export default function CourseManager() {
       {/* Lesson Modal */}
       {showLessonModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setShowLessonModal(false)} />
-          <div className="relative z-10 w-full max-w-lg glass-panel rounded-3xl p-8 border border-white/10 shadow-2xl bg-slate-900/90 backdrop-blur-md">
-            <h3 className="text-xl font-bold text-white mb-6">Add Lesson</h3>
-            <form onSubmit={handleCreateLesson} className="space-y-4">
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => { setShowLessonModal(false); setEditLessonId(null); }} />
+          <div className="relative z-10 w-full max-w-xl glass-panel rounded-3xl p-8 border border-white/10 shadow-2xl bg-slate-900/90 backdrop-blur-md max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-bold text-white mb-6">{editLessonId ? 'Edit Lesson' : 'Create Lesson'}</h3>
+            <form onSubmit={handleSaveLesson} className="space-y-4">
               <div>
                 <label className="text-xs font-semibold text-slate-400 block mb-1.5">Module (Optional)</label>
                 <select
@@ -965,7 +988,7 @@ export default function CourseManager() {
               <div className="flex gap-4 justify-end mt-6">
                 <button
                   type="button"
-                  onClick={() => setShowLessonModal(false)}
+                  onClick={() => { setShowLessonModal(false); setEditLessonId(null); }}
                   className="rounded-xl border border-slate-850 px-5 py-2.5 text-xs font-semibold text-slate-400 hover:text-white"
                 >
                   Cancel
@@ -975,7 +998,7 @@ export default function CourseManager() {
                   disabled={submitting}
                   className="rounded-xl bg-gradient-to-r from-indigo-550 to-purple-650 px-5 py-2.5 text-xs font-bold text-white"
                 >
-                  {submitting ? 'Adding...' : 'Add Lesson'}
+                  {submitting ? 'Saving...' : (editLessonId ? 'Save Changes' : 'Add Lesson')}
                 </button>
               </div>
             </form>

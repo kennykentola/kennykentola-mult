@@ -100,7 +100,7 @@ export async function getAdminOrders(
 /** Admin: update order status / price */
 export async function updateOrderStatus(
   orderId: string,
-  update: { status?: string; price?: number; estimatedReadyAt?: string }
+  update: { status?: string; price?: number; estimatedReadyAt?: string; deliverableUrl?: string; }
 ): Promise<PrintOrder> {
   const data = await fetchWithAuth(`${API_BASE}/printing/admin/orders/${orderId}`, {
     method: 'PATCH',
