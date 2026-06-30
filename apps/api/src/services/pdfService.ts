@@ -90,13 +90,25 @@ export async function generateAndUploadCertificate(
       doc.rect(46, 46, width - 92, height - 92).stroke();
 
       // 4. Header: Brand Logo / Name
-      doc.fillColor('#e2e8f0');
-      doc.font('Helvetica-Bold');
-      doc.fontSize(24);
-      doc.text('KENNYKENTOLA PROGRAMMING ACADEMY', 0, 100, {
-        align: 'center',
-        width: width,
-      });
+      const logoPath = path.join(__dirname, '../../src/assets/logo.png');
+
+      if (fs.existsSync(logoPath)) {
+        // Draw the logo centered at the top
+        // Scale it to fit within a 200x60 box
+        doc.image(logoPath, width / 2 - 100, 70, {
+          fit: [200, 60],
+          align: 'center',
+          valign: 'center'
+        });
+      } else {
+        doc.fillColor('#e2e8f0');
+        doc.font('Helvetica-Bold');
+        doc.fontSize(24);
+        doc.text('KENNYKENTOLA PROGRAMMING ACADEMY', 0, 100, {
+          align: 'center',
+          width: width,
+        });
+      }
 
       doc.fillColor('#94a3b8');
       doc.font('Helvetica');
@@ -174,10 +186,24 @@ export async function generateAndUploadCertificate(
       doc.restore();
 
       // Right: Instructor Signature
-      doc.fillColor('#e2e8f0');
-      doc.font('Times-Italic');
-      doc.fontSize(16);
-      doc.text('Kenny Kentola', width - 300, footerY - 5, { width: 200, align: 'center' });
+      const signaturePath = path.join(__dirname, '../../src/assets/signature.png');
+      
+      if (fs.existsSync(signaturePath)) {
+        // Draw the image signature
+        // The image is scaled to fit in a 150x50 box centered above the line
+        doc.image(signaturePath, width - 275, footerY - 45, {
+          fit: [150, 50],
+          align: 'center',
+          valign: 'center'
+        });
+      } else {
+        // Fallback to text signature
+        doc.fillColor('#e2e8f0');
+        doc.font('Times-Italic');
+        doc.fontSize(16);
+        doc.text('Kenny Kentola', width - 300, footerY - 5, { width: 200, align: 'center' });
+      }
+
       doc.lineWidth(1);
       doc.strokeColor('#475569');
       doc.moveTo(width - 300, footerY + 20).lineTo(width - 100, footerY + 20).stroke();
