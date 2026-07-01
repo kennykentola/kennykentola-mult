@@ -509,22 +509,22 @@ export type QnaReplyDto = {
 
 export function fetchCourseQna(courseId: string, lessonId?: string) {
   const query = lessonId ? '?lessonId=' + lessonId : '';
-  return academyFetch<{ threads: QnaThreadDto[] }>(/courses/ + courseId + /qna + query, undefined, true);
+  return academyFetch<{ threads: QnaThreadDto[] }>(`/courses/${courseId}/qna${query}`, undefined, true);
 }
 
 export function createQnaThread(courseId: string, lessonId: string, content: string) {
-  return academyFetch<{ thread: QnaThreadDto }>(/courses/ + courseId + /qna, {
+  return academyFetch<{ thread: QnaThreadDto }>(`/courses/${courseId}/qna`, {
     method: 'POST',
     body: JSON.stringify({ lessonId, content })
   }, true);
 }
 
 export function fetchQnaReplies(qnaId: string) {
-  return academyFetch<{ replies: QnaReplyDto[] }>(/qna/ + qnaId + /replies, undefined, true);
+  return academyFetch<{ replies: QnaReplyDto[] }>(`/qna/${qnaId}/replies`, undefined, true);
 }
 
 export function createQnaReply(qnaId: string, content: string) {
-  return academyFetch<{ reply: QnaReplyDto }>(/qna/ + qnaId + /replies, {
+  return academyFetch<{ reply: QnaReplyDto }>(`/qna/${qnaId}/replies`, {
     method: 'POST',
     body: JSON.stringify({ content })
   }, true);
