@@ -13,8 +13,8 @@ import {
   Link as LinkIcon
 } from 'lucide-react';
 import Link from 'next/link';
-import { getSessionJwt } from '../../../../../../lib/sessionJwt';
-import { fetchAcademyLiveClasses, createLiveClass, updateLiveClass, deleteLiveClass, AcademyLiveClassDto } from '../../../../../../features/academy/api';
+import { getSessionJwt } from '../../../../../lib/sessionJwt';
+import { fetchAcademyLiveClasses, createLiveClass, updateLiveClass, deleteLiveClass, AcademyLiveClassDto } from '../../../../../features/academy/api';
 
 type LiveClassForm = {
   title: string;
@@ -231,12 +231,14 @@ export default function AdminLiveClassesPage({ params }: { params: Promise<{ id:
                   <button
                     onClick={() => openEditForm(cls)}
                     className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                    title="Edit Live Class"
                   >
                     <Pencil className="h-5 w-5" />
                   </button>
                   <button
                     onClick={() => setDeletingId(cls.id)}
                     className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                    title="Delete Live Class"
                   >
                     <Trash2 className="h-5 w-5" />
                   </button>
@@ -275,6 +277,7 @@ export default function AdminLiveClassesPage({ params }: { params: Promise<{ id:
                     value={form.scheduledAt}
                     onChange={(e) => setForm({ ...form, scheduledAt: e.target.value })}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-rose-500 transition-colors"
+                    title="Date & Time"
                   />
                 </div>
                 <div>
@@ -285,6 +288,7 @@ export default function AdminLiveClassesPage({ params }: { params: Promise<{ id:
                     value={form.durationMinutes}
                     onChange={(e) => setForm({ ...form, durationMinutes: parseInt(e.target.value) || 0 })}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-rose-500 transition-colors"
+                    title="Duration (minutes)"
                   />
                 </div>
               </div>
@@ -306,6 +310,7 @@ export default function AdminLiveClassesPage({ params }: { params: Promise<{ id:
                   value={form.status}
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-rose-500 transition-colors"
+                  title="Status"
                 >
                   <option value="scheduled">Scheduled</option>
                   <option value="ongoing">Ongoing</option>
