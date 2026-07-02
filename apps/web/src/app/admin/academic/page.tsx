@@ -83,7 +83,7 @@ export default function AdminAcademicDashboard() {
                 
                 {/* Info Section */}
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
                     <span className="px-3 py-1 rounded-full bg-white/10 text-xs font-medium">
                       {project.degree} • {project.level}
                     </span>
@@ -99,7 +99,7 @@ export default function AdminAcademicDashboard() {
                   <h3 className="text-2xl font-bold text-white mb-2">{project.title}</h3>
                   <p className="text-slate-400 text-sm mb-4 line-clamp-2">{project.description}</p>
                   
-                  <div className="flex items-center gap-6 text-sm text-slate-500">
+                  <div className="flex flex-wrap items-center gap-4 md:gap-6 text-sm text-slate-500 mt-2">
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4" /> Student ID: {project.studentId}
                     </div>

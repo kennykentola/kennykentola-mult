@@ -2,26 +2,78 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../../../features/auth/AuthContext';
-import { User, Phone, Mail, Award, Key, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { User, Phone, Mail, Award, Key, ShieldCheck, CheckCircle2, Camera, Loader2 } from 'lucide-react';
+import { getSessionJwt } from '../../../lib/sessionJwt';
 
 export default function ProfilePage() {
-  const { profile, user, logout } = useAuth();
+  const { profile, user, logout, refreshProfile } = useAuth();
   const [firstName, setFirstName] = useState(profile?.firstName || '');
   const [lastName, setLastName] = useState(profile?.lastName || '');
   const [phone, setPhone] = useState(profile?.phoneNumber || '');
   const [updating, setUpdating] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   if (!profile || !user) return null;
 
-  const handleUpdateProfile = (e: React.FormEvent) => {
+  const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setUpdating(true);
-    setTimeout(() => {
-      setUpdating(false);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/auth/profile`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${await getSessionJwt()}`
+        },
+        body: JSON.stringify({ firstName, lastName, phoneNumber: phone })
+      });
+      if (!res.ok) throw new Error('Update failed');
+      await refreshProfile();
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-    }, 1200);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setAvatarUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/upload`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${await getSessionJwt()}`
+        },
+        body: formData
+      });
+      
+      if (!uploadRes.ok) throw new Error('Upload failed');
+      const uploadData = await uploadRes.json();
+      
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/auth/profile`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${await getSessionJwt()}`
+        },
+        body: JSON.stringify({ avatarUrl: uploadData.url })
+      });
+      
+      await refreshProfile();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setAvatarUploading(false);
+    }
   };
 
   return (
@@ -41,9 +93,27 @@ export default function ProfilePage() {
       <div className="grid gap-6 md:grid-cols-3">
         {/* Left Card: Account Card */}
         <div className="md:col-span-1 glass-panel border border-white/5 bg-slate-900/20 rounded-2xl p-6 flex flex-col items-center text-center">
-          <div className="h-20 w-20 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-3xl font-bold text-indigo-400 uppercase mb-4">
-            {profile.firstName[0]}
-            {profile.lastName[0]}
+          <div className="relative group mb-4">
+            <div className="h-20 w-20 rounded-full bg-slate-800 border border-slate-700 overflow-hidden flex items-center justify-center text-3xl font-bold text-indigo-400 uppercase">
+              {profile.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <>{profile.firstName[0]}{profile.lastName[0]}</>
+              )}
+            </div>
+            
+            <label className="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+              {avatarUploading ? (
+                <Loader2 className="h-5 w-5 text-white animate-spin" />
+              ) : (
+                <>
+                  <Camera className="h-5 w-5 text-white mb-1" />
+                  <span className="text-[9px] font-bold text-white uppercase tracking-wider">Upload</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={avatarUploading} />
+                </>
+              )}
+            </label>
           </div>
 
           <h3 className="text-base font-bold text-white">{profile.firstName} {profile.lastName}</h3>

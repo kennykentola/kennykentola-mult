@@ -177,14 +177,15 @@ const updateProfileSchema = z.object({
     lastName: z.string().min(1, 'Last name is required').optional(),
     phoneNumber: z.string().optional(),
     emailNotifications: z.boolean().optional(),
-    smsNotifications: z.boolean().optional()
+    smsNotifications: z.boolean().optional(),
+    avatarUrl: z.string().optional()
   })
 });
 
 router.patch('/profile', authenticateJWT, validateRequest(updateProfileSchema), async (req: AuthenticatedRequest, res) => {
   try {
     const userId = req.user?.id;
-    const { firstName, lastName, phoneNumber, emailNotifications, smsNotifications } = req.body;
+    const { firstName, lastName, phoneNumber, emailNotifications, smsNotifications, avatarUrl } = req.body;
 
     const profiles = await databases.listDocuments(
       DATABASE_ID,
@@ -202,6 +203,7 @@ router.patch('/profile', authenticateJWT, validateRequest(updateProfileSchema), 
     if (phoneNumber !== undefined) updateData.phoneNumber = String(phoneNumber).trim();
     if (emailNotifications !== undefined) updateData.emailNotifications = Boolean(emailNotifications);
     if (smsNotifications !== undefined) updateData.smsNotifications = Boolean(smsNotifications);
+    if (avatarUrl !== undefined) updateData.avatarUrl = String(avatarUrl).trim();
 
     const updated = await databases.updateDocument(
       DATABASE_ID,
