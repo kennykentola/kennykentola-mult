@@ -535,6 +535,71 @@ router.get('/courses/:courseId/live-classes', async (req, res) => {
   }
 });
 
+router.post('/admin/courses/:courseId/live-classes', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (!(await ensureAcademyReviewer(req.user?.role))) {
+    return res.status(403).json({ error: 'Academy review access required.' });
+  }
+
+  const { courseId } = req.params;
+  const { title, scheduledAt, durationMinutes, meetingUrl, status } = req.body;
+
+  try {
+    const liveClass = await databases.createDocument(DATABASE_ID, LIVE_CLASSES_COLLECTION, ID.unique(), {
+      courseId,
+      title,
+      scheduledAt,
+      durationMinutes: Number(durationMinutes),
+      meetingUrl,
+      status: status || 'scheduled'
+    });
+
+    res.status(201).json({ liveClass });
+  } catch (err: any) {
+    console.error('[Academy] Error creating live class:', err.message);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.patch('/admin/live-classes/:liveClassId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (!(await ensureAcademyReviewer(req.user?.role))) {
+    return res.status(403).json({ error: 'Academy review access required.' });
+  }
+
+  const { liveClassId } = req.params;
+  const { title, scheduledAt, durationMinutes, meetingUrl, status } = req.body;
+
+  try {
+    const liveClass = await databases.updateDocument(DATABASE_ID, LIVE_CLASSES_COLLECTION, liveClassId, {
+      title,
+      scheduledAt,
+      durationMinutes: Number(durationMinutes),
+      meetingUrl,
+      status
+    });
+
+    res.status(200).json({ liveClass });
+  } catch (err: any) {
+    console.error('[Academy] Error updating live class:', err.message);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.delete('/admin/live-classes/:liveClassId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (!(await ensureAcademyReviewer(req.user?.role))) {
+    return res.status(403).json({ error: 'Academy review access required.' });
+  }
+
+  const { liveClassId } = req.params;
+
+  try {
+    await databases.deleteDocument(DATABASE_ID, LIVE_CLASSES_COLLECTION, liveClassId);
+    res.status(200).json({ success: true });
+  } catch (err: any) {
+    console.error('[Academy] Error deleting live class:', err.message);
+    res.status(400).json({ error: err.message });
+  }
+});
+
 router.get('/admin/submissions', authenticateJWT, async (req: AuthenticatedRequest, res) => {
   if (!(await ensureAcademyReviewer(req.user?.role))) {
     return res.status(403).json({ error: 'Academy review access required.' });

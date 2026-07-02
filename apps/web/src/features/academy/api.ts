@@ -529,3 +529,23 @@ export function createQnaReply(qnaId: string, content: string) {
     body: JSON.stringify({ content })
   }, true);
 }
+
+export function createLiveClass(courseId: string, payload: Partial<AcademyLiveClassDto>) {
+  return academyFetch<{ liveClass: AcademyLiveClassDto }>(`/admin/courses/${courseId}/live-classes`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  }, true);
+}
+
+export function updateLiveClass(liveClassId: string, payload: Partial<AcademyLiveClassDto>) {
+  return academyFetch<{ liveClass: AcademyLiveClassDto }>(`/admin/live-classes/${liveClassId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload)
+  }, true);
+}
+
+export function deleteLiveClass(liveClassId: string) {
+  return academyFetch<{ success: boolean }>(`/admin/live-classes/${liveClassId}`, {
+    method: 'DELETE'
+  }, true);
+}
