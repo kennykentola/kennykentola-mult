@@ -52,6 +52,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const jwt = jwtSession.jwt;
       setSessionJwt(jwt);
 
+      // Sync JWT with Next.js httpOnly cookie
+      await fetch('/api/auth/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jwt })
+      });
+
       const res = await fetch(`${API_BASE}/auth/profile`, {
         headers: {
           Authorization: `Bearer ${jwt}`,
@@ -105,12 +112,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         await account.createEmailPasswordSession(email, password);
       } catch (err: any) {
-        if (err.code === 400 || err.message?.includes('active')) {
+        if (err.code === 400 || err.code === 401 || err.message?.includes('active') || err.message?.includes('guests')) {
           try {
             await account.deleteSession('current');
           } catch (deleteErr) {
             // Ignore error from session deletion
           }
+          // Now that old session is deleted, try creating again
           await account.createEmailPasswordSession(email, password);
         } else {
           throw err;
@@ -129,6 +137,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       await account.deleteSession('current');
+      
+      // Clear Next.js cookie
+      await fetch('/api/auth/session', { method: 'DELETE' });
+
       clearSessionJwt();
       setUser(null);
       setProfile(null);

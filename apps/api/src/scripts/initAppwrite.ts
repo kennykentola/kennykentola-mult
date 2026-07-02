@@ -509,6 +509,15 @@ const collections: CollectionDef[] = [
       { key: 'deadline', type: 'datetime', required: false },
       { key: 'paymentId', type: 'string', size: 50, required: false }
     ]
+  },
+  {
+    id: 'newsletter_subscribers',
+    name: 'Newsletter Subscribers',
+    attributes: [
+      { key: 'email', type: 'string', size: 255, required: true },
+      { key: 'segment', type: 'string', size: 50, required: false, defaultValue: 'general' },
+      { key: 'subscribedAt', type: 'datetime', required: true }
+    ]
   }
 ];
 

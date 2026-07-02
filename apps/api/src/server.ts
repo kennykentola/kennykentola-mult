@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
 import { initializeDatabase } from './scripts/initAppwrite';
 import { initSocketServer } from './services/socket';
@@ -53,6 +54,7 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(cookieParser());
 
 // Routes
 import authRouter from './routes/auth';
@@ -72,6 +74,10 @@ import learningPathsRouter from './routes/learningPaths';
 import ticketsRouter from './routes/tickets';
 import executeRouter from './routes/execute';
 import aiRouter from './routes/ai';
+import inventoryRouter from './routes/inventory';
+import { contactRoutes } from './routes/contact';
+import { newsletterRouter } from './routes/newsletter';
+import { agencyRouter } from './routes/agency';
 
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/printing', printingRouter);
@@ -90,6 +96,10 @@ app.use('/api/v1/learning-paths', learningPathsRouter);
 app.use('/api/v1/tickets', ticketsRouter);
 app.use('/api/v1/execute', executeRouter);
 app.use('/api/v1/ai', aiRouter);
+app.use('/api/v1/inventory', inventoryRouter);
+app.use('/api/v1/contact', contactRoutes);
+app.use('/api/v1/newsletter', newsletterRouter);
+app.use('/api/v1/agency', agencyRouter);
 
 // Basic Health Check Endpoint
 app.get('/api/health', (req, res) => {

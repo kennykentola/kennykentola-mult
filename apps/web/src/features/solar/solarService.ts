@@ -13,7 +13,7 @@ export const solarService = {
     return data.jobs;
   },
 
-  async requestJob(payload: { jobType: string; description: string; address: string; scheduledDate?: string }) {
+  async requestJob(payload: { jobType: string; description: string; address: string; scheduledDate?: string; siteImageUrls?: string[] }) {
     const token = await getSessionJwt();
     const res = await fetch(`${API_BASE}/solar/requests`, {
       method: 'POST',

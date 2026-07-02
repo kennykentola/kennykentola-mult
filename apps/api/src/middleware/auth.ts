@@ -16,12 +16,18 @@ export const authenticateJWT = async (
   res: Response,
   next: NextFunction
 ) => {
+  let jwt = '';
+
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'No authorization token provided' });
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    jwt = authHeader.split(' ')[1];
+  } else if (req.cookies && req.cookies.jwt_token) {
+    jwt = req.cookies.jwt_token;
   }
 
-  const jwt = authHeader.split(' ')[1];
+  if (!jwt) {
+    return res.status(401).json({ error: 'No authorization token provided' });
+  }
 
   try {
     const payloadBase64 = jwt.split('.')[1];
@@ -73,12 +79,18 @@ export const optionalAuthenticateJWT = async (
   res: Response,
   next: NextFunction
 ) => {
+  let jwt = '';
+
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return next();
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    jwt = authHeader.split(' ')[1];
+  } else if (req.cookies && req.cookies.jwt_token) {
+    jwt = req.cookies.jwt_token;
   }
 
-  const jwt = authHeader.split(' ')[1];
+  if (!jwt) {
+    return next();
+  }
 
   try {
     const payloadBase64 = jwt.split('.')[1];

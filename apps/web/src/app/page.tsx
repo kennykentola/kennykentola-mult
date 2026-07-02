@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { BookOpen, Code, Settings, Printer, GraduationCap, Sun, ArrowRight, Activity, Users, FileText, Zap, CheckCircle } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
+import { Footer } from '../components/Footer';
 export default function Home() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#050505] font-sans text-slate-200">
@@ -250,9 +251,7 @@ export default function Home() {
         </div>
       </main>
 
-      <footer className="border-t border-white/5 py-8 text-center text-slate-500 text-sm">
-        <p>© {new Date().getFullYear()} KennyKentola Multi-Company Ecosystem. All rights reserved.</p>
-      </footer>
+      <Footer />
     </div>
   );
 }

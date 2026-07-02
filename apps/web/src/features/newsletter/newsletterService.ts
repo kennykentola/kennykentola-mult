@@ -1,10 +1,21 @@
 export async function subscribeToNewsletter(email: string): Promise<{ success: boolean; message: string }> {
-  // Simulate network request
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // In Phase 2: Send this to the Express backend or Appwrite 'newsletter_subscribers' collection
-      console.log('Subscribed email:', email);
-      resolve({ success: true, message: 'Subscribed successfully!' });
-    }, 1000);
-  });
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/newsletter/subscribe`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, segment: 'general' }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to subscribe');
+    }
+
+    return { success: true, message: data.message };
+  } catch (error: any) {
+    console.error('Newsletter subscription error:', error);
+    return { success: false, message: error.message || 'An error occurred' };
+  }
 }

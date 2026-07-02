@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { fetchLearningPaths, LearningPath } from '../../features/academy/learningPathsApi';
 import { Navbar } from '../../components/Navbar';
+import { Footer } from '../../components/Footer';
 import { 
   ArrowRight, BookOpen, Code, Terminal, MonitorSmartphone, Brush, BrainCircuit, 
   CheckCircle, PlayCircle, Users, Trophy, Layout, Cpu, Database, Blocks, 
@@ -243,9 +244,7 @@ export default function AcademyPage() {
 
       </main>
 
-      <footer className="border-t border-white/5 py-8 text-center text-slate-500 text-sm">
-        <p>© {new Date().getFullYear()} KennyKentola Multi-Company Ecosystem. All rights reserved.</p>
-      </footer>
+      <Footer />
     </div>
   );
 }

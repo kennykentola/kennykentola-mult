@@ -202,7 +202,7 @@ export default function AdminLayout({
         {/* Mobile Header Bar */}
         <header className="lg:hidden h-16 border-b border-slate-900 bg-slate-950/80 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-20">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-rose-600 flex items-center justify-center font-bold text-white">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-rose-500 to-orange-400 flex items-center justify-center font-bold text-white shadow-md">
               A
             </div>
             <span className="text-lg font-bold text-white">Admin Terminal</span>
@@ -226,6 +226,100 @@ export default function AdminLayout({
             </button>
           </div>
         </header>
+
+        {/* Mobile Sidebar Overlay */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            {/* Backdrop */}
+            <div 
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
+              onClick={() => setSidebarOpen(false)}
+            />
+            
+            {/* Sidebar Drawer */}
+            <div className="fixed inset-y-0 right-0 w-64 max-w-sm bg-slate-950 shadow-2xl flex flex-col transform transition-transform border-l border-slate-900 overflow-y-auto">
+              <div className="flex h-16 items-center px-6 border-b border-slate-900 justify-between">
+                <span className="text-lg font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+                  Menu
+                </span>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  title="Close Menu"
+                  aria-label="Close Menu"
+                  className="p-2 -mr-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-900"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+              
+              <nav className="flex-1 px-4 py-6 space-y-6">
+                <div className="space-y-1">
+                  <Link onClick={() => setSidebarOpen(false)} href="/admin" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname === '/admin' ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                    <LayoutDashboard className="h-4 w-4" />
+                    Overview
+                  </Link>
+                </div>
+
+                <div className="space-y-1">
+                  <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Software Agency</p>
+                  <Link onClick={() => setSidebarOpen(false)} href="/admin/projects" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/projects') ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                    <Briefcase className="h-4 w-4" />
+                    Agency Projects
+                  </Link>
+                </div>
+
+                <div className="space-y-1">
+                  <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Academic & Thesis</p>
+                  <Link onClick={() => setSidebarOpen(false)} href="/admin/academic" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/academic') ? 'bg-sky-500/10 text-sky-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                    <GraduationCap className="h-4 w-4" />
+                    CS Projects
+                  </Link>
+                </div>
+
+                <div className="space-y-1">
+                  <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Printing Press</p>
+                  <Link onClick={() => setSidebarOpen(false)} href="/admin/printing" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/printing') ? 'bg-fuchsia-500/10 text-fuchsia-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                    <Printer className="h-4 w-4" />
+                    Print Jobs
+                  </Link>
+                </div>
+
+                <div className="space-y-1">
+                  <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Maintenance & IT</p>
+                  <Link onClick={() => setSidebarOpen(false)} href="/admin/maintenance" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/maintenance') ? 'bg-amber-500/10 text-amber-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                    <Hammer className="h-4 w-4" />
+                    IT Contracts
+                  </Link>
+                  <Link onClick={() => setSidebarOpen(false)} href="/admin/solar" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/solar') ? 'bg-yellow-500/10 text-yellow-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                    <Zap className="h-4 w-4" />
+                    Solar & Network
+                  </Link>
+                </div>
+
+                <div className="space-y-1">
+                  <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Internal</p>
+                  <Link onClick={() => setSidebarOpen(false)} href="/admin/courses" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+                    <BookOpen className="h-4 w-4" />
+                    Academy Content
+                  </Link>
+                  <Link onClick={() => setSidebarOpen(false)} href="/admin/learning-paths" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/learning-paths') ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                    <Layout className="h-4 w-4" />
+                    Learning Paths
+                  </Link>
+                </div>
+              </nav>
+
+              <div className="p-4 border-t border-slate-900 mt-auto">
+                <button
+                  onClick={() => router.replace(getLandingRoute(profile))}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 py-2.5 text-xs font-semibold text-slate-450 transition-all duration-200"
+                >
+                  Back to Dashboard
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Dynamic Page Workspace */}
         <main className="flex-1 p-6 lg:p-10 relative">

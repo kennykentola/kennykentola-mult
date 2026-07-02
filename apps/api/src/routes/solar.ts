@@ -12,7 +12,7 @@ const SOLAR_COLLECTION = 'solar_jobs';
 // ──────────────────────────────────────────────────
 router.post('/requests', authenticateJWT, async (req: AuthenticatedRequest, res) => {
   const userId = req.user?.id;
-  const { jobType, description, address, scheduledDate } = req.body;
+  const { jobType, description, address, scheduledDate, siteImageUrls } = req.body;
 
   if (!jobType || !description || !address) {
     return res.status(400).json({ error: 'Missing required fields for solar job.' });
@@ -26,7 +26,8 @@ router.post('/requests', authenticateJWT, async (req: AuthenticatedRequest, res)
       address,
       status: 'pending-quote',
       quotePrice: 0,
-      assignedTechnicians: []
+      assignedTechnicians: [],
+      siteImageUrls: Array.isArray(siteImageUrls) ? siteImageUrls : []
     };
     
     if (scheduledDate) {
@@ -70,7 +71,63 @@ router.get('/', authenticateJWT, async (req: AuthenticatedRequest, res) => {
 });
 
 // ──────────────────────────────────────────────────
-// ADMIN ONLY: Get all solar jobs globally
+// AUTHENTICATED: Get all solar jobs assigned to a technician
+// ──────────────────────────────────────────────────
+router.get('/technician', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  try {
+    const response = await databases.listDocuments(
+      DATABASE_ID,
+      SOLAR_COLLECTION,
+      [
+        Query.search('assignedTechnicians', userId as string),
+        Query.orderDesc('$createdAt')
+      ]
+    );
+
+    res.json({ jobs: response.documents });
+  } catch (err: any) {
+    console.error('[Solar] Error fetching technician jobs:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ──────────────────────────────────────────────────
+// AUTHENTICATED: Technician updates job status
+// ──────────────────────────────────────────────────
+router.patch('/technician/:id/status', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id;
+  const { id } = req.params;
+  const { status } = req.body;
+
+  try {
+    // Ensure the technician is actually assigned to this job
+    const job = await databases.getDocument(DATABASE_ID, SOLAR_COLLECTION, id);
+    if (!job.assignedTechnicians || !job.assignedTechnicians.includes(userId)) {
+      return res.status(403).json({ error: 'You are not assigned to this job.' });
+    }
+
+    const allowedStatuses = ['in-progress', 'completed'];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ error: 'Technicians can only set status to in-progress or completed.' });
+    }
+
+    const updatedJob = await databases.updateDocument(
+      DATABASE_ID,
+      SOLAR_COLLECTION,
+      id,
+      { status }
+    );
+
+    res.json({ message: 'Status updated successfully', job: updatedJob });
+  } catch (err: any) {
+    console.error('[Solar] Error updating job status by technician:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ──────────────────────────────────────────────────
+// ADMIN: Get all solar jobs
 // ──────────────────────────────────────────────────
 router.get('/admin/all', authenticateJWT, async (req: AuthenticatedRequest, res) => {
   if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {

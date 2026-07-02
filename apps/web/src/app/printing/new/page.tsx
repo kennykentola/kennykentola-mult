@@ -247,7 +247,7 @@ export default function NewPrintOrderPage() {
             <label htmlFor="files" className="text-sm font-semibold text-slate-300">Upload Files (Optional)</label>
             <div className="border-2 border-dashed border-slate-800 rounded-xl p-6 text-center hover:bg-slate-900/50 transition-colors">
               <UploadCloud className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-              <p className="text-sm text-slate-400 mb-4">Upload documents, images, or designs (PDF, DOCX, JPG, PNG)</p>
+              <p className="text-sm text-slate-400 mb-4">Upload documents, images, designs, or archives (PDF, DOCX, JPG, PNG, ZIP)</p>
               <input
                 id="files"
                 type="file"

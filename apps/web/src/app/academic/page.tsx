@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '../../components/Navbar';
+import { Footer } from '../../components/Footer';
 import { requestAcademicProject } from '../../features/academic/academicService';
 import { subscribeToNewsletter } from '../../features/newsletter/newsletterService';
 import toast from 'react-hot-toast';
@@ -459,75 +460,7 @@ export default function AcademicLandingPage() {
       </main>
 
       {/* SECTION 13: FOOTER */}
-      <footer className="border-t border-white/5 bg-[#050505] pt-16 pb-8">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-16">
-            <div className="col-span-2 md:col-span-2">
-              <div className="text-xl font-bold text-white mb-6">KennyKentola Digital</div>
-              <p className="text-slate-400 text-sm mb-6 max-w-sm">Stay Updated: Subscribe to receive project tips, research resources, tutorials, and technology updates.</p>
-              <form onSubmit={handleSubscribe} className="flex items-center gap-2">
-                <input 
-                  type="email" 
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email address" 
-                  className="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-amber-500" 
-                />
-                <button 
-                  type="submit"
-                  disabled={subscribing}
-                  className="bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors"
-                >
-                  {subscribing ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                  Subscribe
-                </button>
-              </form>
-            </div>
-            
-            <div>
-              <h4 className="font-bold text-white mb-6">Company</h4>
-              <ul className="space-y-3 text-sm text-slate-400">
-                <li><Link href="/about" className="hover:text-amber-500 transition-colors">About Us</Link></li>
-                <li><Link href="/p/our-experts" className="hover:text-amber-500 transition-colors">Our Experts</Link></li>
-                <li><Link href="/p/careers" className="hover:text-amber-500 transition-colors">Careers</Link></li>
-                <li><Link href="/blog" className="hover:text-amber-500 transition-colors">Blog</Link></li>
-                <li><Link href="/contact" className="hover:text-amber-500 transition-colors">Contact</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-white mb-6">Services</h4>
-              <ul className="space-y-3 text-sm text-slate-400">
-                <li><Link href="/p/academic-guidance" className="hover:text-amber-500 transition-colors">Academic Guidance</Link></li>
-                <li><Link href="/p/software-development" className="hover:text-amber-500 transition-colors">Software Development</Link></li>
-                <li><Link href="/p/research-assistance" className="hover:text-amber-500 transition-colors">Research Assistance</Link></li>
-                <li><Link href="/p/documentation" className="hover:text-amber-500 transition-colors">Documentation</Link></li>
-                <li><Link href="/p/mentorship" className="hover:text-amber-500 transition-colors">Mentorship</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-white mb-6">Resources</h4>
-              <ul className="space-y-3 text-sm text-slate-400">
-                <li><Link href="/p/project-ideas" className="hover:text-amber-500 transition-colors">Project Ideas</Link></li>
-                <li><Link href="/p/templates" className="hover:text-amber-500 transition-colors">Templates</Link></li>
-                <li><Link href="/p/tutorials" className="hover:text-amber-500 transition-colors">Tutorials</Link></li>
-                <li><Link href="/faqs" className="hover:text-amber-500 transition-colors">FAQs</Link></li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-white/5 text-sm text-slate-500">
-            <div>© {new Date().getFullYear()} KennyKentola Multi-Company Ecosystem. All rights reserved.</div>
-            <div className="flex gap-4 mt-4 md:mt-0">
-              <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>
-              <Link href="#" className="hover:text-white transition-colors">Terms of Service</Link>
-              <Link href="#" className="hover:text-white transition-colors">Academic Integrity</Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

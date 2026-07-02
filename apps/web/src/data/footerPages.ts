@@ -49,7 +49,7 @@ export const footerPagesData: Record<string, FooterPageData> = {
       }
     ],
     ctaText: 'View Openings',
-    ctaLink: '#'
+    ctaLink: '/careers'
   },
 
   // Services

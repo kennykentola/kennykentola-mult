@@ -77,12 +77,20 @@ export default function AdminSolarDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Solar & Electrical Pipeline</h1>
-        <p className="text-sm text-slate-400 mt-1">Review requests, issue quotes, schedule dates, and assign field technicians.</p>
-        <p className="text-xs text-amber-500 mt-2 bg-amber-500/10 inline-block px-2 py-1 rounded">
-          💡 Marking a job as "Completed" will automatically provision a live Telemetry Dashboard for the client.
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Solar & Electrical Pipeline</h1>
+          <p className="text-sm text-slate-400 mt-1">Review requests, issue quotes, schedule dates, and assign field technicians.</p>
+          <p className="text-xs text-amber-500 mt-2 bg-amber-500/10 inline-block px-2 py-1 rounded">
+            💡 Marking a job as "Completed" will automatically provision a live Telemetry Dashboard for the client.
+          </p>
+        </div>
+        <a 
+          href="/admin/solar/inventory" 
+          className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 border border-slate-700"
+        >
+          <span>📦</span> Manage Inventory
+        </a>
       </div>
 
       <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
