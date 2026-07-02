@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { technicianService } from '../../../../../features/solar/technicianService';
+import { technicianService } from '../../../../features/solar/technicianService';
 import { SolarJob } from '@company/shared';
 import { ArrowLeft, CheckCircle2, Clock, Tool } from 'lucide-react';
 import Link from 'next/link';

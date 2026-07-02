@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navbar } from '../../../../components/Navbar';
+import { Navbar } from '../../../components/Navbar';
 import { ExternalLink, Briefcase } from 'lucide-react';
 import { notFound } from 'next/navigation';
 

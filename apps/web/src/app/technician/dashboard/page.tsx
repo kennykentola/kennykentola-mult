@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
-import { technicianService } from '../../../../features/solar/technicianService';
+import { technicianService } from '../../../features/solar/technicianService';
 import { SolarJob } from '@company/shared';
 import Link from 'next/link';
 
