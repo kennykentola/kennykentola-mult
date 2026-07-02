@@ -378,6 +378,7 @@ export interface QuizAttemptDto {
   $id: string;
   quizId: string;
   studentId: string;
+  courseId: string;
   score: number;
   passed: boolean;
   answers: Record<string, string>;
