@@ -97,7 +97,7 @@ export default function CourseWorkspacePage() {
   const handleLoadedMetadata = () => {
     if (!videoRef.current || !activeLesson?.id || isInitialSeekRef.current) return;
     const progress = lessonProgress.find(p => p.lessonId === activeLesson.id);
-    if (progress && progress.lastPosition > 0) {
+    if (progress && progress.lastPosition !== undefined && progress.lastPosition > 0) {
       videoRef.current.currentTime = progress.lastPosition;
       lastSavedTimeRef.current = progress.lastPosition;
     }
