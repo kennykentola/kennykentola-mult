@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { technicianService } from '../../../../features/solar/technicianService';
 import { SolarJob } from '@company/shared';
-import { ArrowLeft, CheckCircle2, Clock, Tool } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Clock, Wrench } from 'lucide-react';
 import Link from 'next/link';
 
 export default function TechnicianJobDetailsPage() {
@@ -34,8 +34,8 @@ export default function TechnicianJobDetailsPage() {
     }
   };
 
-  const updateStatus = async (newStatus: string) => {
-    if (!job) return;
+  const updateStatus = async (newStatus: SolarJob['status']) => {
+    if (!job || !job.$id) return;
     setUpdating(true);
     try {
       await technicianService.updateJobStatus(job.$id, newStatus);
@@ -120,7 +120,7 @@ export default function TechnicianJobDetailsPage() {
 
               <div className={`p-4 rounded-lg border ${job.status === 'in-progress' ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-slate-950 border-slate-800'}`}>
                 <div className="flex items-center gap-3">
-                  <Tool className={`w-5 h-5 ${job.status === 'in-progress' ? 'text-yellow-500' : 'text-slate-500'}`} />
+                  <Wrench className={`w-5 h-5 ${job.status === 'in-progress' ? 'text-yellow-500' : 'text-slate-500'}`} />
                   <div>
                     <h4 className={`font-semibold ${job.status === 'in-progress' ? 'text-yellow-400' : 'text-slate-400'}`}>In Progress</h4>
                     {job.status === 'in-progress' && <p className="text-xs text-yellow-500/70 mt-1">Currently working</p>}
@@ -146,7 +146,7 @@ export default function TechnicianJobDetailsPage() {
                   onClick={() => updateStatus('in-progress')}
                   className="w-full py-2.5 bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 text-black font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
-                  <Tool className="w-4 h-4" /> Start Work
+                  <Wrench className="w-4 h-4" /> Start Work
                 </button>
               )}
               {job.status === 'in-progress' && (

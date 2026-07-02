@@ -150,10 +150,10 @@ export default function ManageAcademicIdeasPage() {
                   {idea.category}
                 </span>
                 <div className="flex gap-1">
-                  <button onClick={() => openEdit(idea)} className="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors">
+                  <button onClick={() => openEdit(idea)} title="Edit Idea" aria-label="Edit Idea" className="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors">
                     <Edit className="h-4 w-4" />
                   </button>
-                  <button onClick={() => handleDelete(idea.$id)} className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors">
+                  <button onClick={() => handleDelete(idea.$id)} title="Delete Idea" aria-label="Delete Idea" className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
@@ -178,7 +178,7 @@ export default function ManageAcademicIdeasPage() {
               <h2 className="text-xl font-bold text-white">
                 {editingId ? 'Edit Project Idea' : 'New Project Idea'}
               </h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setIsModalOpen(false)} title="Close" aria-label="Close" className="text-slate-400 hover:text-white">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -211,6 +211,8 @@ export default function ManageAcademicIdeasPage() {
                 <div>
                   <label className="block text-sm font-semibold text-slate-300 mb-1.5">Category</label>
                   <select
+                    title="Category"
+                    aria-label="Category"
                     value={formData.category}
                     onChange={(e) => setFormData({...formData, category: e.target.value})}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-indigo-500"
@@ -226,6 +228,8 @@ export default function ManageAcademicIdeasPage() {
                 <div>
                   <label className="block text-sm font-semibold text-slate-300 mb-1.5">Auto-Delete / Retention</label>
                   <select
+                    title="Retention Period"
+                    aria-label="Retention Period"
                     value={formData.retentionPeriod}
                     onChange={(e) => setFormData({...formData, retentionPeriod: e.target.value})}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-indigo-500"

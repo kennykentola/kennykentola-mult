@@ -43,6 +43,15 @@ export const teamService = {
     return data.projects;
   },
 
+  getProject: async (projectId: string): Promise<AgencyProject> => {
+    const res = await fetch(`${API_URL}/team/projects/${projectId}`, {
+      headers: await getHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to fetch project');
+    const data = await res.json();
+    return data.project || data;
+  },
+
   // Sprints
   getSprints: async (projectId: string): Promise<TeamSprint[]> => {
     const res = await fetch(`${API_URL}/team/sprints/${projectId}`, {

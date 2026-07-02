@@ -22,6 +22,7 @@ import {
   FileCheck, 
   MessageSquare,
   Layout,
+  Palette,
   Mail
 } from 'lucide-react';
 import Link from 'next/link';

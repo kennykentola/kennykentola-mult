@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { Briefcase, Code, Clock, MapPin, ChevronRight, LayoutDashboard } from 'lucide-react';
 
 export default function TeamDashboardPage() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [projects, setProjects] = useState<AgencyProject[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,15 +18,8 @@ export default function TeamDashboardPage() {
       router.push('/login?redirect=/team/dashboard');
       return;
     }
-    
-    // Only team members (Admins, PMs, Developers) should be here.
-    if (profile?.role === 'Student' || profile?.role === 'Client') {
-      router.push('/dashboard');
-      return;
-    }
-
     fetchProjects();
-  }, [user, profile]);
+  }, [user, router]);
 
   const fetchProjects = async () => {
     try {

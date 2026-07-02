@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { solarService } from '../../../../features/solar/solarService';
-import { api } from '../../../../features/academy/api'; // Or use an upload service if available
 import { UploadCloud, X, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -40,11 +39,16 @@ export default function RequestSolarJobPage() {
         const formData = new FormData();
         formData.append('file', file);
         // Using existing upload route from the platform
-        const res = await api.post('/upload', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/upload`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: formData
         });
-        if (res.data && res.data.fileUrl) {
-          urls.push(res.data.fileUrl);
+        const data = await res.json();
+        if (data && data.url) {
+          urls.push(data.url);
         }
       }
     } catch (err) {

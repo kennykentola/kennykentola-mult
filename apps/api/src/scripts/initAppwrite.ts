@@ -1034,11 +1034,8 @@ export async function initializeDatabase() {
   ]);
   console.log('[Appwrite Init] Certificates storage bucket verified/created.');
 
-  await ensureBucket('print_orders', 'Print Orders Files');
-  console.log('[Appwrite Init] Print Orders storage bucket verified/created.');
-
-  await ensureBucket('academic_files', 'Academic Project Files');
-  console.log('[Appwrite Init] Academic Files storage bucket verified/created.');
+  // We are using Cloudinary for additional file uploads to bypass Appwrite's 3-bucket limit.
+  // The 'certificates' bucket is still created above.
 }
 
 if (require.main === module) {

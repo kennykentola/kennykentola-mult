@@ -201,10 +201,10 @@ export default function ManagePortfolioPage() {
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="font-bold text-white text-lg line-clamp-1">{item.title}</h3>
                   <div className="flex gap-1 shrink-0">
-                    <button onClick={() => openEdit(item)} className="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors">
+                    <button onClick={() => openEdit(item)} title="Edit Project" aria-label="Edit Project" className="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors">
                       <Edit className="h-4 w-4" />
                     </button>
-                    <button onClick={() => handleDelete(item.$id)} className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors">
+                    <button onClick={() => handleDelete(item.$id)} title="Delete Project" aria-label="Delete Project" className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors">
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
@@ -236,7 +236,7 @@ export default function ManagePortfolioPage() {
               <h2 className="text-xl font-bold text-white">
                 {editingId ? 'Edit Project' : 'New Project'}
               </h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setIsModalOpen(false)} title="Close" aria-label="Close" className="text-slate-400 hover:text-white">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -298,6 +298,8 @@ export default function ManagePortfolioPage() {
               <div>
                 <label className="block text-sm font-semibold text-slate-300 mb-1.5">Status</label>
                 <select
+                  title="Status"
+                  aria-label="Status"
                   value={formData.status}
                   onChange={(e) => setFormData({...formData, status: e.target.value})}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-indigo-500"
