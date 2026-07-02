@@ -63,8 +63,12 @@ export function initSocketServer(server: HttpServer) {
       socket.data.userId = user.$id;
       socket.data.name = user.name;
       next();
-    } catch (err) {
-      console.error('[Socket Auth Error]', err);
+    } catch (err: any) {
+      if (err?.code === 401 || err?.type === 'user_jwt_invalid') {
+        console.warn(`[Socket Auth Warning] Invalid or expired JWT from socket handshake (socket id: ${socket.id}). Denying connection.`);
+      } else {
+        console.error('[Socket Auth Error]', err);
+      }
       next(new Error('Authentication error: Invalid token'));
     }
   });

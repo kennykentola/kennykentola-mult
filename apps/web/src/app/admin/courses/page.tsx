@@ -195,9 +195,9 @@ export default function AdminCoursesPage() {
                         </Link>
                         <Link
                           href={`/admin/courses/${course.id}/live-classes`}
-                          className="px-3 py-1.5 rounded-lg text-xs font-bold text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/10 transition-colors"
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold text-sky-400 border border-sky-500/20 hover:bg-sky-500/10 transition-colors whitespace-nowrap inline-flex items-center gap-1"
                         >
-                          Live Classes
+                          <Video className="h-3 w-3" /> Live Classes
                         </Link>
                         <button
                           onClick={() => setDeletingCourseId(course.id)}

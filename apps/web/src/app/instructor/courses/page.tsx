@@ -538,6 +538,12 @@ export default function CourseManager() {
                             Curriculum ({lessons.length} lessons)
                           </h4>
                           <div className="flex gap-2">
+                            <Link
+                              href={`/instructor/courses/${course.id}/live-classes`}
+                              className="text-[10px] font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1 bg-sky-500/10 px-2 py-1 rounded-md border border-sky-500/20"
+                            >
+                              <Video className="h-3 w-3" /> Live Classes
+                            </Link>
                             <button
                               onClick={() => {
                                 setModuleForm(prev => ({ ...prev, courseId: course.id, order: (courseModules[course.id] || []).length + 1 }));
