@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { BookOpen, Code, Settings, Printer, GraduationCap, Sun, ArrowRight, Activity, Users, FileText, Zap, CheckCircle } from 'lucide-react';
+import { BookOpen, Code, Settings, Printer, GraduationCap, Sun, ArrowRight, Activity, Users, FileText, Zap, CheckCircle, Image as ImageIcon, Share2, PenTool, Contact, LayoutTemplate, CalendarDays, Monitor, Film, Lightbulb } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 export default function Home() {
@@ -89,6 +89,148 @@ export default function Home() {
           </div>
         </div>
 
+        {/* NEW SERVICES HIGHLIGHT SECTION - Visual Match */}
+        <div className="py-16 mb-12">
+          
+          {/* Top Tech Banner (Academy) */}
+          <div className="relative rounded-3xl mb-16 border border-blue-900/50 shadow-[0_20px_50px_-12px_rgba(11,27,66,0.8)] overflow-hidden group">
+            {/* Background Image Setup (matching ecosystem style) */}
+            <div className="absolute inset-0 z-0">
+              <img 
+                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80" 
+                alt="Tech Academy" 
+                className="w-full h-full object-cover opacity-30 mix-blend-luminosity group-hover:opacity-60 transition-opacity duration-700" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#0b1b42]/90 to-[#0b1b42]/80" />
+            </div>
+
+            <div className="relative z-10 p-8 md:p-12 flex flex-col md:flex-row items-center justify-between">
+              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/2" />
+              
+              <div className="md:w-1/2 z-10 mb-8 md:mb-0">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+                    <GraduationCap className="w-7 h-7 text-[#0b1b42]" />
+                  </div>
+                  <h3 className="text-xl md:text-2xl font-black text-white tracking-widest uppercase">
+                    Tech Academy & Mentorship
+                  </h3>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <Lightbulb className="w-6 h-6 text-amber-400 shrink-0 mt-1" />
+                    <p className="text-blue-100 text-lg leading-relaxed">
+                      We train students to learn programming languages.
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Zap className="w-6 h-6 text-amber-400 shrink-0 mt-1" />
+                    <p className="text-blue-100 text-lg leading-relaxed">
+                      We teach <strong className="text-white">AI Prompting</strong>, and we use AI to teach how to code a clean, fast, and light app.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="md:w-5/12 z-10">
+                <p className="text-blue-200 font-bold text-sm tracking-widest uppercase mb-4 text-center md:text-left">Core Technologies</p>
+                <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                  {['Python', 'HTML & CSS', 'React Js', 'Next Js', 'Nest Js', 'Appwrite', 'MongoDB'].map(tech => (
+                    <span key={tech} className="px-4 py-2 bg-[#122454]/80 border border-[#1d3573] rounded-lg text-white font-semibold backdrop-blur-md">
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Creative Design Services Grid */}
+          <div className="text-center mb-12">
+            <h2 className="text-2xl md:text-3xl font-black text-indigo-400 tracking-widest uppercase flex items-center justify-center gap-4">
+              <span className="h-px w-12 bg-indigo-500/50 hidden md:block"></span>
+              Our Creative Design Services
+              <span className="h-px w-12 bg-indigo-500/50 hidden md:block"></span>
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            <div className="bg-white rounded-2xl p-6 text-center shadow-xl hover:-translate-y-2 transition-transform duration-300 group">
+              <div className="w-16 h-16 mx-auto bg-[#0b1b42] group-hover:bg-indigo-600 transition-colors rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg">
+                <ImageIcon className="w-8 h-8" />
+              </div>
+              <h4 className="text-lg font-black text-[#0b1b42] mb-2">Flyers & Posters</h4>
+              <p className="text-slate-600 text-sm leading-relaxed">Eye-catching designs that deliver your message effectively.</p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 text-center shadow-xl hover:-translate-y-2 transition-transform duration-300 group">
+              <div className="w-16 h-16 mx-auto bg-[#0b1b42] group-hover:bg-indigo-600 transition-colors rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg">
+                <Share2 className="w-8 h-8" />
+              </div>
+              <h4 className="text-lg font-black text-[#0b1b42] mb-2">Social Media Designs</h4>
+              <p className="text-slate-600 text-sm leading-relaxed">Engaging content that grows your brand and audience.</p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 text-center shadow-xl hover:-translate-y-2 transition-transform duration-300 group">
+              <div className="w-16 h-16 mx-auto bg-[#0b1b42] group-hover:bg-indigo-600 transition-colors rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg">
+                <PenTool className="w-8 h-8" />
+              </div>
+              <h4 className="text-lg font-black text-[#0b1b42] mb-2">Logos & Brand Identity</h4>
+              <p className="text-slate-600 text-sm leading-relaxed">Unique identities that represent your brand professionally.</p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 text-center shadow-xl hover:-translate-y-2 transition-transform duration-300 group">
+              <div className="w-16 h-16 mx-auto bg-[#0b1b42] group-hover:bg-indigo-600 transition-colors rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg">
+                <Contact className="w-8 h-8" />
+              </div>
+              <h4 className="text-lg font-black text-[#0b1b42] mb-2">Business Cards</h4>
+              <p className="text-slate-600 text-sm leading-relaxed">Professional cards that leave a lasting impression.</p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 text-center shadow-xl hover:-translate-y-2 transition-transform duration-300 group">
+              <div className="w-16 h-16 mx-auto bg-[#0b1b42] group-hover:bg-indigo-600 transition-colors rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg">
+                <LayoutTemplate className="w-8 h-8" />
+              </div>
+              <h4 className="text-lg font-black text-[#0b1b42] mb-2">Banners</h4>
+              <p className="text-slate-600 text-sm leading-relaxed">Bold and attractive banners for any occasion.</p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 text-center shadow-xl hover:-translate-y-2 transition-transform duration-300 group">
+              <div className="w-16 h-16 mx-auto bg-[#0b1b42] group-hover:bg-indigo-600 transition-colors rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg">
+                <CalendarDays className="w-8 h-8" />
+              </div>
+              <h4 className="text-lg font-black text-[#0b1b42] mb-2">Event Graphics</h4>
+              <p className="text-slate-600 text-sm leading-relaxed">Stunning visuals that make your events unforgettable.</p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 text-center shadow-xl hover:-translate-y-2 transition-transform duration-300 group">
+              <div className="w-16 h-16 mx-auto bg-[#0b1b42] group-hover:bg-indigo-600 transition-colors rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg">
+                <Monitor className="w-8 h-8" />
+              </div>
+              <h4 className="text-lg font-black text-[#0b1b42] mb-2">Website Design</h4>
+              <p className="text-slate-600 text-sm leading-relaxed">Modern, responsive websites that convert visitors to customers.</p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 text-center shadow-xl hover:-translate-y-2 transition-transform duration-300 group">
+              <div className="w-16 h-16 mx-auto bg-[#0b1b42] group-hover:bg-indigo-600 transition-colors rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg">
+                <Film className="w-8 h-8" />
+              </div>
+              <h4 className="text-lg font-black text-[#0b1b42] mb-2">Motion Graphics</h4>
+              <p className="text-slate-600 text-sm leading-relaxed">Dynamic animations that bring your ideas to life.</p>
+            </div>
+            
+            <div className="bg-white rounded-2xl p-6 text-center shadow-xl hover:-translate-y-2 transition-transform duration-300 group lg:col-span-2 lg:col-start-2 border-2 border-indigo-500/20">
+              <div className="w-16 h-16 mx-auto bg-indigo-600 rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg shadow-indigo-500/30">
+                <BookOpen className="w-8 h-8" />
+              </div>
+              <h4 className="text-lg font-black text-[#0b1b42] mb-2">Academic & Documentation</h4>
+              <p className="text-slate-600 text-sm leading-relaxed font-medium">Assignment & Project writing, Project Printing, and detailed academic guidance.</p>
+            </div>
+          </div>
+        </div>
+
         {/* BENTO BOX ECOSYSTEM */}
         <div id="ecosystem" className="py-12 scroll-mt-24">
           <h2 className="text-3xl font-bold text-white mb-10 tracking-tight">The Infrastructure Ecosystem</h2>
@@ -96,7 +238,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 auto-rows-[340px]">
             
             {/* 1. Software Agency (Large, 2x2) */}
-            <Link href="/projects" className="group relative overflow-hidden md:col-span-2 md:row-span-2 rounded-3xl border border-white/5 bg-white/5 backdrop-blur-sm transition-all hover:border-cyan-500/50 hover:bg-white/[0.07]">
+            <Link href="/agency" className="group relative overflow-hidden md:col-span-2 md:row-span-2 rounded-3xl border border-white/5 bg-white/5 backdrop-blur-sm transition-all hover:border-cyan-500/50 hover:bg-white/[0.07]">
               <div className="absolute inset-0 z-0">
                 <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80" alt="Code infrastructure" className="w-full h-full object-cover opacity-40 mix-blend-luminosity group-hover:opacity-80 transition-opacity duration-700" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-transparent" />

@@ -83,7 +83,7 @@ router.post('/broadcast', authenticateJWT, async (req: AuthenticatedRequest, res
     }
 
     // Extract emails
-    const bccList = subscribers.documents.map(doc => doc.email);
+    const bccList = subscribers.documents.map((sub: any) => sub.email);
 
     // Send the email via Brevo
     // We send one email with all subscribers in BCC to save API calls

@@ -5,8 +5,9 @@ import { Navbar } from '../../../components/Navbar';
 import { footerPagesData } from '../../../data/footerPages';
 import { ArrowRight } from 'lucide-react';
 
-export function generateMetadata({ params }: { params: { slug: string } }) {
-  const pageData = footerPagesData[params.slug];
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const resolvedParams = await params;
+  const pageData = footerPagesData[resolvedParams.slug];
   if (!pageData) {
     return { title: 'Page Not Found' };
   }
@@ -16,11 +17,31 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
   };
 }
 
-export default function DynamicFooterPage({ params }: { params: { slug: string } }) {
-  const pageData = footerPagesData[params.slug];
+export default async function DynamicFooterPage({ params }: { params: Promise<{ slug: string }> }) {
+  const resolvedParams = await params;
+  const pageData = footerPagesData[resolvedParams.slug];
 
   if (!pageData) {
     notFound();
+  }
+
+  let content = pageData.content;
+
+  if (resolvedParams.slug === 'project-ideas') {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/academic-ideas`, { cache: 'no-store' });
+      if (res.ok) {
+        const dynamicIdeas = await res.json();
+        if (dynamicIdeas && dynamicIdeas.length > 0) {
+          content = dynamicIdeas.map((idea: any) => ({
+            heading: idea.title,
+            body: idea.description
+          }));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch dynamic project ideas', err);
+    }
   }
 
   const Icon = pageData.icon;
@@ -43,10 +64,10 @@ export default function DynamicFooterPage({ params }: { params: { slug: string }
         </div>
 
         <div className="space-y-12">
-          {pageData.content.map((section, idx) => (
+          {content.map((section: any, idx: number) => (
             <div key={idx} className="bg-white/5 border border-white/10 rounded-3xl p-8 md:p-12">
               <h2 className="text-2xl font-bold text-white mb-4">{section.heading}</h2>
-              <p className="text-slate-300 leading-relaxed text-lg">
+              <p className="text-slate-300 leading-relaxed text-lg whitespace-pre-wrap">
                 {section.body}
               </p>
             </div>

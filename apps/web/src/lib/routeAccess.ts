@@ -34,11 +34,11 @@ export function isRouteAllowed(pathname: string, profile: Profile) {
   const role = profile.role || '';
   const purpose = getPurpose(profile);
 
-  if (role === 'Super Admin') return pathname.startsWith('/super-admin');
-  if (role === 'Admin') return pathname.startsWith('/admin');
-  if (role === 'Instructor') return pathname.startsWith('/instructor');
-  if (role === 'Printer Operator') return pathname.startsWith('/printing');
-  if (role === 'Mentor') return pathname.startsWith('/mentor');
+  if (role === 'Super Admin') return true; // Almighty access
+  if (role === 'Admin') return pathname.startsWith('/admin') || pathname.startsWith('/team');
+  if (role === 'Instructor') return pathname.startsWith('/instructor') || pathname.startsWith('/team');
+  if (role === 'Printer Operator') return pathname.startsWith('/printing') || pathname.startsWith('/team');
+  if (role === 'Mentor') return pathname.startsWith('/mentor') || pathname.startsWith('/team');
 
   if (pathname.startsWith('/student')) return purpose === 'learn' || purpose === 'both';
   if (pathname.startsWith('/dashboard/academic')) return purpose === 'academic' || purpose === 'both';

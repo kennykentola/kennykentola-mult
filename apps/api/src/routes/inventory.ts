@@ -81,7 +81,7 @@ router.patch('/:id', authenticateJWT, requireAdmin, async (req: AuthenticatedReq
     
     // Auto-update lastRestockedAt if quantity increases
     if (quantityInStock !== undefined) {
-      const existing = await databases.getDocument(DATABASE_ID, INVENTORY_COLLECTION, id);
+      const existing = await databases.getDocument(DATABASE_ID, INVENTORY_COLLECTION, id) as any;
       if (Number(quantityInStock) > existing.quantityInStock) {
         updateData.lastRestockedAt = new Date().toISOString();
       }

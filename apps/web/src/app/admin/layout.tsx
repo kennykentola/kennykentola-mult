@@ -21,7 +21,8 @@ import {
   X,
   FileCheck, 
   MessageSquare,
-  Layout
+  Layout,
+  Mail
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -135,18 +136,26 @@ export default function AdminLayout({
           {/* Software Agency Pipeline */}
           <div className="space-y-1">
             <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Software Agency</p>
-            <Link href="/admin/projects" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/projects') ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+            <Link href="/admin/projects" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname === '/admin/projects' ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
               <Briefcase className="h-4 w-4" />
               Agency Projects
+            </Link>
+            <Link href="/admin/agency/crm" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/agency/crm') ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+              <Layout className="h-4 w-4" />
+              CRM Pipeline
             </Link>
           </div>
 
           {/* Academic Projects Pipeline */}
           <div className="space-y-1">
             <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Academic & Thesis</p>
-            <Link href="/admin/academic" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/academic') ? 'bg-sky-500/10 text-sky-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+            <Link href="/admin/academic" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/academic') && !pathname?.includes('/admin/academy/ideas') ? 'bg-sky-500/10 text-sky-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
               <GraduationCap className="h-4 w-4" />
               CS Projects
+            </Link>
+            <Link href="/admin/academy/ideas" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/academy/ideas') ? 'bg-sky-500/10 text-sky-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+              <BookOpen className="h-4 w-4" />
+              Project Ideas
             </Link>
           </div>
 
@@ -182,6 +191,10 @@ export default function AdminLayout({
             <Link href="/admin/learning-paths" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/learning-paths') ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
               <Layout className="h-4 w-4" />
               Learning Paths
+            </Link>
+            <Link href="/admin/newsletter" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/newsletter') ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+              <Mail className="h-4 w-4" />
+              Newsletter Broadcast
             </Link>
           </div>
         </nav>
@@ -262,17 +275,25 @@ export default function AdminLayout({
 
                 <div className="space-y-1">
                   <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Software Agency</p>
-                  <Link onClick={() => setSidebarOpen(false)} href="/admin/projects" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/projects') ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                  <Link onClick={() => setSidebarOpen(false)} href="/admin/projects" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname === '/admin/projects' ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
                     <Briefcase className="h-4 w-4" />
                     Agency Projects
+                  </Link>
+                  <Link onClick={() => setSidebarOpen(false)} href="/admin/agency/crm" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/agency/crm') ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                    <Layout className="h-4 w-4" />
+                    CRM Pipeline
                   </Link>
                 </div>
 
                 <div className="space-y-1">
                   <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Academic & Thesis</p>
-                  <Link onClick={() => setSidebarOpen(false)} href="/admin/academic" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/academic') ? 'bg-sky-500/10 text-sky-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                  <Link onClick={() => setSidebarOpen(false)} href="/admin/academic" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/academic') && !pathname?.includes('/admin/academy/ideas') ? 'bg-sky-500/10 text-sky-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
                     <GraduationCap className="h-4 w-4" />
                     CS Projects
+                  </Link>
+                  <Link onClick={() => setSidebarOpen(false)} href="/admin/academy/ideas" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/academy/ideas') ? 'bg-sky-500/10 text-sky-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                    <BookOpen className="h-4 w-4" />
+                    Project Ideas
                   </Link>
                 </div>
 
@@ -305,6 +326,10 @@ export default function AdminLayout({
                   <Link onClick={() => setSidebarOpen(false)} href="/admin/learning-paths" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/learning-paths') ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
                     <Layout className="h-4 w-4" />
                     Learning Paths
+                  </Link>
+                  <Link onClick={() => setSidebarOpen(false)} href="/admin/newsletter" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/newsletter') ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                    <Mail className="h-4 w-4" />
+                    Newsletter Broadcast
                   </Link>
                 </div>
               </nav>

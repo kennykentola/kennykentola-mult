@@ -41,6 +41,11 @@ export async function getMyTickets() {
   return data.tickets;
 }
 
+export async function getProjectTickets(projectId: string) {
+  const data = await fetchWithAuth(`${API_BASE}/tickets/project/${projectId}`);
+  return data.tickets;
+}
+
 export async function getTicketDetails(ticketId: string) {
   const data = await fetchWithAuth(`${API_BASE}/tickets/${ticketId}`);
   return data;

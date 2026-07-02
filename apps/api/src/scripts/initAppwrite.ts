@@ -436,6 +436,18 @@ const collections: CollectionDef[] = [
     ]
   },
   {
+    id: 'academic_ideas',
+    name: 'Academic Ideas',
+    attributes: [
+      { key: 'title', type: 'string', size: 255, required: true },
+      { key: 'description', type: 'string', size: 5000, required: true },
+      { key: 'category', type: 'string', size: 100, required: false, defaultValue: 'General' },
+      { key: 'status', type: 'string', size: 50, required: false, defaultValue: 'active' },
+      { key: 'retentionPeriod', type: 'string', size: 50, required: false, defaultValue: '1 year' },
+      { key: 'createdAt', type: 'datetime', required: true }
+    ]
+  },
+  {
     id: 'instructor_payouts',
     name: 'Instructor Payouts',
     attributes: [
@@ -507,7 +519,59 @@ const collections: CollectionDef[] = [
       { key: 'budget', type: 'float', required: false },
       { key: 'quotePrice', type: 'float', required: false },
       { key: 'deadline', type: 'datetime', required: false },
+      { key: 'paymentId', type: 'string', size: 50, required: false },
+      { key: 'pipelineStage', type: 'string', size: 50, required: false, defaultValue: 'Lead' },
+      { key: 'pmId', type: 'string', size: 50, required: false },
+      { key: 'assignedTeam', type: 'string', size: 50, required: false, array: true }
+    ]
+  },
+  {
+    id: 'agency_contracts',
+    name: 'Agency Contracts',
+    attributes: [
+      { key: 'projectId', type: 'string', size: 50, required: true },
+      { key: 'clientId', type: 'string', size: 50, required: true },
+      { key: 'contentUrl', type: 'string', size: 500, required: true },
+      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'pending' },
+      { key: 'signedAt', type: 'datetime', required: false },
+      { key: 'amount', type: 'float', required: false }
+    ]
+  },
+  {
+    id: 'agency_invoices',
+    name: 'Agency Invoices',
+    attributes: [
+      { key: 'projectId', type: 'string', size: 50, required: true },
+      { key: 'clientId', type: 'string', size: 50, required: true },
+      { key: 'amount', type: 'float', required: true },
+      { key: 'dueDate', type: 'datetime', required: false },
+      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'unpaid' },
       { key: 'paymentId', type: 'string', size: 50, required: false }
+    ]
+  },
+  {
+    id: 'team_sprints',
+    name: 'Team Sprints',
+    attributes: [
+      { key: 'projectId', type: 'string', size: 50, required: true },
+      { key: 'title', type: 'string', size: 255, required: true },
+      { key: 'startDate', type: 'datetime', required: true },
+      { key: 'endDate', type: 'datetime', required: true },
+      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'active' }
+    ]
+  },
+  {
+    id: 'team_tasks',
+    name: 'Team Tasks',
+    attributes: [
+      { key: 'projectId', type: 'string', size: 50, required: true },
+      { key: 'sprintId', type: 'string', size: 50, required: false },
+      { key: 'title', type: 'string', size: 255, required: true },
+      { key: 'description', type: 'string', size: 5000, required: false },
+      { key: 'assigneeId', type: 'string', size: 50, required: false },
+      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'todo' },
+      { key: 'priority', type: 'string', size: 50, required: false, defaultValue: 'medium' },
+      { key: 'storyPoints', type: 'integer', required: false, defaultValue: 0 }
     ]
   },
   {

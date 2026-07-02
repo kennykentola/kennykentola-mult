@@ -171,6 +171,7 @@ export default function InstructorAnalyticsPage() {
                         <p className="text-xs text-slate-500 font-semibold mb-1">COMPLETION RATE</p>
                         <div className="flex items-center gap-2">
                           <div className="h-2 flex-1 bg-slate-800 rounded-full overflow-hidden">
+                            {/* eslint-disable-next-line react/forbid-dom-props */}
                             <div className="h-full bg-emerald-500" style={{ width: `${c.completionRate}%` }} />
                           </div>
                           <span className="font-mono text-sm text-emerald-400">{c.completionRate}%</span>

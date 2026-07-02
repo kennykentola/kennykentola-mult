@@ -102,8 +102,14 @@ router.patch('/technician/:id/status', authenticateJWT, async (req: Authenticate
 
   try {
     // Ensure the technician is actually assigned to this job
-    const job = await databases.getDocument(DATABASE_ID, SOLAR_COLLECTION, id);
-    if (!job.assignedTechnicians || !job.assignedTechnicians.includes(userId)) {
+    const job = await databases.updateDocument(
+      DATABASE_ID,
+      SOLAR_COLLECTION,
+      id,
+      { status }
+    ) as any;
+
+    if (userId && !job.assignedTechnicians?.includes(userId)) {
       return res.status(403).json({ error: 'You are not assigned to this job.' });
     }
 

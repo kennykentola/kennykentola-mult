@@ -1,3 +1,5 @@
+import { getSessionJwt } from '../../lib/sessionJwt';
+
 export interface AgencyProject {
   $id: string;
   clientId: string;
@@ -8,13 +10,18 @@ export interface AgencyProject {
   budget?: number;
   quotePrice?: number;
   deadline?: string;
+  pipelineStage?: string;
+  pmId?: string;
+  assignedTeam?: string[];
+  clientName?: string;
+  clientEmail?: string;
   $createdAt: string;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-const getHeaders = () => {
-  const token = localStorage.getItem('jwt_token');
+const getHeaders = async () => {
+  const token = await getSessionJwt();
   return {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`
@@ -23,9 +30,10 @@ const getHeaders = () => {
 
 export const agencyService = {
   async submitBrief(payload: { title: string; description: string; projectType: string; budget?: number; deadline?: string }) {
+    const headers = await getHeaders();
     const res = await fetch(`${API_URL}/agency/requests`, {
       method: 'POST',
-      headers: getHeaders(),
+      headers,
       body: JSON.stringify(payload)
     });
     const data = await res.json();
@@ -34,27 +42,40 @@ export const agencyService = {
   },
 
   async getMyProjects(): Promise<AgencyProject[]> {
+    const headers = await getHeaders();
     const res = await fetch(`${API_URL}/agency`, {
-      headers: getHeaders()
+      headers
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to fetch agency projects');
     return data.projects;
   },
 
+  async getProject(projectId: string): Promise<{ project: AgencyProject, milestones: any[], invoices: any[] }> {
+    const headers = await getHeaders();
+    const res = await fetch(`${API_URL}/agency/${projectId}`, {
+      headers
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to fetch project details');
+    return data;
+  },
+
   async getAllProjectsAdmin(): Promise<AgencyProject[]> {
+    const headers = await getHeaders();
     const res = await fetch(`${API_URL}/agency/admin/all`, {
-      headers: getHeaders()
+      headers
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to fetch all agency projects');
     return data.projects;
   },
 
-  async updateProjectAdmin(projectId: string, payload: { status?: string; quotePrice?: number; deadline?: string }) {
+  async updateProjectAdmin(projectId: string, payload: { status?: string; quotePrice?: number; deadline?: string; pipelineStage?: string; pmId?: string; assignedTeam?: string[] }) {
+    const headers = await getHeaders();
     const res = await fetch(`${API_URL}/agency/admin/${projectId}`, {
       method: 'PATCH',
-      headers: getHeaders(),
+      headers,
       body: JSON.stringify(payload)
     });
     const data = await res.json();

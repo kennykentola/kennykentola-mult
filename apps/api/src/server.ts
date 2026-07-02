@@ -67,6 +67,7 @@ import chatRouter from './routes/chat';
 import uploadRouter from './routes/upload';
 import projectsRouter from './routes/projects';
 import academicProjectsRouter from './routes/academicProjects';
+import academicIdeasRouter from './routes/academicIdeas';
 import maintenanceRouter from './routes/maintenance';
 import solarRouter from './routes/solar';
 import telemetryRouter from './routes/telemetry';
@@ -78,6 +79,7 @@ import inventoryRouter from './routes/inventory';
 import { contactRoutes } from './routes/contact';
 import { newsletterRouter } from './routes/newsletter';
 import { agencyRouter } from './routes/agency';
+import { teamRouter } from './routes/team';
 
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/printing', printingRouter);
@@ -89,6 +91,7 @@ app.use('/api/v1/chat', chatRouter);
 app.use('/api/v1/upload', uploadRouter);
 app.use('/api/v1/projects', projectsRouter);
 app.use('/api/v1/academic-projects', academicProjectsRouter);
+app.use('/api/v1/academic-ideas', academicIdeasRouter);
 app.use('/api/v1/maintenance', maintenanceRouter);
 app.use('/api/v1/solar', solarRouter);
 app.use('/api/v1/telemetry', telemetryRouter);
@@ -100,6 +103,7 @@ app.use('/api/v1/inventory', inventoryRouter);
 app.use('/api/v1/contact', contactRoutes);
 app.use('/api/v1/newsletter', newsletterRouter);
 app.use('/api/v1/agency', agencyRouter);
+app.use('/api/v1/team', teamRouter);
 
 // Basic Health Check Endpoint
 app.get('/api/health', (req, res) => {

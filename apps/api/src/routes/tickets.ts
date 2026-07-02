@@ -69,6 +69,35 @@ router.get('/', authenticateJWT, async (req: AuthenticatedRequest, res) => {
 });
 
 // ──────────────────────────────────────────────────
+// AUTHENTICATED: Get tickets by project ID
+// ──────────────────────────────────────────────────
+router.get('/project/:projectId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  const { projectId } = req.params;
+  const userId = req.user?.id;
+  const role = req.user?.role;
+
+  try {
+    if (role !== 'Admin' && role !== 'Super Admin') {
+      const project = await databases.getDocument(DATABASE_ID, 'agency_projects', projectId) as any;
+      if (project.clientId !== userId && project.pmId !== userId && !(project.assignedTeam && project.assignedTeam.includes(userId))) {
+        return res.status(403).json({ error: 'Access denied.' });
+      }
+    }
+
+    const response = await databases.listDocuments(
+      DATABASE_ID,
+      TICKETS_COLLECTION,
+      [Query.equal('projectOrContractId', projectId), Query.orderDesc('$createdAt')]
+    );
+
+    res.status(200).json({ tickets: response.documents });
+  } catch (err: any) {
+    console.error('[Tickets] Error fetching project tickets:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ──────────────────────────────────────────────────
 // AUTHENTICATED: Get single ticket by ID
 // ──────────────────────────────────────────────────
 router.get('/:ticketId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
@@ -82,7 +111,18 @@ router.get('/:ticketId', authenticateJWT, async (req: AuthenticatedRequest, res)
     ) as any;
 
     if (ticket.userId !== req.user?.id && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
-      return res.status(403).json({ error: 'Access denied.' });
+      if (ticket.projectOrContractId) {
+        try {
+          const project = await databases.getDocument(DATABASE_ID, 'agency_projects', ticket.projectOrContractId) as any;
+          if (project.pmId !== req.user?.id && !(project.assignedTeam && project.assignedTeam.includes(req.user?.id))) {
+            return res.status(403).json({ error: 'Access denied.' });
+          }
+        } catch {
+          return res.status(403).json({ error: 'Access denied.' });
+        }
+      } else {
+        return res.status(403).json({ error: 'Access denied.' });
+      }
     }
 
     // Fetch messages for this ticket (using the ticketId as the roomId)
@@ -116,6 +156,18 @@ router.post('/:ticketId/messages', authenticateJWT, async (req: AuthenticatedReq
   }
 
   try {
+    const ticket = await databases.getDocument(DATABASE_ID, TICKETS_COLLECTION, ticketId) as any;
+    if (ticket.userId !== userId && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+      if (ticket.projectOrContractId) {
+        const project = await databases.getDocument(DATABASE_ID, 'agency_projects', ticket.projectOrContractId) as any;
+        if (project.pmId !== userId && !(project.assignedTeam && project.assignedTeam.includes(userId))) {
+          return res.status(403).json({ error: 'Access denied.' });
+        }
+      } else {
+        return res.status(403).json({ error: 'Access denied.' });
+      }
+    }
+
     const messageData: any = {
       roomId: ticketId,
       senderId: userId,

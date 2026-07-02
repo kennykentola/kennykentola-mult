@@ -265,7 +265,7 @@ function CourseCard({ course, href }: { course: any; href: string }) {
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
             <div
               className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-indigo-400"
-              style={{ width: getProgressWidth(course.progress || 0) }}
+              style={{ width: getProgressWidth(course.progress || 0) }} // NOSONAR eslint-disable-line react/forbid-dom-props
             />
           </div>
         </div>
