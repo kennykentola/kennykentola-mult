@@ -208,6 +208,8 @@ export function updateAcademyCourseProgress(
   );
 }
 
+
+
 export function fetchWorkspaceCode(courseId: string, lessonId: string) {
   return academyFetch<{ workspace: { code: string; language: string } | null }>(
     `/courses/${courseId}/lessons/${lessonId}/workspace`,
@@ -372,17 +374,15 @@ export type QuizDto = {
   isPublished: boolean;
 };
 
-export type QuizAttemptDto = {
-  $id?: string;
+export interface QuizAttemptDto {
+  $id: string;
   quizId: string;
   studentId: string;
-  courseId: string;
   score: number;
   passed: boolean;
-  startedAt: string;
-  completedAt?: string;
-  answers: string;
-};
+  answers: Record<string, string>;
+  createdAt: string;
+}
 
 export type QuizQuestionDto = {
   $id?: string;

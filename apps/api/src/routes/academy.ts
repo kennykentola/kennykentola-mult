@@ -1922,6 +1922,7 @@ router.post('/courses/:courseId/testimonials', authenticateJWT, async (req: Auth
 
     const testimonial = await databases.createDocument(DATABASE_ID, 'testimonials', ID.unique(), {
       userId,
+      studentId: userId, // Added to fix Appwrite missing attribute error
       authorName,
       courseId,
       content,

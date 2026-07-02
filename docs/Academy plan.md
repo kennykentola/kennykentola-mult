@@ -610,3 +610,5 @@ The control center for the entire academy.
 
 > [!NOTE]
 > This document is a **living reference**. Update it as features are built, modified, or deprioritized. Each section maps directly to a sprint deliverable.
+
+

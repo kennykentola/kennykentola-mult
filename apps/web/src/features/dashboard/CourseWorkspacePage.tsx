@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { BookOpen, Calendar, CheckCircle2, FileText, Loader2, MessageSquare, Play, Video, Lock } from 'lucide-react';
 import {
@@ -16,6 +16,9 @@ import {
   fetchMyQuizAttempts,
   QuizDto,
   QuizAttemptDto,
+  LessonProgressDto,
+  fetchLessonProgress,
+  updateLessonProgress,
   submitCoursePayment,
   fetchWorkspaceCode,
   saveWorkspaceCode
@@ -47,6 +50,7 @@ export default function CourseWorkspacePage() {
   const [liveClasses, setLiveClasses] = useState<AcademyLiveClassDto[]>([]);
   const [quizzes, setQuizzes] = useState<QuizDto[]>([]);
   const [quizAttempts, setQuizAttempts] = useState<QuizAttemptDto[]>([]);
+  const [lessonProgress, setLessonProgress] = useState<LessonProgressDto[]>([]);
   const [activeLessonId, setActiveLessonId] = useState('');
   const [activeTab, setActiveTab] = useState<Tab>('lessons');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -65,6 +69,41 @@ export default function CourseWorkspacePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [executionCount, setExecutionCount] = useState(0);
 
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const lastSavedTimeRef = useRef<number>(0);
+  const isInitialSeekRef = useRef<boolean>(false);
+
+  // Reset video tracking when active lesson changes
+  useEffect(() => {
+    isInitialSeekRef.current = false;
+    lastSavedTimeRef.current = 0;
+  }, [activeLessonId]);
+
+  const handleTimeUpdate = async () => {
+    if (!videoRef.current || !activeLesson?.id || !courseId) return;
+    const currentTime = Math.floor(videoRef.current.currentTime);
+    
+    // Save progress every 10 seconds
+    if (currentTime > lastSavedTimeRef.current + 10) {
+      lastSavedTimeRef.current = currentTime;
+      try {
+        await updateLessonProgress(activeLesson.id, { courseId, lastPosition: currentTime });
+      } catch (e) {
+        console.error('Failed to save video progress', e);
+      }
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (!videoRef.current || !activeLesson?.id || isInitialSeekRef.current) return;
+    const progress = lessonProgress.find(p => p.lessonId === activeLesson.id);
+    if (progress && progress.lastPosition > 0) {
+      videoRef.current.currentTime = progress.lastPosition;
+      lastSavedTimeRef.current = progress.lastPosition;
+    }
+    isInitialSeekRef.current = true;
+  };
+
   useEffect(() => {
     let cancelled = false;
 
@@ -74,12 +113,13 @@ export default function CourseWorkspacePage() {
       setError('');
 
       try {
-        const [courseResponse, assignmentsResponse, liveResponse, quizzesResponse, attemptsResponse] = await Promise.all([
+        const [courseResponse, assignmentsResponse, liveResponse, quizzesResponse, attemptsResponse, progressResponse] = await Promise.all([
           fetchAcademyCourse(courseId),
           fetchMyAcademyAssignments(courseId),
           fetchAcademyLiveClasses(courseId),
           fetchCourseQuizzes(courseId),
-          fetchMyQuizAttempts(courseId)
+          fetchMyQuizAttempts(courseId),
+          fetchLessonProgress(courseId)
         ]);
         if (cancelled) return;
         setCourseData(courseResponse);
@@ -87,6 +127,7 @@ export default function CourseWorkspacePage() {
         setLiveClasses(liveResponse.liveClasses);
         setQuizzes(quizzesResponse.quizzes.filter(q => q.isPublished));
         setQuizAttempts(attemptsResponse.attempts);
+        setLessonProgress(progressResponse.lessonProgress);
         setActiveLessonId(courseResponse.lessons[0]?.id || '');
       } catch (err: any) {
         if (!cancelled) setError(err?.message || 'Unable to load course workspace.');
@@ -459,7 +500,14 @@ export default function CourseWorkspacePage() {
                   <div className="flex-1">
                     <div className="aspect-video overflow-hidden rounded-2xl bg-slate-950">
                       {activeLesson.videoUrl ? (
-                        <iframe src={activeLesson.videoUrl} className="h-full w-full" title={activeLesson.title} allowFullScreen />
+                        <video 
+                          ref={videoRef}
+                          src={activeLesson.videoUrl} 
+                          controls
+                          onTimeUpdate={handleTimeUpdate}
+                          onLoadedMetadata={handleLoadedMetadata}
+                          className="h-full w-full outline-none" 
+                        />
                       ) : (
                         <div className="flex h-full flex-col items-center justify-center text-slate-500">
                           <Video className="h-12 w-12" />

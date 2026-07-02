@@ -107,7 +107,7 @@ export default function QuizTaker() {
     try {
       const res = await submitQuizAttempt(quizId, {
         courseId,
-        answers: JSON.stringify(answers)
+        answers
       });
       setAttempt(res.attempt);
       
