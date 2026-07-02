@@ -18,8 +18,8 @@ export function CTASection() {
           <Link href="/agency/dashboard" className="px-8 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-[0_0_30px_rgba(79,70,229,0.4)]">
             Start Your Project
           </Link>
-          <Link href="/calendly" className="px-8 py-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold transition-all">
-            Schedule a Consultation
+          <Link href="/contact" className="w-full sm:w-auto px-8 py-4 rounded-xl border border-white/20 text-white font-bold hover:bg-white/10 transition-all text-center">
+            Book Consultation
           </Link>
         </div>
       </div>

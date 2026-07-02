@@ -27,7 +27,7 @@ export function AgencyHero() {
           <Link href="/agency/dashboard" className="w-full sm:w-auto px-8 py-4 rounded-xl bg-white text-black font-extrabold hover:bg-slate-200 hover:scale-105 transition-all flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(255,255,255,0.2)]">
             Start Your Project <ArrowRight className="w-5 h-5" />
           </Link>
-          <Link href="/calendly" className="w-full sm:w-auto px-8 py-4 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-white font-bold hover:bg-indigo-500/20 transition-all flex items-center justify-center gap-2">
+          <Link href="/contact" className="w-full sm:w-auto px-8 py-4 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-white font-bold hover:bg-indigo-500/20 transition-all flex items-center justify-center gap-2">
             Book Free Consultation <Play className="w-4 h-4" />
           </Link>
         </div>
