@@ -1,4 +1,4 @@
-'use client';
+import React from 'react';
 
 import React from 'react';
 import { Navbar } from '../../components/Navbar';
@@ -16,7 +16,22 @@ import {
   ChevronRight
 } from 'lucide-react';
 
-export default function DesignLandingPage() {
+async function getDesignPortfolio() {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/design-portfolio`, {
+      cache: 'no-store'
+    });
+    if (!res.ok) throw new Error('Failed to fetch');
+    return res.json();
+  } catch (error) {
+    console.error('Error fetching design portfolio:', error);
+    return [];
+  }
+}
+
+export default async function DesignLandingPage() {
+  const portfolioItems = await getDesignPortfolio();
+
   return (
     <div className="min-h-screen bg-[#050505] text-slate-200">
       <Navbar />
@@ -90,32 +105,25 @@ export default function DesignLandingPage() {
             <p className="text-slate-400 max-w-2xl mx-auto">A glimpse into the digital and physical assets we've crafted for our clients.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="group relative aspect-square rounded-3xl overflow-hidden bg-white/5 border border-white/10">
-              <img src="https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&q=80" alt="Brand Identity" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
-              <div className="absolute bottom-6 left-6 right-6">
-                <h4 className="text-white font-bold text-lg">Brand Identity</h4>
-                <p className="text-rose-400 text-sm">Tech Startup</p>
-              </div>
+          {portfolioItems.length === 0 ? (
+            <div className="text-center py-20 bg-white/5 border border-white/10 rounded-3xl">
+              <p className="text-slate-400">Portfolio showcase is empty. Check back soon!</p>
             </div>
-            <div className="group relative aspect-square rounded-3xl overflow-hidden bg-white/5 border border-white/10">
-              <img src="https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&q=80" alt="Social Media Campaign" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
-              <div className="absolute bottom-6 left-6 right-6">
-                <h4 className="text-white font-bold text-lg">Social Media Kit</h4>
-                <p className="text-rose-400 text-sm">E-commerce Brand</p>
-              </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {portfolioItems.map((item: any) => (
+                <div key={item.$id} className="group relative aspect-square rounded-3xl overflow-hidden bg-white/5 border border-white/10">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+                  <div className="absolute bottom-6 left-6 right-6">
+                    <h4 className="text-white font-bold text-lg">{item.title}</h4>
+                    {item.subtitle && <p className="text-rose-400 text-sm">{item.subtitle}</p>}
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="group relative aspect-square rounded-3xl overflow-hidden bg-white/5 border border-white/10">
-              <img src="https://images.unsplash.com/photo-1542744094-3a31f272c490?auto=format&fit=crop&q=80" alt="UI/UX Design" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
-              <div className="absolute bottom-6 left-6 right-6">
-                <h4 className="text-white font-bold text-lg">Website Design</h4>
-                <p className="text-rose-400 text-sm">Fintech Application</p>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Call to Action & Info */}

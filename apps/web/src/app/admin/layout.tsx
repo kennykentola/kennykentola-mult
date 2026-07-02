@@ -140,6 +140,14 @@ export default function AdminLayout({
               <Briefcase className="h-4 w-4" />
               Agency Projects
             </Link>
+            <Link href="/admin/agency/portfolio" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/agency/portfolio') ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+              <Layout className="h-4 w-4" />
+              Project Portfolio
+            </Link>
+            <Link href="/admin/agency/design-portfolio" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/agency/design-portfolio') ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+              <Palette className="h-4 w-4" />
+              Design Portfolio
+            </Link>
             <Link href="/admin/agency/crm" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/agency/crm') ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
               <Layout className="h-4 w-4" />
               CRM Pipeline
@@ -149,9 +157,13 @@ export default function AdminLayout({
           {/* Academic Projects Pipeline */}
           <div className="space-y-1">
             <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Academic & Thesis</p>
-            <Link href="/admin/academic" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/academic') && !pathname?.includes('/admin/academy/ideas') ? 'bg-sky-500/10 text-sky-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+            <Link href="/admin/academic" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/academic') && !pathname?.includes('/admin/academy/ideas') && !pathname?.includes('/admin/academy/thesis') ? 'bg-sky-500/10 text-sky-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
               <GraduationCap className="h-4 w-4" />
               CS Projects
+            </Link>
+            <Link href="/admin/academy/thesis" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/academy/thesis') ? 'bg-sky-500/10 text-sky-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+              <FileCheck className="h-4 w-4" />
+              Thesis Samples
             </Link>
             <Link href="/admin/academy/ideas" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/academy/ideas') ? 'bg-sky-500/10 text-sky-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
               <BookOpen className="h-4 w-4" />
@@ -279,6 +291,14 @@ export default function AdminLayout({
                     <Briefcase className="h-4 w-4" />
                     Agency Projects
                   </Link>
+                  <Link onClick={() => setSidebarOpen(false)} href="/admin/agency/portfolio" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/agency/portfolio') ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                    <Layout className="h-4 w-4" />
+                    Project Portfolio
+                  </Link>
+                  <Link onClick={() => setSidebarOpen(false)} href="/admin/agency/design-portfolio" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/agency/design-portfolio') ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                    <Palette className="h-4 w-4" />
+                    Design Portfolio
+                  </Link>
                   <Link onClick={() => setSidebarOpen(false)} href="/admin/agency/crm" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/agency/crm') ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
                     <Layout className="h-4 w-4" />
                     CRM Pipeline
@@ -287,9 +307,13 @@ export default function AdminLayout({
 
                 <div className="space-y-1">
                   <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Academic & Thesis</p>
-                  <Link onClick={() => setSidebarOpen(false)} href="/admin/academic" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/academic') && !pathname?.includes('/admin/academy/ideas') ? 'bg-sky-500/10 text-sky-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                  <Link onClick={() => setSidebarOpen(false)} href="/admin/academic" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/academic') && !pathname?.includes('/admin/academy/ideas') && !pathname?.includes('/admin/academy/thesis') ? 'bg-sky-500/10 text-sky-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
                     <GraduationCap className="h-4 w-4" />
                     CS Projects
+                  </Link>
+                  <Link onClick={() => setSidebarOpen(false)} href="/admin/academy/thesis" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/academy/thesis') ? 'bg-sky-500/10 text-sky-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                    <FileCheck className="h-4 w-4" />
+                    Thesis Samples
                   </Link>
                   <Link onClick={() => setSidebarOpen(false)} href="/admin/academy/ideas" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/academy/ideas') ? 'bg-sky-500/10 text-sky-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
                     <BookOpen className="h-4 w-4" />

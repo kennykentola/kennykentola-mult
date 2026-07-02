@@ -582,6 +582,40 @@ const collections: CollectionDef[] = [
       { key: 'segment', type: 'string', size: 50, required: false, defaultValue: 'general' },
       { key: 'subscribedAt', type: 'datetime', required: true }
     ]
+  },
+  {
+    id: 'project_portfolio',
+    name: 'Project Portfolio',
+    attributes: [
+      { key: 'title', type: 'string', size: 255, required: true },
+      { key: 'description', type: 'string', size: 5000, required: false },
+      { key: 'url', type: 'string', size: 500, required: false },
+      { key: 'imageUrl', type: 'string', size: 500, required: false },
+      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'active' },
+      { key: 'createdAt', type: 'datetime', required: false }
+    ]
+  },
+  {
+    id: 'thesis_samples',
+    name: 'Thesis Samples',
+    attributes: [
+      { key: 'title', type: 'string', size: 255, required: true },
+      { key: 'content', type: 'string', size: 65535, required: true },
+      { key: 'category', type: 'string', size: 100, required: false },
+      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'active' },
+      { key: 'createdAt', type: 'datetime', required: false }
+    ]
+  },
+  {
+    id: 'design_portfolio',
+    name: 'Design Portfolio',
+    attributes: [
+      { key: 'title', type: 'string', size: 255, required: true },
+      { key: 'subtitle', type: 'string', size: 255, required: false },
+      { key: 'imageUrl', type: 'string', size: 500, required: true },
+      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'active' },
+      { key: 'createdAt', type: 'datetime', required: false }
+    ]
   }
 ];
 
