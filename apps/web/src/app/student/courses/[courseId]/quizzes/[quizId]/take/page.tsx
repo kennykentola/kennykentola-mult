@@ -156,7 +156,7 @@ export default function QuizTaker() {
     
     // Parse answers to show review
     let studentAnswers: Record<string, string> = {};
-    try { studentAnswers = JSON.parse(attempt.answers || '{}'); } catch(e){}
+    try { studentAnswers = typeof attempt.answers === 'string' ? JSON.parse(attempt.answers || '{}') : (attempt.answers || {}); } catch(e){}
 
     return (
       <div className="min-h-screen bg-slate-950 font-sans text-slate-200 py-12 px-4 sm:px-6">
