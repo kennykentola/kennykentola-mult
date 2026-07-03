@@ -1,16 +1,41 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { account } from '../../lib/appwrite';
+import { api } from '../../lib/api';
 import { router } from 'expo-router';
+
+interface DashboardStats {
+  activeProjects: number;
+  enrolledCourses: number;
+  openTickets: number;
+}
 
 export default function DashboardScreen() {
   const { user, checkSession } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  const fetchStats = async () => {
+    try {
+      const response = await api.get('/dashboard/stats');
+      setStats(response.data);
+    } catch (error) {
+      console.log('Failed to fetch dashboard stats', error);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
     await checkSession();
+    await fetchStats();
     setRefreshing(false);
   };
 
@@ -38,15 +63,15 @@ export default function DashboardScreen() {
       <View style={styles.cardsGrid}>
         <View style={styles.card}>
           <Text style={styles.cardTitle}>My Projects</Text>
-          <Text style={styles.cardValue}>2 Active</Text>
+          {loadingStats ? <ActivityIndicator size="small" color="#f8fafc" style={styles.spinner} /> : <Text style={styles.cardValue}>{stats?.activeProjects || 0} Active</Text>}
         </View>
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Academy Courses</Text>
-          <Text style={styles.cardValue}>1 Enrolled</Text>
+          {loadingStats ? <ActivityIndicator size="small" color="#f8fafc" style={styles.spinner} /> : <Text style={styles.cardValue}>{stats?.enrolledCourses || 0} Enrolled</Text>}
         </View>
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Active Tickets</Text>
-          <Text style={styles.cardValue}>0 Open</Text>
+          {loadingStats ? <ActivityIndicator size="small" color="#f8fafc" style={styles.spinner} /> : <Text style={styles.cardValue}>{stats?.openTickets || 0} Open</Text>}
         </View>
       </View>
 
@@ -60,6 +85,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#020617',
     padding: 16,
+  },
+  spinner: {
+    marginTop: 8,
+    alignSelf: 'flex-start'
   },
   header: {
     marginTop: 16,

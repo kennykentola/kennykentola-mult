@@ -83,6 +83,7 @@ import { contactRoutes } from './routes/contact';
 import { newsletterRouter } from './routes/newsletter';
 import { agencyRouter } from './routes/agency';
 import { teamRouter } from './routes/team';
+import dashboardRouter from './routes/dashboard';
 
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/printing', printingRouter);
@@ -110,6 +111,7 @@ app.use('/api/v1/contact', contactRoutes);
 app.use('/api/v1/newsletter', newsletterRouter);
 app.use('/api/v1/agency', agencyRouter);
 app.use('/api/v1/team', teamRouter);
+app.use('/api/v1/dashboard', dashboardRouter);
 
 // Basic Health Check Endpoint
 app.get('/api/health', (req, res) => {
