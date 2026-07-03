@@ -34,6 +34,47 @@ router.get('/all', authenticateJWT, async (req, res) => {
   }
 });
 
+// Get RSS Feed (Public)
+router.get('/rss.xml', async (req, res) => {
+  try {
+    const posts = await databases.listDocuments(DATABASE_ID, COLLECTION, [
+      Query.equal('isPublished', true),
+      Query.orderDesc('publishedAt'),
+      Query.limit(20)
+    ]);
+
+    const CLIENT_URL = process.env.CLIENT_URL || 'https://kennykentola.com';
+
+    const items = posts.documents.map((post: any) => `
+      <item>
+        <title><![CDATA[${post.title}]]></title>
+        <link>${CLIENT_URL}/blog/${post.slug}</link>
+        <guid>${CLIENT_URL}/blog/${post.slug}</guid>
+        <pubDate>${new Date(post.publishedAt || post.$createdAt).toUTCString()}</pubDate>
+        <description><![CDATA[${post.excerpt || post.content.substring(0, 200)}]]></description>
+      </item>
+    `).join('');
+
+    const rss = `<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>KennyKentola Blog</title>
+    <link>${CLIENT_URL}/blog</link>
+    <description>Latest updates, tutorials, and news from KennyKentola.</description>
+    <language>en-us</language>
+    <atom:link href="${CLIENT_URL}/api/v1/blog/rss.xml" rel="self" type="application/rss+xml" />
+    ${items}
+  </channel>
+</rss>`;
+
+    res.set('Content-Type', 'application/rss+xml');
+    res.send(rss);
+  } catch (error: any) {
+    console.error('Error generating RSS feed:', error);
+    res.status(500).send('Error generating RSS feed');
+  }
+});
+
 // Get single blog post by slug (Public)
 router.get('/:slug', async (req, res) => {
   try {
