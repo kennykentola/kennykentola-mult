@@ -84,6 +84,7 @@ import { newsletterRouter } from './routes/newsletter';
 import { agencyRouter } from './routes/agency';
 import { teamRouter } from './routes/team';
 import dashboardRouter from './routes/dashboard';
+import blogRouter from './routes/blog';
 
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/printing', printingRouter);
@@ -112,6 +113,7 @@ app.use('/api/v1/newsletter', newsletterRouter);
 app.use('/api/v1/agency', agencyRouter);
 app.use('/api/v1/team', teamRouter);
 app.use('/api/v1/dashboard', dashboardRouter);
+app.use('/api/v1/blog', blogRouter);
 
 // Basic Health Check Endpoint
 app.get('/api/health', (req, res) => {

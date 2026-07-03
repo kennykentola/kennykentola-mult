@@ -262,7 +262,7 @@ export default function ManageDesignPortfolioPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-1.5">Design Image</label>
+                <label htmlFor="designImage" className="block text-sm font-semibold text-slate-300 mb-1.5">Design Image</label>
                 {formData.imageUrl && !imageFile && (
                   <div className="mb-2 relative w-full h-32 bg-slate-950 rounded-xl border border-slate-800 overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -270,6 +270,8 @@ export default function ManageDesignPortfolioPage() {
                   </div>
                 )}
                 <input
+                  id="designImage"
+                  title="Design Image"
                   type="file"
                   accept="image/*"
                   onChange={(e) => {

@@ -209,6 +209,10 @@ export default function AdminLayout({
               <Mail className="h-4 w-4" />
               Newsletter Broadcast
             </Link>
+            <Link href="/admin/blog" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/blog') ? 'bg-orange-500/10 text-orange-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+              <FileCheck className="h-4 w-4" />
+              Blog Manager
+            </Link>
           </div>
         </nav>
 

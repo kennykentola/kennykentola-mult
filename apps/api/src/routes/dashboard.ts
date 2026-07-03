@@ -26,9 +26,9 @@ router.get('/stats', authenticateJWT, async (req: AuthenticatedRequest, res) => 
     // 2. Get academy courses enrolled
     const enrollments = await databases.listDocuments(
       DATABASE_ID,
-      'academy_enrollments',
+      'course_enrollments',
       [
-        Query.equal('studentId', userId)
+        Query.equal('userId', userId)
       ]
     );
 

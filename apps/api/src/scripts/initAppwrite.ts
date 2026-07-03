@@ -616,6 +616,21 @@ const collections: CollectionDef[] = [
       { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'active' },
       { key: 'createdAt', type: 'datetime', required: false }
     ]
+  },
+  {
+    id: 'blog_posts',
+    name: 'Blog Posts',
+    attributes: [
+      { key: 'title', type: 'string', size: 255, required: true },
+      { key: 'slug', type: 'string', size: 120, required: true },
+      { key: 'excerpt', type: 'string', size: 500, required: false },
+      { key: 'content', type: 'string', size: 65535, required: true },
+      { key: 'category', type: 'string', size: 100, required: false, defaultValue: 'General' },
+      { key: 'coverImageId', type: 'string', size: 100, required: false },
+      { key: 'authorName', type: 'string', size: 100, required: true },
+      { key: 'isPublished', type: 'boolean', required: true, defaultValue: false },
+      { key: 'publishedAt', type: 'datetime', required: false }
+    ]
   }
 ];
 

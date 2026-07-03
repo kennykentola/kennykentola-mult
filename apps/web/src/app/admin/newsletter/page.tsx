@@ -1,16 +1,47 @@
 'use client';
 
-import React, { useState } from 'react';
-import { sendBroadcast } from '../../../features/newsletter/newsletterService';
+import React, { useState, useEffect } from 'react';
+import { sendBroadcast, fetchSubscribers } from '../../../features/newsletter/newsletterService';
 import { Mail, Send, Users, Sparkles, Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import { AIAssistantModal } from '../../../components/ai/AIAssistantModal';
 
 export default function AdminNewsletterPage() {
   const [subject, setSubject] = useState('');
   const [html, setHtml] = useState('');
   const [segment, setSegment] = useState('all');
   const [sending, setSending] = useState(false);
+  const [subscribers, setSubscribers] = useState<any[]>([]);
+  const [loadingSubscribers, setLoadingSubscribers] = useState(true);
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+
+  useEffect(() => {
+    async function loadSubscribers() {
+      try {
+        const res = await fetchSubscribers();
+        if (res.success && res.subscribers) {
+          setSubscribers(res.subscribers);
+        }
+      } catch (error) {
+        console.error('Failed to load subscribers', error);
+      } finally {
+        setLoadingSubscribers(false);
+      }
+    }
+    loadSubscribers();
+
+    // Check for drafts (e.g. from Blog Manager broadcast)
+    const draftSubject = localStorage.getItem('newsletter_draft_subject');
+    const draftHtml = localStorage.getItem('newsletter_draft_html');
+    if (draftSubject && draftHtml) {
+      setSubject(draftSubject);
+      setHtml(draftHtml);
+      localStorage.removeItem('newsletter_draft_subject');
+      localStorage.removeItem('newsletter_draft_html');
+      toast.success('Loaded broadcast draft from Blog Manager');
+    }
+  }, []);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,8 +122,18 @@ export default function AdminNewsletterPage() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-bold text-slate-300 mb-2">HTML Content</label>
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-bold text-slate-300">HTML Content</label>
+                <button
+                  type="button"
+                  onClick={() => setIsAIModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-sm font-semibold rounded-lg transition-colors border border-indigo-500/20"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Write with AI
+                </button>
+              </div>
               <textarea
                 title="HTML Content"
                 required
@@ -150,6 +191,51 @@ export default function AdminNewsletterPage() {
         </div>
 
       </div>
+
+      <div className="mt-12">
+        <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+          <Users className="w-6 h-6 text-indigo-400" />
+          Subscribers List ({subscribers.length})
+        </h2>
+        
+        {loadingSubscribers ? (
+          <div className="flex items-center gap-2 text-slate-400">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            Loading subscribers...
+          </div>
+        ) : subscribers.length === 0 ? (
+          <div className="text-slate-400">No subscribers found.</div>
+        ) : (
+          <div className="glass-panel border border-white/5 rounded-3xl overflow-hidden bg-slate-900/30">
+            <table className="w-full text-left text-sm text-slate-300">
+              <thead className="bg-slate-950/50 text-slate-400 border-b border-white/5">
+                <tr>
+                  <th className="px-6 py-4 font-bold">Email</th>
+                  <th className="px-6 py-4 font-bold">Segment</th>
+                  <th className="px-6 py-4 font-bold">Subscribed At</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {subscribers.map((sub: any) => (
+                  <tr key={sub.$id} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="px-6 py-4">{sub.email}</td>
+                    <td className="px-6 py-4 capitalize">{sub.segment || 'General'}</td>
+                    <td className="px-6 py-4">
+                      {new Date(sub.subscribedAt || sub.$createdAt).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+      <AIAssistantModal
+        isOpen={isAIModalOpen}
+        onClose={() => setIsAIModalOpen(false)}
+        type="newsletter"
+        onInsert={(content: string) => setHtml(prev => prev ? prev + '\n<br>\n' + content : content)}
+      />
     </div>
   );
 }

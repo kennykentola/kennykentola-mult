@@ -4,19 +4,30 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Loader2, Mail, Phone } from 'lucide-react';
 
+import { subscribeToNewsletter } from '../features/newsletter/newsletterService';
+
 export function Footer() {
   const [email, setEmail] = useState('');
   const [subscribing, setSubscribing] = useState(false);
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email) return;
     setSubscribing(true);
-    // TODO: Connect to backend subscription endpoint
-    setTimeout(() => {
+    
+    try {
+      const res = await subscribeToNewsletter(email);
+      if (res.success) {
+        alert('Successfully subscribed!');
+        setEmail('');
+      } else {
+        alert(res.message || 'Failed to subscribe.');
+      }
+    } catch (err: any) {
+      alert('Failed to subscribe.');
+    } finally {
       setSubscribing(false);
-      setEmail('');
-      alert('Successfully subscribed!');
-    }, 1000);
+    }
   };
 
   return (

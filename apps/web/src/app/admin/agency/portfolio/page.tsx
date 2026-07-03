@@ -276,7 +276,7 @@ export default function ManagePortfolioPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-1.5">Project Image (Screenshot)</label>
+                <label htmlFor="projectImage" className="block text-sm font-semibold text-slate-300 mb-1.5">Project Image (Screenshot)</label>
                 {formData.imageUrl && !imageFile && (
                   <div className="mb-2 relative w-full h-32 bg-slate-950 rounded-xl border border-slate-800 overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -284,6 +284,8 @@ export default function ManagePortfolioPage() {
                   </div>
                 )}
                 <input
+                  id="projectImage"
+                  title="Project Image"
                   type="file"
                   accept="image/*"
                   onChange={(e) => {

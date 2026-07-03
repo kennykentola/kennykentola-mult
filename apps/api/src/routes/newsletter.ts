@@ -75,7 +75,7 @@ router.post('/broadcast', authenticateJWT, async (req: AuthenticatedRequest, res
     const subscribers = await databases.listDocuments(
       DATABASE_ID,
       SUBSCRIBERS_COLLECTION,
-      queries.length > 0 ? queries : undefined
+      queries
     );
 
     if (subscribers.documents.length === 0) {
@@ -111,6 +111,27 @@ router.post('/broadcast', authenticateJWT, async (req: AuthenticatedRequest, res
   } catch (error) {
     console.error('Newsletter Broadcast Error:', error);
     res.status(500).json({ success: false, message: 'Failed to send broadcast.' });
+  }
+});
+
+// GET /api/v1/newsletter/subscribers
+// Protected route: Admin only
+router.get('/subscribers', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  try {
+    if (req.user?.role !== 'Super Admin' && req.user?.role !== 'Admin') {
+      return res.status(403).json({ success: false, message: 'Unauthorized.' });
+    }
+
+    const subscribers = await databases.listDocuments(
+      DATABASE_ID,
+      SUBSCRIBERS_COLLECTION,
+      [Query.orderDesc('subscribedAt')]
+    );
+
+    res.status(200).json({ success: true, subscribers: subscribers.documents });
+  } catch (error) {
+    console.error('Newsletter Get Subscribers Error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch subscribers.' });
   }
 });
 
