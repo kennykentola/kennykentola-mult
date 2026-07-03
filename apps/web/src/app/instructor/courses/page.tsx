@@ -587,6 +587,7 @@ export default function CourseManager() {
                                         }}
                                         className="p-1.5 text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors"
                                         title="Add Lesson to Module"
+                                        aria-label={`Add Lesson to Module ${module.title}`}
                                       >
                                         <Plus className="h-4 w-4" />
                                       </button>
@@ -594,6 +595,7 @@ export default function CourseManager() {
                                         onClick={() => handleDeleteModule(module.id)}
                                         className="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
                                         title="Delete Module"
+                                        aria-label={`Delete Module ${module.title}`}
                                       >
                                         <Trash2 className="h-4 w-4" />
                                       </button>

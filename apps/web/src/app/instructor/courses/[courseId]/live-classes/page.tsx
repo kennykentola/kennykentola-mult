@@ -231,6 +231,7 @@ export default function InstructorLiveClassesPage({ params }: { params: Promise<
                     onClick={() => openEditForm(cls)}
                     className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
                     title="Edit Live Class"
+                    aria-label={`Edit ${cls.title}`}
                   >
                     <Pencil className="h-5 w-5" />
                   </button>
@@ -238,6 +239,7 @@ export default function InstructorLiveClassesPage({ params }: { params: Promise<
                     onClick={() => setDeletingId(cls.id)}
                     className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
                     title="Delete Live Class"
+                    aria-label={`Delete ${cls.title}`}
                   >
                     <Trash2 className="h-5 w-5" />
                   </button>

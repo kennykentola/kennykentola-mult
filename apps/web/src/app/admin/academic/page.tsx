@@ -82,7 +82,7 @@ export default function AdminAcademicDashboard() {
               <div className="flex flex-col lg:flex-row justify-between gap-6">
                 
                 {/* Info Section */}
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-3">
                     <span className="px-3 py-1 rounded-full bg-white/10 text-xs font-medium">
                       {project.degree} • {project.level}

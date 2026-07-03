@@ -2,6 +2,7 @@ import React from 'react';
 import { Navbar } from '../../../components/Navbar';
 import { FileText } from 'lucide-react';
 import { notFound } from 'next/navigation';
+import { SecureViewer } from '../../../components/SecureViewer';
 
 async function getThesisSamples() {
   try {
@@ -65,18 +66,14 @@ export default async function ThesisSamplesPage() {
                 </div>
                 
                 {/* 
-                  Copy Protection Applied Here:
-                  - select-none: prevents text selection
-                  - pointer-events-none: prevents right click / context menu on text
-                  - However, pointer-events-none breaks scrolling if applied to the whole container, 
-                    so we apply select-none to the wrapper, and let the user scroll normally.
+                  Copy Protection Applied Here via SecureViewer component 
                 */}
-                <div 
-                  className="p-8 md:p-12 prose prose-invert prose-slate max-w-none select-none"
-                  onContextMenu={(e) => e.preventDefault()} // Disable right click
-                  onCopy={(e) => e.preventDefault()}       // Disable keyboard copy
-                  dangerouslySetInnerHTML={{ __html: item.content }}
-                />
+                <SecureViewer>
+                  <div 
+                    className="p-8 md:p-12 prose prose-invert prose-slate max-w-none"
+                    dangerouslySetInnerHTML={{ __html: item.content }}
+                  />
+                </SecureViewer>
               </div>
             ))}
           </div>
