@@ -1,29 +1,39 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { account } from '../../lib/appwrite';
+import { ID } from 'react-native-appwrite';
 import { useAuth } from '../../context/AuthContext';
 import { router, Link } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 
-export default function LoginScreen() {
+export default function RegisterScreen() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { checkSession } = useAuth();
 
-  const handleLogin = async () => {
-    if (!email || !password) {
+  const handleRegister = async () => {
+    if (!name || !email || !password) {
       Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    if (password.length < 8) {
+      Alert.alert('Error', 'Password must be at least 8 characters long');
       return;
     }
 
     setLoading(true);
     try {
+      // Create user account
+      await account.create(ID.unique(), email, password, name);
+      // Immediately log them in
       await account.createEmailPasswordSession(email, password);
       await checkSession();
       router.replace('/');
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message);
+      Alert.alert('Registration Failed', error.message);
     } finally {
       setLoading(false);
     }
@@ -36,12 +46,25 @@ export default function LoginScreen() {
     >
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
         <View style={styles.container}>
+          
           <View style={styles.header}>
-            <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Sign in to your account</Text>
+            <Text style={styles.title}>Join the Ecosystem</Text>
+            <Text style={styles.subtitle}>Create your account to get started</Text>
           </View>
 
           <View style={styles.form}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Full Name</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="John Doe"
+                placeholderTextColor="#64748b"
+                autoCapitalize="words"
+                value={name}
+                onChangeText={setName}
+              />
+            </View>
+
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email Address</Text>
               <TextInput
@@ -54,12 +77,12 @@ export default function LoginScreen() {
                 onChangeText={setEmail}
               />
             </View>
-
+            
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Password</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your password"
+                placeholder="Minimum 8 characters"
                 placeholderTextColor="#64748b"
                 secureTextEntry
                 value={password}
@@ -68,7 +91,7 @@ export default function LoginScreen() {
             </View>
 
             <TouchableOpacity 
-              onPress={handleLogin}
+              onPress={handleRegister}
               disabled={loading}
               activeOpacity={0.8}
             >
@@ -81,16 +104,16 @@ export default function LoginScreen() {
                 {loading ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={styles.buttonText}>Sign In</Text>
+                  <Text style={styles.buttonText}>Create Account</Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Don't have an account? </Text>
-              <Link href="/(auth)/register" asChild>
+              <Text style={styles.footerText}>Already have an account? </Text>
+              <Link href="/(auth)/login" asChild>
                 <TouchableOpacity>
-                  <Text style={styles.footerLink}>Sign Up</Text>
+                  <Text style={styles.footerLink}>Sign In</Text>
                 </TouchableOpacity>
               </Link>
             </View>
