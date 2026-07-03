@@ -34,7 +34,7 @@ export function Footer() {
     <footer className="border-t border-white/5 bg-[#050505] pt-16 pb-8">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-16">
-          <div className="col-span-1 md:col-span-2 lg:col-span-2">
+          <div className="col-span-1 md:col-span-2 lg:col-span-2 min-w-0">
             <div className="text-xl font-bold text-white mb-6">KennyKentola Digital</div>
             <p className="text-slate-400 text-sm mb-6 max-w-sm">
               Stay Updated: Subscribe to receive project tips, research resources, tutorials, and technology updates.
@@ -77,7 +77,7 @@ export function Footer() {
             </div>
           </div>
           
-          <div>
+          <div className="min-w-0">
             <h4 className="font-bold text-white mb-6">Company</h4>
             <ul className="space-y-3 text-sm text-slate-400">
               <li><Link href="/about" className="hover:text-amber-500 transition-colors">About Us</Link></li>
@@ -88,7 +88,7 @@ export function Footer() {
             </ul>
           </div>
 
-          <div>
+          <div className="min-w-0">
             <h4 className="font-bold text-white mb-6">Services</h4>
             <ul className="space-y-3 text-sm text-slate-400">
               <li><Link href="/p/academic-guidance" className="hover:text-amber-500 transition-colors">Academic Guidance</Link></li>
@@ -99,7 +99,7 @@ export function Footer() {
             </ul>
           </div>
 
-          <div>
+          <div className="min-w-0">
             <h4 className="font-bold text-white mb-6">Resources</h4>
             <ul className="space-y-3 text-sm text-slate-400">
               <li><Link href="/p/project-ideas" className="hover:text-amber-500 transition-colors">Project Ideas</Link></li>
