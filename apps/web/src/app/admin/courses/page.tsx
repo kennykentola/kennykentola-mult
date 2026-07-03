@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { BookOpen, Plus, Trash2, Eye, EyeOff, Loader2, Search, AlertCircle, Users, DollarSign } from 'lucide-react';
+import { BookOpen, Plus, Trash2, Eye, EyeOff, Loader2, Search, AlertCircle, Users, DollarSign, Video } from 'lucide-react';
 import { getSessionJwt } from '../../../lib/sessionJwt';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
