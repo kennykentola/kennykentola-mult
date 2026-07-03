@@ -24,6 +24,13 @@ export default function TabsLayout() {
           tabBarLabel: 'Technician' 
         }} 
       />
+      <Tabs.Screen 
+        name="academy" 
+        options={{ 
+          title: 'Academy',
+          tabBarLabel: 'Courses' 
+        }} 
+      />
     </Tabs>
   );
 }
