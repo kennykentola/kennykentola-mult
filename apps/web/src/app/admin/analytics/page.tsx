@@ -170,7 +170,7 @@ export default function AdminAnalyticsPage() {
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: 8, color: '#f8fafc' }}
                   itemStyle={{ color: '#34d399' }}
-                  formatter={(value: number) => [fmt(value), 'Revenue']}
+                  formatter={(value: any) => [fmt(Number(value) || 0), 'Revenue']}
                 />
                 <Line type="monotone" dataKey="revenue" stroke="#34d399" strokeWidth={3} dot={{ fill: '#0f172a', stroke: '#34d399', strokeWidth: 2, r: 4 }} activeDot={{ r: 6 }} />
               </LineChart>
