@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { databases } from '../services/appwrite';
 import { ID, Query } from 'node-appwrite';
 import { authenticateJWT, requireAdmin } from '../middleware/auth';
@@ -8,7 +8,7 @@ const DATABASE_ID = process.env.APPWRITE_DATABASE_ID || 'multicompany';
 const COLLECTION = 'newsletter_subscribers';
 
 // Subscribe to newsletter
-router.post('/subscribe', async (req, res) => {
+router.post('/subscribe', async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
     if (!email || !email.includes('@')) {
@@ -42,7 +42,7 @@ router.post('/subscribe', async (req, res) => {
 });
 
 // Unsubscribe from newsletter
-router.post('/unsubscribe', async (req, res) => {
+router.post('/unsubscribe', async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
     if (!email) {
@@ -68,7 +68,7 @@ router.post('/unsubscribe', async (req, res) => {
 });
 
 // Admin: Get all subscribers
-router.get('/subscribers', requireAdmin, async (req, res) => {
+router.get('/subscribers', requireAdmin, async (req: Request, res: Response) => {
   try {
     const response = await databases.listDocuments(
       DATABASE_ID,
@@ -83,7 +83,7 @@ router.get('/subscribers', requireAdmin, async (req, res) => {
 });
 
 // Admin: Broadcast newsletter
-router.post('/broadcast', requireAdmin, async (req, res) => {
+router.post('/broadcast', requireAdmin, async (req: Request, res: Response) => {
   try {
     const { subject, html, segment } = req.body;
     // In a real application, you would integrate with Resend, SendGrid, Mailchimp, etc.
