@@ -267,7 +267,7 @@ export default function Home() {
                   <Bot className="w-5 h-5" />
                   Join The Masterclass
                 </Link>
-                <Link href="/contact" className="h-14 px-8 inline-flex items-center justify-center gap-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold transition-colors backdrop-blur-sm">
+                <Link href="/ai-prompting" className="h-14 px-8 inline-flex items-center justify-center gap-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold transition-colors backdrop-blur-sm">
                   View Curriculum
                 </Link>
               </div>

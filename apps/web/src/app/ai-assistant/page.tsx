@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { promptService } from '../../../services/promptService';
+import { promptService } from '../../services/promptService';
 import { Bot, Sparkles, TerminalSquare, Search, Copy, CheckCircle2 } from 'lucide-react';
-import PublicNavbar from '../../../components/PublicNavbar';
-import PublicFooter from '../../../components/PublicFooter';
+import { Navbar } from '../../components/Navbar';
+import { Footer } from '../../components/Footer';
 import Link from 'next/link';
 
 export default function AIAssistantPage() {
@@ -34,11 +34,10 @@ export default function AIAssistantPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
-      <PublicNavbar />
+    <div className="min-h-screen bg-[#020617] text-slate-200 font-sans selection:bg-indigo-500/30">
+      <Navbar />
       
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 overflow-hidden">
+      <main className="relative pt-32 pb-20 overflow-hidden">
         {/* Decorative Gradients */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] opacity-70 pointer-events-none" />
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-rose-500/10 rounded-full blur-[100px] pointer-events-none" />
@@ -159,7 +158,7 @@ export default function AIAssistantPage() {
         </div>
       </section>
       
-      <PublicFooter />
+      <Footer />
     </div>
   );
 }
