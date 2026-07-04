@@ -21,6 +21,7 @@ import {
   Settings
 } from 'lucide-react';
 import Link from 'next/link';
+import { NotificationBell } from '../../components/NotificationBell';
 
 export default function DashboardLayout({
   children,
@@ -196,6 +197,11 @@ export default function DashboardLayout({
         {/* User Card */}
         <div className="p-4 border-t border-slate-900 bg-slate-900/20">
           <div className="flex items-center gap-3 mb-4">
+            <div className="flex-1 flex justify-end">
+              <NotificationBell />
+            </div>
+          </div>
+          <div className="flex items-center gap-3 mb-4">
             <div className="h-9 w-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-sm font-bold text-indigo-400 uppercase">
               {profile.firstName[0]}
               {profile.lastName[0]}
@@ -303,6 +309,7 @@ export default function DashboardLayout({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <NotificationBell />
             <button
               onClick={handleSignOut}
               className="rounded-lg border border-slate-800 bg-slate-900 px-3 py-1.5 text-[11px] font-semibold text-slate-400 hover:border-rose-500/30 hover:text-rose-400 transition-all duration-200"

@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
 import { initializeDatabase } from './scripts/initAppwrite';
 import { initSocketServer } from './services/socket';
+import { initCronJobs } from './services/cronService';
 
 dotenv.config();
 
@@ -85,8 +86,10 @@ import { agencyRouter } from './routes/agency';
 import { teamRouter } from './routes/team';
 import dashboardRouter from './routes/dashboard';
 import blogRouter from './routes/blog';
-
+import orchestratorRouter from './routes/orchestrator';
+import notificationsRouter from './routes/notifications';
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/orchestrator', orchestratorRouter);
 app.use('/api/v1/printing', printingRouter);
 app.use('/api/v1/academy', academyRouter);
 app.use('/api/v1/payments', paymentsRouter);
@@ -114,6 +117,7 @@ app.use('/api/v1/agency', agencyRouter);
 app.use('/api/v1/team', teamRouter);
 app.use('/api/v1/dashboard', dashboardRouter);
 app.use('/api/v1/blog', blogRouter);
+app.use('/api/v1/notifications', notificationsRouter);
 
 // Basic Health Check Endpoint
 app.get('/api/health', (req, res) => {
@@ -142,6 +146,7 @@ async function startServer() {
 
   httpServer.listen(PORT, () => {
     console.log(`[API] Server initialized on port ${PORT}`);
+    initCronJobs();
   });
 }
 

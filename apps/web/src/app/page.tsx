@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { BookOpen, Code, Settings, Printer, GraduationCap, Sun, ArrowRight, Activity, Users, FileText, Zap, CheckCircle, Image as ImageIcon, Share2, PenTool, Contact, LayoutTemplate, CalendarDays, Monitor, Film, Lightbulb } from 'lucide-react';
+import { BookOpen, Code, Settings, Printer, GraduationCap, Sun, ArrowRight, Activity, Users, FileText, Zap, CheckCircle, Image as ImageIcon, Share2, PenTool, Contact, LayoutTemplate, CalendarDays, Monitor, Film, Lightbulb, Bot } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 export default function Home() {
@@ -227,6 +227,67 @@ export default function Home() {
               </div>
               <h4 className="text-lg font-black text-[#0b1b42] mb-2">Academic & Documentation</h4>
               <p className="text-slate-600 text-sm leading-relaxed font-medium">Assignment & Project writing, Project Printing, and detailed academic guidance.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* AI PROMPT ENGINEERING MASTERCLASS PROMO */}
+        <div className="relative rounded-[2.5rem] mb-24 overflow-hidden border border-purple-500/30 group shadow-[0_0_80px_-15px_rgba(168,85,247,0.4)]">
+          <div className="absolute inset-0 z-0">
+            <img 
+              src="https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80" 
+              alt="AI Technology" 
+              className="w-full h-full object-cover opacity-20 mix-blend-screen group-hover:opacity-40 transition-opacity duration-700" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#0a0514] via-purple-900/60 to-[#050505]/95" />
+          </div>
+
+          <div className="relative z-10 p-10 md:p-16 flex flex-col lg:flex-row items-center gap-12">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-fuchsia-500/20 blur-[120px] rounded-full pointer-events-none" />
+            
+            <div className="lg:w-3/5">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/20 border border-purple-500/50 mb-6">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
+                </span>
+                <span className="text-purple-300 text-xs font-black tracking-widest uppercase">Master The Future</span>
+              </div>
+              
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-[1.1] mb-6">
+                Learn <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-fuchsia-400">AI Prompt Engineering</span> Like A Master.
+              </h2>
+              
+              <p className="text-purple-100/80 text-lg md:text-xl leading-relaxed mb-8 max-w-2xl font-medium">
+                I don't just use AI; I orchestrate it. Let me teach you the exact frameworks, psychological prompts, and technical structures to make AI bend to your will. Whether it's coding, writing, or designing—become the master of the machine.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/academy" className="h-14 px-8 inline-flex items-center justify-center gap-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition-all shadow-lg shadow-purple-500/30 hover:scale-105">
+                  <Bot className="w-5 h-5" />
+                  Join The Masterclass
+                </Link>
+                <Link href="/contact" className="h-14 px-8 inline-flex items-center justify-center gap-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold transition-colors backdrop-blur-sm">
+                  View Curriculum
+                </Link>
+              </div>
+            </div>
+
+            <div className="lg:w-2/5 w-full">
+              <div className="bg-[#050505]/80 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-fuchsia-500" />
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-3 h-3 rounded-full bg-red-500/50" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
+                  <div className="w-3 h-3 rounded-full bg-green-500/50" />
+                  <span className="text-slate-500 text-xs font-mono ml-2">system_prompt.txt</span>
+                </div>
+                <div className="font-mono text-sm space-y-4">
+                  <p className="text-purple-400">System: <span className="text-slate-300">You are an elite AI Orchestrator...</span></p>
+                  <p className="text-emerald-400">User: <span className="text-slate-300">Teach me how to control the LLM...</span></p>
+                  <p className="text-blue-400">AI: <span className="text-slate-300 animate-pulse">Initializing Masterclass module...</span></p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

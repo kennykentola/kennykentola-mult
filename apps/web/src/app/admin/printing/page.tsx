@@ -273,11 +273,9 @@ export default function AdminPrintingPage() {
             </div>
           )}
         </div>
-          )}
-        </div>
       </div>
-        </>
-      ) : (
+      </>
+    ) : (
         <div className="rounded-2xl border border-slate-800/50 bg-slate-900/30 p-8 text-center text-slate-400">
           <Package className="h-12 w-12 text-slate-600 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-white mb-2">Print-on-Demand Catalog</h2>

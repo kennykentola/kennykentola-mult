@@ -2,7 +2,7 @@ import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
 import { storage } from './appwrite';
-import { InputFile } from 'node-appwrite';
+import { InputFile, ID } from 'node-appwrite';
 
 const BUCKET_ID = 'certificates';
 

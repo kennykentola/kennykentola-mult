@@ -110,7 +110,22 @@ const collections: CollectionDef[] = [
       { key: 'scheduledAt', type: 'datetime', required: true },
       { key: 'durationMinutes', type: 'integer', required: true },
       { key: 'meetingUrl', type: 'string', size: 1000, required: true },
-      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'scheduled' }
+      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'scheduled' },
+      { key: 'reminderSent', type: 'boolean', required: false, defaultValue: false },
+      { key: 'immediateSent', type: 'boolean', required: false, defaultValue: false }
+    ]
+  },
+  {
+    id: 'notifications',
+    name: 'Notifications',
+    attributes: [
+      { key: 'userId', type: 'string', size: 50, required: true },
+      { key: 'title', type: 'string', size: 255, required: true },
+      { key: 'message', type: 'string', size: 2000, required: true },
+      { key: 'type', type: 'string', size: 50, required: true },
+      { key: 'link', type: 'string', size: 1000, required: false },
+      { key: 'isRead', type: 'boolean', required: true, defaultValue: false },
+      { key: 'createdAt', type: 'datetime', required: true }
     ]
   },
   {
@@ -462,6 +477,37 @@ const collections: CollectionDef[] = [
     attributes: [
       { key: 'email', type: 'string', size: 255, required: true },
       { key: 'subscribedAt', type: 'datetime', required: true }
+    ]
+  },
+  {
+    id: 'media_providers',
+    name: 'Media Providers',
+    attributes: [
+      { key: 'name', type: 'string', size: 100, required: true },
+      { key: 'type', type: 'string', size: 50, required: true }, // 'text' or 'image'
+      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'active' }, // 'active', 'dead', 'cooldown'
+      { key: 'priority', type: 'integer', required: true, defaultValue: 10 },
+      { key: 'maxRequests', type: 'integer', required: true, defaultValue: 5 },
+      { key: 'currentRequests', type: 'integer', required: true, defaultValue: 0 },
+    ]
+  },
+  {
+    id: 'media_api_keys',
+    name: 'Media API Keys',
+    attributes: [
+      { key: 'providerId', type: 'string', size: 50, required: true },
+      { key: 'encryptedKey', type: 'string', size: 2000, required: true }
+    ]
+  },
+  {
+    id: 'ai_generated_assets',
+    name: 'AI Generated Assets',
+    attributes: [
+      { key: 'imageUrl', type: 'string', size: 1000, required: false },
+      { key: 'contentText', type: 'string', size: 10000, required: false },
+      { key: 'status', type: 'string', size: 50, required: true, defaultValue: 'preview' }, // preview, published, deleted
+      { key: 'providerUsed', type: 'string', size: 100, required: false },
+      { key: 'createdAt', type: 'datetime', required: true }
     ]
   },
   {

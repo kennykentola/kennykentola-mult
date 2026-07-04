@@ -222,7 +222,9 @@ export default function InstructorLiveClassesPage({ params }: { params: Promise<
                     </div>
                     <div className="flex items-center gap-1.5 truncate max-w-[200px]" title={cls.meetingUrl}>
                       <LinkIcon className="h-4 w-4 shrink-0" />
-                      <span className="truncate">{cls.meetingUrl}</span>
+                      <a href={cls.meetingUrl} target="_blank" rel="noopener noreferrer" className="truncate hover:text-indigo-400 hover:underline transition-colors">
+                        {cls.meetingUrl}
+                      </a>
                     </div>
                   </div>
                 </div>
