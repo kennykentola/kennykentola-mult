@@ -1,7 +1,7 @@
 import express from 'express';
 import { databases } from '../services/appwrite';
 import { ID, Query } from 'node-appwrite';
-import { authenticateJWT, authenticateAdmin } from '../middleware/auth';
+import { authenticateJWT, requireAdmin } from '../middleware/auth';
 
 const router = express.Router();
 const DATABASE_ID = process.env.APPWRITE_DATABASE_ID || 'multicompany';
@@ -68,7 +68,7 @@ router.post('/unsubscribe', async (req, res) => {
 });
 
 // Admin: Get all subscribers
-router.get('/subscribers', authenticateJWT, authenticateAdmin, async (req, res) => {
+router.get('/subscribers', requireAdmin, async (req, res) => {
   try {
     const response = await databases.listDocuments(
       DATABASE_ID,
@@ -83,7 +83,7 @@ router.get('/subscribers', authenticateJWT, authenticateAdmin, async (req, res) 
 });
 
 // Admin: Broadcast newsletter
-router.post('/broadcast', authenticateJWT, authenticateAdmin, async (req, res) => {
+router.post('/broadcast', requireAdmin, async (req, res) => {
   try {
     const { subject, html, segment } = req.body;
     // In a real application, you would integrate with Resend, SendGrid, Mailchimp, etc.
