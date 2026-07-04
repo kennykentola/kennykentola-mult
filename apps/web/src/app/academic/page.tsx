@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '../../components/Navbar';
 import { Footer } from '../../components/Footer';
+import { ConsultationModal } from '../../components/ConsultationModal';
 import { requestAcademicProject } from '../../features/academic/academicService';
 import { subscribeToNewsletter } from '../../features/newsletter/newsletterService';
 import toast from 'react-hot-toast';
@@ -19,6 +20,7 @@ export default function AcademicLandingPage() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [subscribing, setSubscribing] = useState(false);
+  const [isConsultationModalOpen, setIsConsultationModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -93,7 +95,10 @@ export default function AcademicLandingPage() {
                 Get Started
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <button className="w-full sm:w-auto h-14 px-8 inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white text-base font-medium hover:bg-white/10 transition-colors backdrop-blur-md">
+              <button 
+                onClick={() => setIsConsultationModalOpen(true)}
+                className="w-full sm:w-auto h-14 px-8 inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white text-base font-medium hover:bg-white/10 transition-colors backdrop-blur-md"
+              >
                 Book a Consultation
               </button>
             </div>
@@ -448,6 +453,7 @@ export default function AcademicLandingPage() {
                 </button>
                 <button 
                   type="button"
+                  onClick={() => setIsConsultationModalOpen(true)}
                   className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold py-4 px-8 rounded-xl transition-all"
                 >
                   Book Free Consultation
@@ -458,6 +464,12 @@ export default function AcademicLandingPage() {
         </section>
 
       </main>
+
+      {/* Consultation Modal */}
+      <ConsultationModal 
+        isOpen={isConsultationModalOpen} 
+        onClose={() => setIsConsultationModalOpen(false)} 
+      />
 
       {/* SECTION 13: FOOTER */}
       <Footer />

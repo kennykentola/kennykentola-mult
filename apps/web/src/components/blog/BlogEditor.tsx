@@ -206,15 +206,15 @@ export function BlogEditor({ initialData, isEdit }: BlogEditorProps) {
 
               <div className="col-span-2">
                 <label className="block text-sm font-bold text-slate-300 mb-2">Cover Image URL</label>
-                <div className="flex gap-4 items-start">
+                <div className="flex flex-col md:flex-row gap-4 md:items-start">
                   <input
                     type="text"
                     value={formData.coverImageId}
                     onChange={(e) => setFormData({ ...formData, coverImageId: e.target.value })}
-                    className="flex-1 bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-orange-500 outline-none"
+                    className="flex-1 w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-orange-500 outline-none"
                     placeholder="https://..."
                   />
-                  <div className="relative">
+                  <div className="relative w-full md:w-auto">
                     <input
                       type="file"
                       accept="image/*"
@@ -226,7 +226,7 @@ export function BlogEditor({ initialData, isEdit }: BlogEditorProps) {
                     <button
                       type="button"
                       disabled={uploadingCover}
-                      className="flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-all disabled:opacity-50"
+                      className="flex items-center justify-center w-full md:w-auto gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-all disabled:opacity-50"
                     >
                       {uploadingCover ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
                       Upload Cover
@@ -250,10 +250,10 @@ export function BlogEditor({ initialData, isEdit }: BlogEditorProps) {
             </div>
 
             <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-bold text-slate-300">Content (HTML or Markdown supported on frontend)</label>
-                <div className="flex items-center gap-3">
-                  <div className="relative">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-4">
+                <label className="block text-sm font-bold text-slate-300">Content (HTML or Markdown supported)</label>
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <div className="relative flex-1 sm:flex-initial">
                     <input
                       type="file"
                       accept="image/*"
@@ -265,7 +265,7 @@ export function BlogEditor({ initialData, isEdit }: BlogEditorProps) {
                     <button
                       type="button"
                       disabled={uploadingInline}
-                      className="flex items-center gap-2 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold rounded-lg transition-colors border border-slate-700"
+                      className="flex items-center justify-center w-full sm:w-auto gap-2 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold rounded-lg transition-colors border border-slate-700"
                     >
                       {uploadingInline ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
                       Insert Image
@@ -274,7 +274,7 @@ export function BlogEditor({ initialData, isEdit }: BlogEditorProps) {
                   <button
                     type="button"
                     onClick={() => setIsAIModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-sm font-semibold rounded-lg transition-colors border border-indigo-500/20"
+                    className="flex items-center justify-center flex-1 sm:flex-initial gap-2 px-4 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-sm font-semibold rounded-lg transition-colors border border-indigo-500/20"
                   >
                     <Sparkles className="w-4 h-4" />
                     Write with AI

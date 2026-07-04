@@ -46,7 +46,7 @@ export class RotationManager {
         provider.currentRequests++;
         return { result, providerUsed: provider.name };
       } catch (error: any) {
-        console.warn(`[RotationManager] Provider ${provider.name} failed or is cooling down. Moving to next.`);
+        console.warn(`[RotationManager] Provider ${provider.name} failed or is cooling down. Moving to next. Error:`, error.message);
         // Fallback to next provider in the loop
       }
     }

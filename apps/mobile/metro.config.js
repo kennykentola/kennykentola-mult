@@ -1,5 +1,6 @@
 const { getDefaultConfig } = require('expo/metro-config');
 const path = require('path');
+const exclusionList = require('metro-config/src/defaults/exclusionList');
 
 // Find the project and workspace directories
 const projectRoot = __dirname;
@@ -18,5 +19,11 @@ config.resolver.nodeModulesPaths = [
 
 // 3. Force Metro to resolve hoisted packages correctly
 config.resolver.disableHierarchicalLookup = true;
+
+// 4. Block Metro from trying to watch or resolve files in Next.js or API
+config.resolver.blockList = exclusionList([
+  /.*\/apps\/web\/.*/,
+  /.*\/apps\/api\/.*/,
+]);
 
 module.exports = config;

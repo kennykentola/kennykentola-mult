@@ -4,6 +4,9 @@ import { OpenAIAdapter } from '../orchestrator/providers/openai';
 import { GeminiAdapter } from '../orchestrator/providers/gemini';
 import { StabilityAdapter } from '../orchestrator/providers/stability';
 import { XaiAdapter } from '../orchestrator/providers/xai';
+import { GroqAdapter } from '../orchestrator/providers/groq';
+import { OpenRouterAdapter } from '../orchestrator/providers/openrouter';
+import { PollinationsAdapter } from '../orchestrator/providers/pollinations';
 import { databases } from '../services/appwrite';
 import { ID } from 'node-appwrite';
 import dotenv from 'dotenv';
@@ -13,30 +16,48 @@ const router = Router();
 
 // In a real scenario, these would be populated from the database securely.
 // For the initial build, we use environment variables.
-const textManager = new RotationManager();
+export const textManager = new RotationManager();
 const imageManager = new RotationManager();
 
 // Setup adapters
 if (process.env.ORCH_OPENAI_API_KEY) {
   const openAiAdapter = new OpenAIAdapter(process.env.ORCH_OPENAI_API_KEY);
-  textManager.addProvider('openai_text', 'OpenAI', 1, 10, openAiAdapter);
-  imageManager.addProvider('openai_img', 'OpenAI DALL-E 3', 1, 5, openAiAdapter);
+  textManager.addProvider('openai_text', 'OpenAI', 3, 10, openAiAdapter);
+  imageManager.addProvider('openai_img', 'OpenAI DALL-E 3', 3, 5, openAiAdapter);
 }
 
 if (process.env.ORCH_GEMINI_API_KEY) {
   const geminiAdapter = new GeminiAdapter(process.env.ORCH_GEMINI_API_KEY);
-  textManager.addProvider('gemini_text', 'Gemini', 2, 10, geminiAdapter);
+  textManager.addProvider('gemini_text', 'Gemini', 4, 10, geminiAdapter);
 }
 
 if (process.env.ORCH_XAI_API_KEY) {
   const xaiAdapter = new XaiAdapter(process.env.ORCH_XAI_API_KEY);
-  textManager.addProvider('grok_text', 'Grok', 3, 10, xaiAdapter);
+  textManager.addProvider('grok_text', 'Grok', 5, 10, xaiAdapter);
 }
 
 if (process.env.ORCH_STABILITY_API_KEY) {
   const stabilityAdapter = new StabilityAdapter(process.env.ORCH_STABILITY_API_KEY);
   imageManager.addProvider('stability_img', 'Stability AI', 2, 10, stabilityAdapter);
 }
+
+// Add Groq (Highest priority, free)
+if (process.env.GROQ_API_KEY || process.env.ORCH_GROQ_API_KEY) {
+  const key = process.env.GROQ_API_KEY || process.env.ORCH_GROQ_API_KEY;
+  const groqAdapter = new GroqAdapter(key!);
+  textManager.addProvider('groq_text', 'Groq (Free)', 1, 10, groqAdapter);
+}
+
+// Add OpenRouter (Secondary priority, completely free models)
+if (process.env.OPENROUTER_API_KEY || process.env.ORCH_OPENROUTER_API_KEY) {
+  const key = process.env.OPENROUTER_API_KEY || process.env.ORCH_OPENROUTER_API_KEY;
+  const openRouterAdapter = new OpenRouterAdapter(key!);
+  textManager.addProvider('openrouter_text', 'OpenRouter (Free)', 2, 10, openRouterAdapter);
+}
+
+// Add Pollinations AI for completely free images
+const pollinationsAdapter = new PollinationsAdapter();
+imageManager.addProvider('pollinations_img', 'Pollinations AI (Free)', 1, 100, pollinationsAdapter);
 
 router.post('/generate', async (req: Request, res: Response) => {
   try {

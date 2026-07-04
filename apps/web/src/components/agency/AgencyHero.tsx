@@ -1,8 +1,12 @@
 'use client';
 import Link from 'next/link';
+import { useState } from 'react';
 import { ArrowRight, Play, ShieldCheck, Zap, Code } from 'lucide-react';
+import { ConsultationModal } from '../ConsultationModal';
 
 export function AgencyHero() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <section className="relative pt-40 pb-20 overflow-hidden">
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[400px] bg-indigo-600/20 blur-[120px] rounded-full pointer-events-none" />
@@ -27,9 +31,9 @@ export function AgencyHero() {
           <Link href="/agency/dashboard" className="w-full sm:w-auto px-8 py-4 rounded-xl bg-white text-black font-extrabold hover:bg-slate-200 hover:scale-105 transition-all flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(255,255,255,0.2)]">
             Start Your Project <ArrowRight className="w-5 h-5" />
           </Link>
-          <Link href="/contact" className="w-full sm:w-auto px-8 py-4 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-white font-bold hover:bg-indigo-500/20 transition-all flex items-center justify-center gap-2">
+          <button onClick={() => setIsModalOpen(true)} className="w-full sm:w-auto px-8 py-4 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-white font-bold hover:bg-indigo-500/20 transition-all flex items-center justify-center gap-2">
             Book Free Consultation <Play className="w-4 h-4" />
-          </Link>
+          </button>
         </div>
 
         <div className="mt-20 pt-10 border-t border-white/5 grid grid-cols-2 md:grid-cols-4 gap-6 text-slate-400 text-sm font-medium animate-in fade-in duration-1000 delay-300">
@@ -39,6 +43,8 @@ export function AgencyHero() {
           <div className="flex items-center justify-center gap-2"><span className="text-white font-bold">100+</span> Projects Shipped</div>
         </div>
       </div>
+      
+      <ConsultationModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </section>
   );
 }

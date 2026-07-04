@@ -23,7 +23,8 @@ import {
   MessageSquare,
   Layout,
   Palette,
-  Mail
+  Mail,
+  Bot
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -197,6 +198,10 @@ export default function AdminLayout({
           {/* Internal Tools */}
           <div className="space-y-1">
             <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Internal</p>
+            <Link href="/admin/prompts" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/prompts') ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+              <Bot className="h-4 w-4" />
+              AI Prompt Generator
+            </Link>
             <Link href="/admin/courses" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
               <BookOpen className="h-4 w-4" />
               Academy Content
