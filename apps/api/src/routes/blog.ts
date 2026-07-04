@@ -118,7 +118,7 @@ router.post('/', authenticateJWT, async (req, res) => {
       isPublished: !!isPublished
     };
     
-    if (coverImageId) postData.coverImageId = coverImageId;
+    if (coverImageId) postData.coverImageUrl = coverImageId;
     if (isPublished) postData.publishedAt = new Date().toISOString();
 
     const post = await databases.createDocument(
@@ -159,7 +159,11 @@ router.put('/:id', authenticateJWT, async (req, res) => {
     };
     
     // Only include optional fields if they have truthy values or are explicitly set
-    if (coverImageId) postData.coverImageId = coverImageId;
+    if (coverImageId) {
+      postData.coverImageUrl = coverImageId; // Use new 2048 size attribute
+      // Still set coverImageId to an empty string to avoid old data issues if we want to overwrite
+      // But Appwrite will just ignore it if we don't include it. Actually let's not include coverImageId at all.
+    }
     if (publishedAt) postData.publishedAt = publishedAt;
 
     const post = await databases.updateDocument(

@@ -42,7 +42,7 @@ export function BlogEditor({ initialData, isEdit }: BlogEditorProps) {
         content: initialData.content || '',
         authorName: initialData.authorName || 'KennyKentola Admin',
         isPublished: initialData.isPublished || false,
-        coverImageId: initialData.coverImageId || ''
+        coverImageId: initialData.coverImageUrl || initialData.coverImageId || ''
       });
     }
   }, [initialData]);
