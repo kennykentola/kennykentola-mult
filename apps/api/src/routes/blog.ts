@@ -2,6 +2,14 @@ import express from 'express';
 import { databases } from '../services/appwrite';
 import { ID, Query } from 'node-appwrite';
 import { authenticateJWT } from '../middleware/auth';
+import { v2 as cloudinary } from 'cloudinary';
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 const router = express.Router();
 const DATABASE_ID = process.env.APPWRITE_DATABASE_ID || 'multicompany';
@@ -174,6 +182,28 @@ router.delete('/:id', authenticateJWT, async (req, res) => {
   } catch (error: any) {
     console.error('Error deleting blog post:', error);
     res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Upload Image to Cloudinary (Admin)
+router.post('/upload-image', authenticateJWT, async (req, res) => {
+  try {
+    const { file } = req.body; // base64 encoded string
+
+    if (!file) {
+      return res.status(400).json({ success: false, message: 'Image file is required' });
+    }
+
+    // Upload to cloudinary
+    const result = await cloudinary.uploader.upload(file, {
+      folder: 'kennykentola/blog',
+      resource_type: 'auto'
+    });
+
+    res.json({ success: true, url: result.secure_url });
+  } catch (error: any) {
+    console.error('Error uploading image to Cloudinary:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to upload image' });
   }
 });
 

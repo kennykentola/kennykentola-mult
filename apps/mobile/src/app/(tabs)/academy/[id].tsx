@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { api } from '../../../lib/api';
 import { useLocalSearchParams, router } from 'expo-router';
-import { Video, ResizeMode } from 'expo-av';
+import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function CourseDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -47,6 +48,21 @@ export default function CourseDetailScreen() {
     }
   };
 
+  const handleVideoStatusUpdate = async (status: AVPlaybackStatus) => {
+    if (status.isLoaded && status.didJustFinish) {
+      // Find current lesson id based on activeVideoUrl
+      const currentLesson = courseData?.lessons?.find((l: any) => l.videoUrl === activeVideoUrl);
+      if (currentLesson) {
+        try {
+          await api.post(`/academy/courses/${id}/lessons/${currentLesson.id}/complete`);
+          // optionally refresh to update UI state
+        } catch(e) {
+          console.log('Error marking lesson complete', e);
+        }
+      }
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -81,6 +97,7 @@ export default function CourseDetailScreen() {
             useNativeControls
             resizeMode={ResizeMode.CONTAIN}
             isLooping={false}
+            onPlaybackStatusUpdate={handleVideoStatusUpdate}
           />
         ) : (
           <LinearGradient
@@ -96,6 +113,48 @@ export default function CourseDetailScreen() {
         <Text style={styles.courseTitle}>{course.title}</Text>
         <Text style={styles.courseInstructor}>by {course.instructorName}</Text>
         <Text style={styles.courseDescription}>{course.description}</Text>
+
+        <View style={styles.actionGrid}>
+          <TouchableOpacity 
+            style={styles.actionBtn}
+            onPress={() => router.push(`/(tabs)/academy/assignments?courseId=${id}` as any)}
+          >
+            <View style={[styles.actionIconContainer, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
+              <Ionicons name="document-text" size={24} color="#3b82f6" />
+            </View>
+            <Text style={styles.actionBtnText}>Assignments</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.actionBtn}
+            onPress={() => router.push(`/(tabs)/academy/quizzes?courseId=${id}` as any)}
+          >
+            <View style={[styles.actionIconContainer, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
+              <Ionicons name="help-circle" size={24} color="#10b981" />
+            </View>
+            <Text style={styles.actionBtnText}>Quizzes</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.actionBtn}
+            onPress={() => router.push(`/(tabs)/academy/live?courseId=${id}` as any)}
+          >
+            <View style={[styles.actionIconContainer, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
+              <Ionicons name="videocam" size={24} color="#ef4444" />
+            </View>
+            <Text style={styles.actionBtnText}>Live Classes</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.actionBtn}
+            onPress={() => router.push(`/(tabs)/academy/qna?courseId=${id}` as any)}
+          >
+            <View style={[styles.actionIconContainer, { backgroundColor: 'rgba(167, 139, 250, 0.1)' }]}>
+              <Ionicons name="chatbubbles" size={24} color="#a78bfa" />
+            </View>
+            <Text style={styles.actionBtnText}>Q&A</Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.divider} />
         
@@ -178,6 +237,35 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: 'rgba(255,255,255,0.1)',
     marginVertical: 24,
+  },
+  actionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: 24,
+    gap: 12,
+  },
+  actionBtn: {
+    width: '48%',
+    backgroundColor: '#0f172a',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#1e293b',
+  },
+  actionIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  actionBtnText: {
+    color: '#f8fafc',
+    fontSize: 14,
+    fontWeight: '600',
   },
   sectionTitle: {
     fontSize: 18,

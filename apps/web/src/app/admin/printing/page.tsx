@@ -39,6 +39,7 @@ const statusConfig: Record<OrderStatus, { label: string; color: string; dotColor
 };
 
 export default function AdminPrintingPage() {
+  const [activeTab, setActiveTab] = useState<'orders' | 'pod'>('orders');
   const [filterStatus, setFilterStatus] = useState<OrderStatus | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [orders, setOrders] = useState<AdminPrintOrder[]>([]);
@@ -112,7 +113,33 @@ export default function AdminPrintingPage() {
         <p className="text-slate-400 text-sm mt-1">Review, process, and manage all customer print orders.</p>
       </div>
 
-      {/* Stats Cards */}
+      {/* Tabs */}
+      <div className="flex items-center gap-4 border-b border-white/5 pb-4">
+        <button
+          onClick={() => setActiveTab('orders')}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+            activeTab === 'orders' 
+              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30' 
+              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
+          }`}
+        >
+          General Orders
+        </button>
+        <button
+          onClick={() => setActiveTab('pod')}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+            activeTab === 'pod' 
+              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30' 
+              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
+          }`}
+        >
+          Print-on-Demand Catalog
+        </button>
+      </div>
+
+      {activeTab === 'orders' ? (
+        <>
+          {/* Stats Cards */}
       <div className="grid gap-4 sm:grid-cols-4">
         {[
           { label: 'Total Orders',     value: stats.total,      icon: <FileText className="h-4 w-4" />,    color: 'text-rose-400' },
@@ -246,7 +273,20 @@ export default function AdminPrintingPage() {
             </div>
           )}
         </div>
+          )}
+        </div>
       </div>
+        </>
+      ) : (
+        <div className="rounded-2xl border border-slate-800/50 bg-slate-900/30 p-8 text-center text-slate-400">
+          <Package className="h-12 w-12 text-slate-600 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-white mb-2">Print-on-Demand Catalog</h2>
+          <p className="max-w-md mx-auto mb-6">Manage merchandise designs, t-shirts, mugs, and other printable items that customers can order directly from the store.</p>
+          <button className="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold shadow-lg shadow-rose-500/20">
+            + Add New Merchandise Design
+          </button>
+        </div>
+      )}
     </div>
   );
 }

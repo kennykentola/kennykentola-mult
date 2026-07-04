@@ -487,3 +487,108 @@ export async function generateAndUploadReceipt(
     }
   });
 }
+
+/**
+ * Generates an Invoice PDF and uploads it to Appwrite Storage.
+ * @returns The public file view URL.
+ */
+export async function generateAndUploadInvoice(
+  customerName: string,
+  customerEmail: string,
+  invoiceNumber: string,
+  items: { description: string; amount: number }[],
+  totalAmount: number,
+  issueDate: string,
+  dueDate: string
+): Promise<string> {
+  const invoiceBucket = 'receipts'; // Using receipts bucket for invoices as well
+  await ensureCertificatesBucket(); // Assuming we ensure buckets exist
+
+  const tempDir = path.join(__dirname, '../../temp');
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+  }
+
+  const tempFilePath = path.join(tempDir, `invoice-${invoiceNumber}.pdf`);
+
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({ size: 'A4', margin: 40 });
+      const writeStream = fs.createWriteStream(tempFilePath);
+      doc.pipe(writeStream);
+
+      const width = doc.page.width;
+
+      // Header
+      doc.fontSize(24).font('Helvetica-Bold').fillColor('#1e3a8a').text('INVOICE', { align: 'right' });
+      doc.fontSize(10).font('Helvetica').fillColor('#64748b').text(`Invoice #: ${invoiceNumber}`, { align: 'right' });
+      doc.text(`Date: ${issueDate}`, { align: 'right' });
+      doc.text(`Due Date: ${dueDate}`, { align: 'right' });
+
+      doc.moveDown(2);
+      
+      // Billing Info
+      doc.fontSize(12).font('Helvetica-Bold').fillColor('#0f172a').text('Bill To:');
+      doc.fontSize(10).font('Helvetica').fillColor('#334155').text(customerName);
+      doc.text(customerEmail);
+
+      doc.moveDown(2);
+
+      // Table Header
+      const tableY = doc.y;
+      doc.rect(40, tableY, width - 80, 20).fill('#f1f5f9');
+      doc.fillColor('#0f172a').font('Helvetica-Bold');
+      doc.text('Description', 50, tableY + 5);
+      doc.text('Amount (NGN)', width - 150, tableY + 5, { width: 100, align: 'right' });
+
+      // Table Items
+      let itemY = tableY + 25;
+      doc.font('Helvetica').fillColor('#334155');
+      items.forEach((item) => {
+        doc.text(item.description, 50, itemY);
+        doc.text(item.amount.toLocaleString(), width - 150, itemY, { width: 100, align: 'right' });
+        itemY += 20;
+      });
+
+      // Total
+      doc.moveTo(40, itemY).lineTo(width - 40, itemY).stroke('#cbd5e1');
+      itemY += 10;
+      doc.font('Helvetica-Bold').fontSize(14).fillColor('#0f172a');
+      doc.text('Total:', width - 250, itemY, { width: 100, align: 'right' });
+      doc.fillColor('#1d4ed8').text(`N ${totalAmount.toLocaleString()}`, width - 150, itemY, { width: 100, align: 'right' });
+
+      // Footer
+      doc.fontSize(10).font('Helvetica').fillColor('#64748b').text(
+        'Please make payment by the due date. For any questions, contact billing@kennykentola.com',
+        40, doc.page.height - 80, { align: 'center', width: width - 80 }
+      );
+
+      doc.end();
+
+      writeStream.on('finish', async () => {
+        try {
+          const appwriteFileName = `invoice_${invoiceNumber}.pdf`;
+          const fileUpload = await storage.createFile(
+            invoiceBucket,
+            ID.unique(),
+            InputFile.fromPath(tempFilePath, appwriteFileName)
+          );
+
+          const endpoint = process.env.APPWRITE_ENDPOINT || 'https://fra.cloud.appwrite.io/v1';
+          const projectId = process.env.APPWRITE_PROJECT_ID || 'kennykentolamult';
+          const publicUrl = `${endpoint}/storage/buckets/${invoiceBucket}/files/${fileUpload.$id}/view?project=${projectId}`;
+
+          try { fs.unlinkSync(tempFilePath); } catch (e) {}
+
+          resolve(publicUrl);
+        } catch (err) {
+          reject(err);
+        }
+      });
+
+      writeStream.on('error', reject);
+    } catch (err) {
+      reject(err);
+    }
+  });
+}

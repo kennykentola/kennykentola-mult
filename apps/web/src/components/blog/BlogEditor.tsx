@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBlogPost, updateBlogPost } from '../../features/blog/blogService';
-import { FileCheck, Loader2, ArrowLeft, Save, Sparkles } from 'lucide-react';
+import { uploadBlogImage } from '../../features/blog/blogService';
+import { FileCheck, Loader2, ArrowLeft, Save, Sparkles, Image as ImageIcon, Upload } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { AIAssistantModal } from '../ai/AIAssistantModal';
@@ -17,6 +18,8 @@ export function BlogEditor({ initialData, isEdit }: BlogEditorProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingInline, setUploadingInline] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -79,6 +82,43 @@ export function BlogEditor({ initialData, isEdit }: BlogEditorProps) {
       toast.error(err.message || 'Failed to save post');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'cover' | 'inline') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (type === 'cover') setUploadingCover(true);
+    else setUploadingInline(true);
+
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        try {
+          const base64Data = reader.result as string;
+          const res = await uploadBlogImage(base64Data);
+          
+          if (type === 'cover') {
+            setFormData(prev => ({ ...prev, coverImageId: res.url }));
+            toast.success('Cover image uploaded');
+          } else {
+            const markdownImage = `\n![Image](${res.url})\n`;
+            setFormData(prev => ({ ...prev, content: prev.content + markdownImage }));
+            toast.success('Image inserted into content');
+          }
+        } catch (err: any) {
+          toast.error(err.message || 'Upload failed');
+        } finally {
+          if (type === 'cover') setUploadingCover(false);
+          else setUploadingInline(false);
+        }
+      };
+    } catch (err) {
+      toast.error('Failed to process image');
+      if (type === 'cover') setUploadingCover(false);
+      else setUploadingInline(false);
     }
   };
 
@@ -163,6 +203,40 @@ export function BlogEditor({ initialData, isEdit }: BlogEditorProps) {
                 />
                 <label htmlFor="isPublished" className="text-sm font-bold text-white">Publish this post</label>
               </div>
+
+              <div className="col-span-2">
+                <label className="block text-sm font-bold text-slate-300 mb-2">Cover Image URL</label>
+                <div className="flex gap-4 items-start">
+                  <input
+                    type="text"
+                    value={formData.coverImageId}
+                    onChange={(e) => setFormData({ ...formData, coverImageId: e.target.value })}
+                    className="flex-1 bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-orange-500 outline-none"
+                    placeholder="https://..."
+                  />
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, 'cover')}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      disabled={uploadingCover}
+                      title="Upload Cover Image"
+                    />
+                    <button
+                      type="button"
+                      disabled={uploadingCover}
+                      className="flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-all disabled:opacity-50"
+                    >
+                      {uploadingCover ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+                      Upload Cover
+                    </button>
+                  </div>
+                </div>
+                {formData.coverImageId && (
+                  <img src={formData.coverImageId} alt="Cover Preview" className="mt-4 h-48 w-full object-cover rounded-xl border border-slate-800" />
+                )}
+              </div>
             </div>
 
             <div className="mb-6">
@@ -178,14 +252,34 @@ export function BlogEditor({ initialData, isEdit }: BlogEditorProps) {
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-bold text-slate-300">Content (HTML or Markdown supported on frontend)</label>
-                <button
-                  type="button"
-                  onClick={() => setIsAIModalOpen(true)}
-                  className="flex items-center gap-2 px-4 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-sm font-semibold rounded-lg transition-colors border border-indigo-500/20"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Write with AI
-                </button>
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, 'inline')}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      disabled={uploadingInline}
+                      title="Insert Inline Image"
+                    />
+                    <button
+                      type="button"
+                      disabled={uploadingInline}
+                      className="flex items-center gap-2 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold rounded-lg transition-colors border border-slate-700"
+                    >
+                      {uploadingInline ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                      Insert Image
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsAIModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-sm font-semibold rounded-lg transition-colors border border-indigo-500/20"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Write with AI
+                  </button>
+                </div>
               </div>
               <textarea
                 required

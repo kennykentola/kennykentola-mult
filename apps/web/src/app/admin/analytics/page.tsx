@@ -14,6 +14,9 @@ import {
   Loader2,
   AlertCircle
 } from 'lucide-react';
+import {
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+} from 'recharts';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
@@ -38,38 +41,6 @@ function fmt(n: number) {
   return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(n);
 }
 
-function DynamicBar({ pct, color }: { pct: number, color: string }) {
-  const ref = React.useRef<HTMLDivElement>(null);
-  React.useEffect(() => {
-    if (ref.current) {
-      ref.current.style.height = `${pct}%`;
-    }
-  }, [pct]);
-  return <div ref={ref} className={`w-full rounded-t-md ${color} transition-all duration-700 min-h-[4px]`} />;
-}
-
-function SimpleBarChart({ data, dataKey, color }: { data: any[], dataKey: string, color: string }) {
-  if (!data || data.length === 0) return <div className="h-40 flex items-center justify-center text-slate-500 text-sm">No data</div>;
-  const max = Math.max(...data.map(d => d[dataKey]), 1);
-  return (
-    <div className="flex items-end gap-2 h-44 w-full pt-4">
-      {data.map((d, i) => {
-        const pct = Math.round((d[dataKey] / max) * 100);
-        return (
-          <div key={i} className="flex flex-col items-center flex-1 gap-1 h-full justify-end group">
-            <div className="relative w-full flex flex-col items-center justify-end h-full">
-              <span className="absolute -top-6 text-[10px] font-bold text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-slate-800 px-2 py-0.5 rounded-full">
-                {dataKey === 'revenue' ? fmt(d[dataKey]) : d[dataKey]}
-              </span>
-              <DynamicBar pct={pct} color={color} />
-            </div>
-            <span className="text-[10px] text-slate-500 font-medium">{d.name}</span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 export default function AdminAnalyticsPage() {
   const { profile } = useAuth();
@@ -190,7 +161,21 @@ export default function AdminAnalyticsPage() {
             </div>
           </div>
           <p className="text-xs text-slate-500 mb-4">Total platform revenue over the last 5 months.</p>
-          <SimpleBarChart data={monthlyData} dataKey="revenue" color="bg-gradient-to-t from-emerald-600 to-emerald-400" />
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
+                <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `₦${val / 1000}k`} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: 8, color: '#f8fafc' }}
+                  itemStyle={{ color: '#34d399' }}
+                  formatter={(value: number) => [fmt(value), 'Revenue']}
+                />
+                <Line type="monotone" dataKey="revenue" stroke="#34d399" strokeWidth={3} dot={{ fill: '#0f172a', stroke: '#34d399', strokeWidth: 2, r: 4 }} activeDot={{ r: 6 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         {/* User Registration Chart */}
@@ -202,7 +187,21 @@ export default function AdminAnalyticsPage() {
             </div>
           </div>
           <p className="text-xs text-slate-500 mb-4">New user sign-ups per month.</p>
-          <SimpleBarChart data={monthlyData} dataKey="users" color="bg-gradient-to-t from-blue-600 to-blue-400" />
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
+                <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip 
+                  cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: 8, color: '#f8fafc' }}
+                  itemStyle={{ color: '#60a5fa' }}
+                />
+                <Bar dataKey="users" name="Users" fill="#60a5fa" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
         
         {/* Enrollments Chart */}
@@ -214,7 +213,21 @@ export default function AdminAnalyticsPage() {
             </div>
           </div>
           <p className="text-xs text-slate-500 mb-4">Total enrollments across all published courses.</p>
-          <SimpleBarChart data={monthlyData} dataKey="enrollments" color="bg-gradient-to-t from-purple-600 to-purple-400" />
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
+                <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip 
+                  cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: 8, color: '#f8fafc' }}
+                  itemStyle={{ color: '#c084fc' }}
+                />
+                <Bar dataKey="enrollments" name="Enrollments" fill="#c084fc" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
     </div>

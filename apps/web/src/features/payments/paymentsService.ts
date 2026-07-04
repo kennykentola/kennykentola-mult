@@ -88,3 +88,17 @@ export async function rejectPayment(paymentId: string, reason: string) {
   });
   return data;
 }
+
+/** ADMIN: Generate an invoice PDF */
+export async function generateInvoice(payload: {
+  customerName: string;
+  customerEmail: string;
+  items: { description: string; amount: number }[];
+  dueDate?: string;
+}) {
+  const data = await fetchWithAuth(`${API_BASE}/payments/generate-invoice`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return data;
+}

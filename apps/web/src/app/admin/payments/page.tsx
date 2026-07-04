@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FileText, Check, X, Eye, ShieldAlert, Award, Loader2, RefreshCw, Download } from 'lucide-react';
+import { FileText, Check, X, Eye, ShieldAlert, Award, Loader2, RefreshCw, Download, Plus } from 'lucide-react';
 import { getAdminPendingPayments, verifyPayment, rejectPayment } from '../../../features/payments/paymentsService';
+import InvoiceGeneratorModal from '../../../components/payments/InvoiceGeneratorModal';
 
 export default function AdminPaymentsPage() {
   const [receiptsQueue, setReceiptsQueue] = useState<any[]>([]);
@@ -14,6 +15,7 @@ export default function AdminPaymentsPage() {
   const [showDeclineBox, setShowDeclineBox] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
 
   const loadPending = async () => {
     try {
@@ -111,7 +113,13 @@ export default function AdminPaymentsPage() {
           <h1 className="text-3xl font-extrabold text-white">Manual Payment Queue</h1>
           <p className="text-slate-400 text-sm mt-1">Audit customer manual bank transfer receipt screenshots and mark invoices as paid in real-time.</p>
         </div>
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          <button
+            onClick={() => setShowInvoiceModal(true)}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors shadow-lg shadow-indigo-500/20"
+          >
+            <Plus className="h-4 w-4" /> Generate Invoice
+          </button>
           <button
             onClick={handleExportCsv}
             disabled={receiptsQueue.length === 0}
@@ -303,6 +311,10 @@ export default function AdminPaymentsPage() {
             )}
           </div>
         </div>
+      )}
+
+      {showInvoiceModal && (
+        <InvoiceGeneratorModal onClose={() => setShowInvoiceModal(false)} />
       )}
     </div>
   );

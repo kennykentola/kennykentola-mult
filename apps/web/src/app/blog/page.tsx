@@ -3,12 +3,15 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Navbar } from '../../components/Navbar';
-import { BookOpen, Calendar, Clock, Loader2 } from 'lucide-react';
+import { BookOpen, Calendar, Clock, Loader2, Mail, Sparkles, ArrowRight } from 'lucide-react';
 import { getPublicBlogPosts } from '../../features/blog/blogService';
+import toast from 'react-hot-toast';
 
 export default function BlogPage() {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState('');
+  const [subscribing, setSubscribing] = useState(false);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -23,6 +26,33 @@ export default function BlogPage() {
     };
     fetchPosts();
   }, []);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setSubscribing(true);
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const res = await fetch(`${API_URL}/newsletter/subscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        toast.success(data.message);
+        setEmail('');
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error('Failed to subscribe. Please try again.');
+    } finally {
+      setSubscribing(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#050505] text-slate-200">
@@ -75,6 +105,41 @@ export default function BlogPage() {
             ))}
           </div>
         )}
+        
+        {/* Newsletter Section */}
+        <div className="mt-24 max-w-4xl mx-auto glass-panel border border-indigo-500/20 rounded-3xl p-8 md:p-12 bg-indigo-950/10 text-center relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px]" />
+          <div className="relative z-10">
+            <Mail className="w-12 h-12 text-indigo-400 mx-auto mb-6" />
+            <h2 className="text-3xl md:text-4xl font-black text-white mb-4">Subscribe to our Newsletter</h2>
+            <p className="text-slate-400 mb-8 max-w-2xl mx-auto">
+              Get the latest insights, tutorials, and tech news delivered directly to your inbox. No spam, just value.
+            </p>
+            <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+              <input
+                type="email"
+                required
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="flex-1 bg-slate-950/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+              />
+              <button
+                type="submit"
+                disabled={subscribing || !email}
+                className="bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-bold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {subscribing ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    Subscribe <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
       </main>
     </div>
   );

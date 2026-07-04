@@ -97,6 +97,7 @@ export default function SolarLandingPage() {
                     <option value="installation">New Solar Installation</option>
                     <option value="maintenance">SLA App / Infrastructure Maintenance</option>
                     <option value="wiring">Industrial Electrical Wiring</option>
+                    <option value="bulk_request">Bulk Material Request</option>
                   </select>
                 </div>
 

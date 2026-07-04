@@ -457,6 +457,14 @@ const collections: CollectionDef[] = [
     ]
   },
   {
+    id: 'newsletter_subscribers',
+    name: 'Newsletter Subscribers',
+    attributes: [
+      { key: 'email', type: 'string', size: 255, required: true },
+      { key: 'subscribedAt', type: 'datetime', required: true }
+    ]
+  },
+  {
     id: 'solar_jobs',
     name: 'Solar Jobs',
     attributes: [

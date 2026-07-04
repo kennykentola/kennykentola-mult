@@ -3,7 +3,7 @@ import { ID, Query, InputFile } from 'node-appwrite';
 import { databases, storage } from '../services/appwrite';
 import { authenticateJWT, AuthenticatedRequest } from '../middleware/auth';
 import { SubmitPaymentValidation } from '@company/shared';
-import { generateAndUploadReceipt } from '../services/pdfService';
+import { generateAndUploadReceipt, generateAndUploadInvoice } from '../services/pdfService';
 import fs from 'fs';
 import path from 'path';
 
@@ -589,6 +589,41 @@ router.post('/admin/:paymentId/reject', authenticateJWT, async (req: Authenticat
   } catch (err: any) {
     console.error('[Payments Admin] Error rejecting payment:', err.message);
     res.status(400).json({ error: err.message });
+  }
+});
+
+// Generate Invoice Endpoint
+router.post('/generate-invoice', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { customerName, customerEmail, items, dueDate } = req.body;
+    if (!customerName || !customerEmail || !items || !items.length) {
+      return res.status(400).json({ error: 'Missing required invoice details' });
+    }
+
+    const totalAmount = items.reduce((sum: number, item: any) => sum + Number(item.amount), 0);
+    const invoiceNumber = `INV-${Math.floor(Date.now() / 1000)}`;
+    const issueDate = new Date().toLocaleDateString();
+    const finalDueDate = dueDate || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString();
+
+    const invoiceUrl = await generateAndUploadInvoice(
+      customerName,
+      customerEmail,
+      invoiceNumber,
+      items,
+      totalAmount,
+      issueDate,
+      finalDueDate
+    );
+
+    res.json({
+      message: 'Invoice generated successfully',
+      invoiceNumber,
+      invoiceUrl,
+      totalAmount
+    });
+  } catch (error: any) {
+    console.error('Generate invoice error:', error);
+    res.status(500).json({ error: error.message || 'Failed to generate invoice' });
   }
 });
 

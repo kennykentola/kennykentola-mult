@@ -67,3 +67,17 @@ export async function deleteBlogPost(id: string) {
   if (!res.ok) throw new Error('Failed to delete blog post');
   return await res.json();
 }
+
+export async function uploadBlogImage(base64Data: string) {
+  const token = await getSessionJwt();
+  const res = await fetch(`${API_URL}/blog/upload-image`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ file: base64Data })
+  });
+  if (!res.ok) throw new Error('Failed to upload image');
+  return await res.json();
+}
