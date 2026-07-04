@@ -1,6 +1,7 @@
 import express from 'express';
 import { databases } from '../services/appwrite';
 import { ID, Query } from 'node-appwrite';
+import { authenticateJWT, authenticateAdmin } from '../middleware/auth';
 
 const router = express.Router();
 const DATABASE_ID = process.env.APPWRITE_DATABASE_ID || 'multicompany';
@@ -63,6 +64,38 @@ router.post('/unsubscribe', async (req, res) => {
   } catch (error: any) {
     console.error('Newsletter unsubscribe error:', error);
     res.status(500).json({ success: false, message: 'Failed to unsubscribe. Please try again later.' });
+  }
+});
+
+// Admin: Get all subscribers
+router.get('/subscribers', authenticateJWT, authenticateAdmin, async (req, res) => {
+  try {
+    const response = await databases.listDocuments(
+      DATABASE_ID,
+      COLLECTION,
+      [Query.orderDesc('$createdAt'), Query.limit(100)]
+    );
+    res.json({ success: true, subscribers: response.documents });
+  } catch (error: any) {
+    console.error('Error fetching subscribers:', error);
+    res.status(500).json({ success: false, message: 'Failed to load subscribers' });
+  }
+});
+
+// Admin: Broadcast newsletter
+router.post('/broadcast', authenticateJWT, authenticateAdmin, async (req, res) => {
+  try {
+    const { subject, html, segment } = req.body;
+    // In a real application, you would integrate with Resend, SendGrid, Mailchimp, etc.
+    // For now, we will just simulate the broadcast by returning success.
+    console.log(`[Newsletter Broadcast] Subject: ${subject}, Segment: ${segment}`);
+    console.log(`[Newsletter Broadcast] Content: ${html.substring(0, 100)}...`);
+    
+    // Log the broadcast event to a collection or simply return
+    res.json({ success: true, message: 'Newsletter broadcast sent successfully! (Simulated)' });
+  } catch (error: any) {
+    console.error('Error sending broadcast:', error);
+    res.status(500).json({ success: false, message: 'Failed to send broadcast' });
   }
 });
 
