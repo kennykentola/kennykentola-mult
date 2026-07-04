@@ -108,17 +108,18 @@ router.post('/', authenticateJWT, async (req, res) => {
   try {
     const { title, slug, excerpt, content, category, coverImageId, authorName, isPublished } = req.body;
     
-    const postData = {
+    const postData: any = {
       title,
       slug,
       excerpt,
       content,
       category: category || 'General',
-      coverImageId,
       authorName,
-      isPublished: !!isPublished,
-      publishedAt: isPublished ? new Date().toISOString() : undefined
+      isPublished: !!isPublished
     };
+    
+    if (coverImageId) postData.coverImageId = coverImageId;
+    if (isPublished) postData.publishedAt = new Date().toISOString();
 
     const post = await databases.createDocument(
       DATABASE_ID,
@@ -147,17 +148,19 @@ router.put('/:id', authenticateJWT, async (req, res) => {
       publishedAt = new Date().toISOString();
     }
 
-    const postData = {
+    const postData: any = {
       title,
       slug,
       excerpt,
       content,
       category,
-      coverImageId,
       authorName,
-      isPublished: !!isPublished,
-      publishedAt
+      isPublished: !!isPublished
     };
+    
+    // Only include optional fields if they have truthy values or are explicitly set
+    if (coverImageId) postData.coverImageId = coverImageId;
+    if (publishedAt) postData.publishedAt = publishedAt;
 
     const post = await databases.updateDocument(
       DATABASE_ID,

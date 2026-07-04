@@ -38,7 +38,14 @@ export async function createBlogPost(postData: any) {
     },
     body: JSON.stringify(postData)
   });
-  if (!res.ok) throw new Error('Failed to create blog post');
+  if (!res.ok) {
+    let errorMsg = 'Failed to create blog post';
+    try {
+      const errorData = await res.json();
+      if (errorData.message) errorMsg = errorData.message;
+    } catch (e) {}
+    throw new Error(errorMsg);
+  }
   return await res.json();
 }
 
@@ -52,7 +59,14 @@ export async function updateBlogPost(id: string, postData: any) {
     },
     body: JSON.stringify(postData)
   });
-  if (!res.ok) throw new Error('Failed to update blog post');
+  if (!res.ok) {
+    let errorMsg = 'Failed to update blog post';
+    try {
+      const errorData = await res.json();
+      if (errorData.message) errorMsg = errorData.message;
+    } catch (e) {}
+    throw new Error(errorMsg);
+  }
   return await res.json();
 }
 
