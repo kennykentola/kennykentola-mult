@@ -72,7 +72,7 @@ export default function AIAssistantPage() {
             </a>
           </div>
         </div>
-      </section>
+      </main>
 
       {/* Showcase Library */}
       <section id="examples" className="py-24 bg-slate-950 relative border-t border-slate-900">
