@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Bell, Check, ExternalLink } from 'lucide-react';
 import { useAuth } from '../features/auth/AuthContext';
 import { getSessionJwt } from '../lib/sessionJwt';
+import { useNotifications } from '../features/notifications/NotificationProvider';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
@@ -21,17 +22,15 @@ export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const { profile } = useAuth();
+  const { newNotificationTrigger } = useNotifications();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   useEffect(() => {
     if (!profile) return;
-    
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60000); // Poll every minute
-    return () => clearInterval(interval);
-  }, [profile]);
+  }, [profile, newNotificationTrigger]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

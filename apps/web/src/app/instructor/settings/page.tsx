@@ -5,19 +5,32 @@ import { Settings, Bell, Lock, User, Save, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../../features/auth/AuthContext';
 
 export default function InstructorSettingsPage() {
-  const { profile, user } = useAuth();
+  const { profile, user, updateProfile } = useAuth();
   const [saved, setSaved] = useState(false);
-  const [notifications, setNotifications] = useState({
+  const [loading, setLoading] = useState(false);
+  
+  // Use user prefs if they exist, otherwise default
+  const defaultPrefs = (user as any)?.prefs?.instructorNotificationPrefs || {
     newEnrollment: true,
     assignmentSubmitted: true,
     courseReview: true,
     payoutProcessed: true,
     liveSessionReminder: true,
-  });
+  };
+  const [notifications, setNotifications] = useState(defaultPrefs);
 
-  function handleSave() {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+
+  async function handleSave() {
+    setLoading(true);
+    try {
+      await updateProfile({ instructorNotificationPrefs: notifications });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -147,15 +160,19 @@ export default function InstructorSettingsPage() {
         </div>
       </div>
 
-      {/* Save */}
-      <div className="flex justify-end">
+      {/* Save Button */}
+      <div className="flex justify-end border-t border-slate-900 pt-6">
         <button
-          id="btn-save-settings"
           onClick={handleSave}
-          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-6 py-3 text-sm font-bold text-white transition-all shadow-lg shadow-indigo-500/20"
+          disabled={loading}
+          className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-8 py-3 text-sm font-bold text-white shadow-lg transition-all hover:opacity-90 disabled:opacity-50"
         >
-          <Save className="h-4 w-4" />
-          Save Settings
+          {loading ? 'Saving...' : (
+            <>
+              <Save className="h-4 w-4" />
+              Save Changes
+            </>
+          )}
         </button>
       </div>
     </div>

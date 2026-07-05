@@ -36,6 +36,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<Profile | null>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<Profile | null>;
+  updateProfile: (data: Partial<Profile> & { instructorNotificationPrefs?: Record<string, boolean> }) => Promise<Profile>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -151,18 +152,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateProfile = async (data: Partial<Profile> & { instructorNotificationPrefs?: Record<string, boolean> }) => {
+    try {
+      const jwtSession = await account.createJWT();
+      const res = await fetch(`${API_BASE}/auth/profile`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${jwtSession.jwt}`,
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Failed to update profile');
+      }
+
+      const updated = await res.json();
+      setProfile(updated.profile);
+      
+      // If user prefs are updated, we might need to refresh the user obj
+      if (data.instructorNotificationPrefs) {
+        const u = await account.get();
+        setUser(u as any);
+      }
+      
+      return updated.profile;
+    } catch (err: any) {
+      console.error('Error updating profile:', err);
+      throw err;
+    }
+  };
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        profile,
-        loading,
-        error,
-        login,
-        logout,
-        refreshProfile: fetchProfile,
-      }}
-    >
+    <AuthContext.Provider value={{ user, profile, loading, error, login, logout, refreshProfile: fetchProfile, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

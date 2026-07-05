@@ -178,14 +178,15 @@ const updateProfileSchema = z.object({
     phoneNumber: z.string().optional(),
     emailNotifications: z.boolean().optional(),
     smsNotifications: z.boolean().optional(),
-    avatarUrl: z.string().optional()
+    avatarUrl: z.string().optional(),
+    instructorNotificationPrefs: z.record(z.boolean()).optional()
   })
 });
 
 router.patch('/profile', authenticateJWT, validateRequest(updateProfileSchema), async (req: AuthenticatedRequest, res) => {
   try {
     const userId = req.user?.id;
-    const { firstName, lastName, phoneNumber, emailNotifications, smsNotifications, avatarUrl } = req.body;
+    const { firstName, lastName, phoneNumber, emailNotifications, smsNotifications, avatarUrl, instructorNotificationPrefs } = req.body;
 
     const profiles = await databases.listDocuments(
       DATABASE_ID,
@@ -211,6 +212,16 @@ router.patch('/profile', authenticateJWT, validateRequest(updateProfileSchema), 
       profiles.documents[0].$id,
       updateData
     );
+
+    // Save instructor notification preferences to Appwrite User Prefs if provided
+    if (instructorNotificationPrefs !== undefined && userId) {
+      const userObj = await users.get(userId);
+      const newPrefs = {
+        ...userObj.prefs,
+        instructorNotificationPrefs
+      };
+      await users.updatePrefs(userId, newPrefs);
+    }
 
     res.status(200).json({
       message: 'Profile updated successfully',
