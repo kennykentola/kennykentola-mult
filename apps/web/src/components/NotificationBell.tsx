@@ -3,6 +3,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, Check, ExternalLink } from 'lucide-react';
 import { useAuth } from '../features/auth/AuthContext';
+import { getSessionJwt } from '../lib/sessionJwt';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
 interface Notification {
   $id: string;
@@ -42,14 +45,22 @@ export function NotificationBell() {
 
   const fetchNotifications = async () => {
     try {
-      const res = await fetch('/api/v1/notifications', {
+      const token = await getSessionJwt();
+      if (!token) return;
+
+      const res = await fetch(`${API_BASE}/notifications`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
       if (res.ok) {
         const data = await res.json();
-        setNotifications(data);
+        if (Array.isArray(data)) {
+          setNotifications(data);
+        } else {
+          // In case backend isn't ready and returns HTML or error obj
+          setNotifications([]);
+        }
       }
     } catch (err) {
       console.error('Error fetching notifications:', err);
@@ -58,10 +69,11 @@ export function NotificationBell() {
 
   const markAsRead = async (id: string, link?: string) => {
     try {
-      await fetch(`/api/v1/notifications/${id}/read`, {
+      const token = await getSessionJwt();
+      await fetch(`${API_BASE}/notifications/${id}/read`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
       setNotifications(prev => prev.map(n => n.$id === id ? { ...n, isRead: true } : n));
@@ -76,10 +88,11 @@ export function NotificationBell() {
 
   const markAllAsRead = async () => {
     try {
-      await fetch('/api/v1/notifications/read-all', {
+      const token = await getSessionJwt();
+      await fetch(`${API_BASE}/notifications/read-all`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));

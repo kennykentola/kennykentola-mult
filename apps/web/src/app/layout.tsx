@@ -6,8 +6,16 @@ import { Toaster } from 'react-hot-toast';
 import { SocketProvider } from '../features/chat/SocketContext';
 
 export const metadata: Metadata = {
-  title: 'Learn, Build, Print, Power - Platform',
-  description: 'One platform integrating Programming Academy, Software Agency, App Maintenance, Graphic & Printing, and Solar Installation services.',
+  title: 'KennyKentola — Software, Academy, Printing & Solar',
+  description: 'KennyKentola is a leading multi-company platform offering Programming Academy courses, custom Software Agency services, IT Maintenance, Graphic & Printing, and Solar Installation in Nigeria and worldwide.',
+  keywords: 'KennyKentola, Kenny Kentola, software agency, programming academy, web development, app development, solar installation, printing press, Ibadan, Lagos, Nigeria',
+  openGraph: {
+    title: 'KennyKentola',
+    description: 'Learn, Build, Print, Power with KennyKentola',
+    url: 'https://kennykentola.com',
+    siteName: 'KennyKentola',
+    type: 'website',
+  }
 };
 
 export default function RootLayout({
