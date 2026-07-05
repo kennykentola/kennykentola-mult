@@ -25,8 +25,23 @@ export default function BlogPostPage() {
           setPost(data);
           
           if (data.content) {
+            // Clean up AI generated HTML
+            let cleanContent = data.content;
+            
+            // 1. Remove boilerplate HTML structure that AI might generate
+            cleanContent = cleanContent.replace(/<!DOCTYPE html>/gi, '');
+            cleanContent = cleanContent.replace(/<\/?html[^>]*>/gi, '');
+            cleanContent = cleanContent.replace(/<head>[\s\S]*?<\/head>/gi, '');
+            cleanContent = cleanContent.replace(/<\/?body[^>]*>/gi, '');
+            
+            // 2. Remove leading whitespace (like 4-space indents) from HTML tags to prevent marked from turning them into code blocks
+            cleanContent = cleanContent.replace(/^[ \t]+(<\/?\w+)/gm, '$1');
+            
+            // 3. Ensure markdown images have proper newlines around them so marked recognizes them as blocks
+            cleanContent = cleanContent.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '\n\n![$1]($2)\n\n');
+
             // Parse markdown to HTML asynchronously
-            const parsed = await marked.parse(data.content);
+            const parsed = await marked.parse(cleanContent);
             setHtmlContent(parsed);
           }
         }
