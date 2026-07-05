@@ -107,9 +107,9 @@ export default function DashboardLayout({
   } else if (isProjectsPortal) {
     navItems.push(
       { name: 'Projects', href: '/projects', icon: Briefcase },
-      { name: 'Messages', href: '/projects/messages', icon: MessageSquare },
-      { name: 'Payments', href: '/projects/payments', icon: CreditCard },
-      { name: 'Profile', href: '/projects/profile', icon: User }
+      { name: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
+      { name: 'Payments', href: '/dashboard/payments', icon: CreditCard },
+      { name: 'Profile', href: '/dashboard/profile', icon: User }
     );
   } else {
     navItems.push(
