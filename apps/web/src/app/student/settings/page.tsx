@@ -18,6 +18,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v
 
 export default function StudentSettingsPage() {
   const { profile, refreshProfile } = useAuth();
+  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'security'>('profile');
   const [firstName, setFirstName] = useState(profile?.firstName || '');
   const [lastName, setLastName] = useState(profile?.lastName || '');
   const [phone, setPhone] = useState(profile?.phoneNumber || '');
@@ -98,15 +99,36 @@ export default function StudentSettingsPage() {
       <div className="grid gap-8 md:grid-cols-[1fr_2.5fr]">
         {/* Navigation Sidebar inside Page */}
         <aside className="space-y-1">
-          <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 text-left">
+          <button 
+            onClick={() => setActiveTab('profile')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold border text-left transition-colors ${
+              activeTab === 'profile' 
+                ? 'bg-indigo-600/10 border-indigo-500/20 text-indigo-400' 
+                : 'border-transparent text-slate-400 hover:text-white hover:bg-slate-900/50'
+            }`}
+          >
             <User className="h-4 w-4" />
             General Profile
           </button>
-          <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium border border-transparent text-slate-400 hover:text-white hover:bg-slate-900/50 text-left">
+          <button 
+            onClick={() => setActiveTab('notifications')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold border text-left transition-colors ${
+              activeTab === 'notifications' 
+                ? 'bg-indigo-600/10 border-indigo-500/20 text-indigo-400' 
+                : 'border-transparent text-slate-400 hover:text-white hover:bg-slate-900/50'
+            }`}
+          >
             <Bell className="h-4 w-4" />
             Notifications
           </button>
-          <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium border border-transparent text-slate-400 hover:text-white hover:bg-slate-900/50 text-left">
+          <button 
+            onClick={() => setActiveTab('security')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold border text-left transition-colors ${
+              activeTab === 'security' 
+                ? 'bg-indigo-600/10 border-indigo-500/20 text-indigo-400' 
+                : 'border-transparent text-slate-400 hover:text-white hover:bg-slate-900/50'
+            }`}
+          >
             <Lock className="h-4 w-4" />
             Security & Login
           </button>
@@ -115,86 +137,136 @@ export default function StudentSettingsPage() {
         {/* Content Box */}
         <div className="rounded-3xl border border-white/5 bg-slate-900/20 p-6 lg:p-8 space-y-6">
           <form onSubmit={handleSave} className="space-y-6">
-            <h3 className="text-lg font-bold text-white border-b border-slate-900 pb-3">
-              Profile Details
-            </h3>
+            {activeTab === 'profile' && (
+              <>
+                <h3 className="text-lg font-bold text-white border-b border-slate-900 pb-3">
+                  Profile Details
+                </h3>
 
-            <div className="grid gap-6 sm:grid-cols-2">
-              <div className="space-y-2">
-                <label htmlFor="firstName" className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  First Name
-                </label>
-                <input
-                  id="firstName"
-                  type="text"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full rounded-xl border border-white/5 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none transition-colors"
-                  placeholder="First name"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="lastName" className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Last Name
-                </label>
-                <input
-                  id="lastName"
-                  type="text"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="w-full rounded-xl border border-white/5 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none transition-colors"
-                  placeholder="Last name"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="phone" className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                Phone Number
-              </label>
-              <input
-                id="phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-xl border border-white/5 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none transition-colors"
-                placeholder="Phone number"
-              />
-            </div>
-
-            <h3 className="text-lg font-bold text-white border-b border-slate-900 pb-3 pt-4">
-              Communications
-            </h3>
-
-            <div className="space-y-4">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={emailNotifications}
-                  onChange={(e) => setEmailNotifications(e.target.checked)}
-                  className="mt-1 h-4 w-4 rounded border-slate-800 bg-slate-950 text-indigo-600 focus:ring-0 focus:ring-offset-0 focus:outline-none"
-                />
-                <div>
-                  <span className="block text-sm font-semibold text-white">Email updates</span>
-                  <span className="block text-xs text-slate-400">Receive notifications about assignment reviews, courses, and announcements.</span>
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label htmlFor="firstName" className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      First Name
+                    </label>
+                    <input
+                      id="firstName"
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className="w-full rounded-xl border border-white/5 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none transition-colors"
+                      placeholder="First name"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="lastName" className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      Last Name
+                    </label>
+                    <input
+                      id="lastName"
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="w-full rounded-xl border border-white/5 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none transition-colors"
+                      placeholder="Last name"
+                      required
+                    />
+                  </div>
                 </div>
-              </label>
 
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={smsNotifications}
-                  onChange={(e) => setSmsNotifications(e.target.checked)}
-                  className="mt-1 h-4 w-4 rounded border-slate-800 bg-slate-950 text-indigo-600 focus:ring-0 focus:ring-offset-0 focus:outline-none"
-                />
-                <div>
-                  <span className="block text-sm font-semibold text-white">SMS updates</span>
-                  <span className="block text-xs text-slate-400">Receive text alerts for immediate updates on deadlines.</span>
+                <div className="space-y-2">
+                  <label htmlFor="email" className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    Email Address
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={profile.email}
+                    disabled
+                    className="w-full rounded-xl border border-white/5 bg-slate-900/50 px-4 py-3 text-sm text-slate-400 cursor-not-allowed"
+                    title="Email cannot be changed"
+                  />
                 </div>
-              </label>
-            </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="phone" className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    Phone Number
+                  </label>
+                  <input
+                    id="phone"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full rounded-xl border border-white/5 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none transition-colors"
+                    placeholder="Phone number"
+                  />
+                </div>
+              </>
+            )}
+
+            {activeTab === 'notifications' && (
+              <>
+                <h3 className="text-lg font-bold text-white border-b border-slate-900 pb-3">
+                  Communications
+                </h3>
+
+                <div className="space-y-4">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={emailNotifications}
+                      onChange={(e) => setEmailNotifications(e.target.checked)}
+                      className="mt-1 h-4 w-4 rounded border-slate-800 bg-slate-950 text-indigo-600 focus:ring-0 focus:ring-offset-0 focus:outline-none"
+                    />
+                    <div>
+                      <span className="block text-sm font-semibold text-white">Email updates</span>
+                      <span className="block text-xs text-slate-400">Receive notifications about assignment reviews, courses, and announcements.</span>
+                    </div>
+                  </label>
+
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={smsNotifications}
+                      onChange={(e) => setSmsNotifications(e.target.checked)}
+                      className="mt-1 h-4 w-4 rounded border-slate-800 bg-slate-950 text-indigo-600 focus:ring-0 focus:ring-offset-0 focus:outline-none"
+                    />
+                    <div>
+                      <span className="block text-sm font-semibold text-white">SMS updates</span>
+                      <span className="block text-xs text-slate-400">Receive text alerts for immediate updates on deadlines.</span>
+                    </div>
+                  </label>
+                </div>
+              </>
+            )}
+
+            {activeTab === 'security' && (
+              <>
+                <h3 className="text-lg font-bold text-white border-b border-slate-900 pb-3">
+                  Security
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="current-password" className="block text-xs font-semibold text-slate-400 mb-1.5">Current Password</label>
+                    <input
+                      type="password"
+                      id="current-password"
+                      placeholder="••••••••"
+                      className="w-full rounded-xl border border-white/5 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="new-password" className="block text-xs font-semibold text-slate-400 mb-1.5">New Password</label>
+                    <input
+                      type="password"
+                      id="new-password"
+                      placeholder="••••••••"
+                      className="w-full rounded-xl border border-white/5 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none transition-all"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className="pt-4 border-t border-slate-900 flex justify-end">
               <button
