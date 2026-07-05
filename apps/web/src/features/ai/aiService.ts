@@ -26,3 +26,27 @@ export const generateContent = async (topic: string, type: 'blog' | 'newsletter'
   const data = await response.json();
   return data.content;
 };
+
+export const generateAIImage = async (prompt: string) => {
+  const token = await getSessionJwt();
+  
+  if (!token) {
+    throw new Error('Authentication required');
+  }
+
+  const response = await fetch(`${API_URL}/ai/generate-image`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ prompt })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to generate image');
+  }
+
+  return response.json();
+};

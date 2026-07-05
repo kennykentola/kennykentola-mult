@@ -1,5 +1,12 @@
 import { Router } from 'express';
 import { authenticateJWT, AuthenticatedRequest } from '../middleware/auth';
+import { v2 as cloudinary } from 'cloudinary';
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 const router = Router();
 
@@ -170,6 +177,52 @@ ${instructions ? `Additional instructions: ${instructions}` : ''}`;
     res.status(200).json(result);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * AI Image Generation Endpoint (Admins only)
+ * Uses Pollinations.ai (free, open source model)
+ */
+router.post('/generate-image', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  try {
+    // Only allow Admins and Super Admins
+    if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+      return res.status(403).json({ error: 'Access denied. Image generation is restricted to administrators.' });
+    }
+
+    const { prompt } = req.body;
+    if (!prompt) {
+      return res.status(400).json({ error: 'Prompt is required.' });
+    }
+
+    // Use pollinations.ai for free AI image generation
+    const encodedPrompt = encodeURIComponent(prompt);
+    // Add seed and nologo parameter for a cleaner image
+    const seed = Math.floor(Math.random() * 100000000);
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?nologo=true&seed=${seed}&width=1024&height=1024`;
+
+    const response = await fetch(imageUrl);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to generate image. Status: ${response.status}`);
+    }
+
+    // Convert the image arrayBuffer to base64
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const base64Data = `data:image/jpeg;base64,${buffer.toString('base64')}`;
+
+    // Upload to Cloudinary so we have a permanent URL
+    const result = await cloudinary.uploader.upload(base64Data, {
+      folder: 'kennykentola/blog_ai',
+      resource_type: 'image'
+    });
+
+    res.status(200).json({ success: true, url: result.secure_url });
+  } catch (error: any) {
+    console.error('[AI] Image generation error:', error);
+    res.status(500).json({ error: error.message || 'Failed to generate image' });
   }
 });
 

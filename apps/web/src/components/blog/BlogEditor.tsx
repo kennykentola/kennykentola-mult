@@ -8,6 +8,7 @@ import { FileCheck, Loader2, ArrowLeft, Save, Sparkles, Image as ImageIcon, Uplo
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { AIAssistantModal } from '../ai/AIAssistantModal';
+import { AIImageModal } from '../ai/AIImageModal';
 
 interface BlogEditorProps {
   initialData?: any;
@@ -18,6 +19,7 @@ export function BlogEditor({ initialData, isEdit }: BlogEditorProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  const [isAIImageModalOpen, setIsAIImageModalOpen] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingInline, setUploadingInline] = useState(false);
   
@@ -273,6 +275,14 @@ export function BlogEditor({ initialData, isEdit }: BlogEditorProps) {
                   </div>
                   <button
                     type="button"
+                    onClick={() => setIsAIImageModalOpen(true)}
+                    className="flex items-center justify-center flex-1 sm:flex-initial gap-2 px-4 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-sm font-semibold rounded-lg transition-colors border border-emerald-500/20"
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                    AI Image
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => setIsAIModalOpen(true)}
                     className="flex items-center justify-center flex-1 sm:flex-initial gap-2 px-4 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-sm font-semibold rounded-lg transition-colors border border-indigo-500/20"
                   >
@@ -303,11 +313,18 @@ export function BlogEditor({ initialData, isEdit }: BlogEditorProps) {
           </div>
         </form>
       </div>
-      <AIAssistantModal
+
+      <AIAssistantModal 
         isOpen={isAIModalOpen}
         onClose={() => setIsAIModalOpen(false)}
+        onInsert={(generatedContent) => setFormData(prev => ({ ...prev, content: prev.content + '\n\n' + generatedContent }))}
         type="blog"
-        onInsert={(content) => setFormData(prev => ({ ...prev, content: prev.content ? prev.content + '\n\n' + content : content }))}
+      />
+
+      <AIImageModal
+        isOpen={isAIImageModalOpen}
+        onClose={() => setIsAIImageModalOpen(false)}
+        onInsert={(url) => setFormData(prev => ({ ...prev, content: prev.content + `\n\n![AI Generated Image](${url})\n\n` }))}
       />
     </div>
   );
