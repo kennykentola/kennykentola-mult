@@ -77,8 +77,12 @@ export default function BlogPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {posts.map((post) => (
               <Link key={post.$id} href={`/blog/${post.slug}`} className="group block bg-white/5 border border-white/10 rounded-3xl overflow-hidden hover:border-amber-500/50 transition-all flex flex-col">
-                <div className="h-48 bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center border-b border-white/10 group-hover:scale-105 transition-transform duration-500 shrink-0">
-                  <BookOpen className="w-12 h-12 text-slate-700" />
+                <div className="h-48 bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center border-b border-white/10 group-hover:scale-105 transition-transform duration-500 shrink-0 overflow-hidden">
+                  {post.coverImageUrl || post.coverImageId ? (
+                    <img src={post.coverImageUrl || post.coverImageId} alt={post.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <BookOpen className="w-12 h-12 text-slate-700" />
+                  )}
                 </div>
                 <div className="p-8 flex flex-col flex-1">
                   <div className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-3">

@@ -9,10 +9,13 @@ import { getPublicBlogPost } from '../../../features/blog/blogService';
 import { Loader2, ArrowLeft, Calendar, User, Share2, Twitter, Facebook, Linkedin, Link as LinkIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+import { marked } from 'marked';
+
 export default function BlogPostPage() {
   const params = useParams();
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [htmlContent, setHtmlContent] = useState('');
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -20,6 +23,12 @@ export default function BlogPostPage() {
         if (params?.slug) {
           const data = await getPublicBlogPost(params.slug as string);
           setPost(data);
+          
+          if (data.content) {
+            // Parse markdown to HTML asynchronously
+            const parsed = await marked.parse(data.content);
+            setHtmlContent(parsed);
+          }
         }
       } catch (err) {
         console.error('Failed to load post', err);
@@ -88,6 +97,16 @@ export default function BlogPostPage() {
               {post.title}
             </h1>
 
+            {(post.coverImageUrl || post.coverImageId) && (
+              <div className="w-full h-64 md:h-96 rounded-3xl overflow-hidden mb-8 border border-white/10">
+                <img 
+                  src={post.coverImageUrl || post.coverImageId} 
+                  alt={post.title} 
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" 
+                />
+              </div>
+            )}
+
             <div className="flex items-center justify-between py-6 border-y border-white/10">
               <div className="flex items-center gap-3 text-slate-300 font-medium">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 to-orange-400 flex items-center justify-center text-white font-black">
@@ -115,8 +134,8 @@ export default function BlogPostPage() {
           </header>
 
           <div 
-            className="prose prose-invert prose-lg max-w-none prose-a:text-amber-500 hover:prose-a:text-amber-400 prose-headings:text-white prose-img:rounded-2xl"
-            dangerouslySetInnerHTML={{ __html: post.content }}
+            className="prose prose-invert prose-lg max-w-none prose-a:text-amber-500 hover:prose-a:text-amber-400 prose-headings:text-white prose-img:rounded-2xl prose-img:border prose-img:border-white/10"
+            dangerouslySetInnerHTML={{ __html: htmlContent || post.content }}
           />
           
         </article>
