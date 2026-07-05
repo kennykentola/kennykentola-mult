@@ -353,6 +353,10 @@ export default function AdminLayout({
 
                 <div className="space-y-1">
                   <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Internal</p>
+                  <Link onClick={() => setSidebarOpen(false)} href="/admin/prompts" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/prompts') ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                    <Bot className="h-4 w-4" />
+                    AI Prompt Generator
+                  </Link>
                   <Link onClick={() => setSidebarOpen(false)} href="/admin/courses" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
                     <BookOpen className="h-4 w-4" />
                     Academy Content
@@ -364,6 +368,10 @@ export default function AdminLayout({
                   <Link onClick={() => setSidebarOpen(false)} href="/admin/newsletter" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/newsletter') ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
                     <Mail className="h-4 w-4" />
                     Newsletter Broadcast
+                  </Link>
+                  <Link onClick={() => setSidebarOpen(false)} href="/admin/blog" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/blog') ? 'bg-orange-500/10 text-orange-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                    <FileCheck className="h-4 w-4" />
+                    Blog Manager
                   </Link>
                 </div>
               </nav>
