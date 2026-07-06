@@ -150,6 +150,29 @@ export default function AdminAnalyticsPage() {
         })}
       </div>
 
+      {/* Looker Studio Google Analytics Embed */}
+      <div className="rounded-3xl border border-white/5 bg-slate-900/30 p-2 sm:p-6 shadow-xl w-full">
+        <div className="flex items-center justify-between mb-4 px-2 sm:px-0">
+          <div>
+            <h2 className="text-lg font-bold text-white">Live Website Traffic (Google Analytics)</h2>
+            <p className="text-xs text-slate-500">Real-time user behavior, acquisition, and engagement.</p>
+          </div>
+          <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400 hidden sm:block">
+            <Users className="h-5 w-5" />
+          </div>
+        </div>
+        <div className="w-full bg-slate-950 rounded-2xl overflow-hidden border border-white/5 relative" style={{ height: '800px' }}>
+          <iframe 
+            width="100%" 
+            height="100%" 
+            src="https://lookerstudio.google.com/embed/reporting/fba7ba84-bb9a-4b33-bf9b-0b00e4fd2d83/page/9zB3F" 
+            style={{ border: 0 }}
+            allowFullScreen 
+            sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+          ></iframe>
+        </div>
+      </div>
+
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue Chart */}
