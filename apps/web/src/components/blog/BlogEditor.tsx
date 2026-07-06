@@ -242,9 +242,15 @@ export function BlogEditor({ initialData, isEdit }: BlogEditorProps) {
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm font-bold text-slate-300 mb-2">Excerpt (Brief summary)</label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-bold text-slate-300">Excerpt (Brief summary)</label>
+                <span className={`text-xs ${formData.excerpt.length > 480 ? 'text-orange-500' : 'text-slate-500'}`}>
+                  {formData.excerpt.length}/500
+                </span>
+              </div>
               <textarea
                 value={formData.excerpt}
+                maxLength={500}
                 onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-orange-500 outline-none resize-none h-24"
                 placeholder="A short description of the post..."
