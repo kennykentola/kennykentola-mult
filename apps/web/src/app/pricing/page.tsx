@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowRight, Check, Zap, Users, BookOpen, MessageSquare, Award, Star } from 'lucide-react';
+import { Footer } from '../../components/Footer';
 
 export const metadata = {
   title: 'Pricing — KennyKentola Academy',
@@ -190,6 +191,8 @@ export default function PricingPage() {
           Contact Us <ArrowRight className="h-4 w-4" />
         </Link>
       </section>
+
+      <Footer />
     </div>
   );
 }

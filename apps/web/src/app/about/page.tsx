@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowRight, Users, BookOpen, Code, Award, Heart, Target, Zap } from 'lucide-react';
+import { Footer } from '../../components/Footer';
 
 export const metadata = {
   title: 'About KennyKentola — Our Story & Mission',
@@ -125,6 +126,8 @@ export default function AboutPage() {
           </Link>
         </div>
       </section>
+
+      <Footer />
     </div>
   );
 }

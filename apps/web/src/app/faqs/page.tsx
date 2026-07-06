@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Navbar } from '../../components/Navbar';
 import { ChevronDown, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
+import { Footer } from '../../components/Footer';
 
 const FAQS = [
   {
@@ -73,7 +74,10 @@ export default function FaqsPage() {
             Get in touch
           </Link>
         </div>
+        </div>
       </main>
+
+      <Footer />
     </div>
   );
 }
