@@ -17,7 +17,7 @@ import { getSessionJwt } from '../../../lib/sessionJwt';
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
 export default function StudentSettingsPage() {
-  const { profile, refreshProfile } = useAuth();
+  const { profile, user, refreshProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'security'>('profile');
   const [firstName, setFirstName] = useState(profile?.firstName || '');
   const [lastName, setLastName] = useState(profile?.lastName || '');
@@ -181,7 +181,7 @@ export default function StudentSettingsPage() {
                   <input
                     id="email"
                     type="email"
-                    value={profile.email}
+                    value={user?.email || ''}
                     disabled
                     className="w-full rounded-xl border border-white/5 bg-slate-900/50 px-4 py-3 text-sm text-slate-400 cursor-not-allowed"
                     title="Email cannot be changed"
