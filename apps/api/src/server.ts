@@ -146,8 +146,8 @@ async function startServer() {
     process.exit(1);
   }
 
-  httpServer.listen(PORT, () => {
-    console.log(`[API] Server initialized on port ${PORT}`);
+  httpServer.listen(Number(PORT), '0.0.0.0', () => {
+    console.log(`[API] Server initialized on port ${PORT} (0.0.0.0)`);
     initCronJobs();
   });
 }
