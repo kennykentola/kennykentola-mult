@@ -25,7 +25,11 @@ router.post('/', async (req, res) => {
 
     await sendEmail({
       // Send to the primary admin email
-      to: process.env.DEFAULT_FROM_EMAIL || 'ademolapeter233@gmail.com',
+      to: [
+        'peterkehindeademola9@gmail.com',
+        'peterkehindeademola@gmail.com',
+        'ademolapeter233@gmail.com'
+      ],
       replyTo: data.email, // Allows replying directly to the user
       subject: `[Contact Form] ${data.subject}`,
       html: htmlContent

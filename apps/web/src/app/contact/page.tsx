@@ -1,6 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { Mail, Phone, MapPin, MessageSquare, Clock, ArrowRight } from 'lucide-react';
+import ContactForm from '../../components/ContactForm';
+import Footer from '../../components/Footer';
 
 export const metadata = {
   title: 'Contact Us — KennyKentola',
@@ -117,46 +119,12 @@ export default function ContactPage() {
             </div>
           </div>
 
-          {/* Contact form (mailto) */}
-          <div>
-            <h2 className="text-xl font-bold mb-6">Send a Message</h2>
-            <div className="rounded-3xl border border-white/5 bg-slate-900/30 p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-slate-400 block mb-1.5">First Name</label>
-                  <input id="contact-first-name" type="text" placeholder="John" className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-colors" />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-400 block mb-1.5">Last Name</label>
-                  <input id="contact-last-name" type="text" placeholder="Doe" className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-colors" />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-400 block mb-1.5">Email Address</label>
-                <input id="contact-email" type="email" placeholder="john@example.com" className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-colors" />
-              </div>
-              <div>
-                <label htmlFor="contact-topic" className="text-xs font-semibold text-slate-400 block mb-1.5">Topic</label>
-                <select id="contact-topic" title="Topic" className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-colors">
-                  <option value="">Select a topic...</option>
-                  {topics.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-400 block mb-1.5">Message</label>
-                <textarea id="contact-message" rows={5} placeholder="Tell us how we can help..." className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-colors resize-none" />
-              </div>
-              <a
-                href="mailto:hello@kennykentola.com"
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 py-3 text-sm font-bold text-white hover:opacity-90 transition-opacity"
-              >
-                Send Message <ArrowRight className="h-4 w-4" />
-              </a>
-              <p className="text-xs text-slate-500 text-center">This will open your email client. We typically reply within 24 hours.</p>
-            </div>
-          </div>
+          {/* Contact form (interactive) */}
+          <ContactForm topics={topics} />
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 }
