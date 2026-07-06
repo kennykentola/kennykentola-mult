@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Mail, Phone, MapPin, MessageSquare, Clock, ArrowRight } from 'lucide-react';
 import ContactForm from '../../components/ContactForm';
-import Footer from '../../components/Footer';
+import { Footer } from '../../components/Footer';
 
 export const metadata = {
   title: 'Contact Us — KennyKentola',
