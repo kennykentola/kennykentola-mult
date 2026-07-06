@@ -63,6 +63,7 @@ export const AIImageModal: React.FC<AIImageModalProps> = ({ isOpen, onClose, onI
           </div>
           <button 
             onClick={onClose}
+            title="Close"
             className="p-1 text-slate-400 hover:text-white transition-colors"
           >
             <X className="w-5 h-5" />
