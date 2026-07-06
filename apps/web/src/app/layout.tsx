@@ -4,6 +4,7 @@ import { AuthProvider } from '../features/auth/AuthContext';
 import { Toaster } from 'react-hot-toast';
 
 import { SocketProvider } from '../features/chat/SocketContext';
+import Script from 'next/script';
 
 export const metadata: Metadata = {
   title: 'KennyKentola — Software, Academy, Printing & Solar',
@@ -25,6 +26,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <Script 
+          src="https://www.googletagmanager.com/gtag/js?id=G-CR4LWR93DK" 
+          strategy="afterInteractive" 
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+          
+            gtag('config', 'G-CR4LWR93DK');
+          `}
+        </Script>
+      </head>
       <body className="bg-slate-950 text-slate-100 min-h-screen antialiased">
         <AuthProvider>
           <SocketProvider>
