@@ -24,7 +24,8 @@ import {
   Layout,
   Palette,
   Mail,
-  Bot
+  Bot,
+  BarChart3
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -132,6 +133,10 @@ export default function AdminLayout({
             <Link href="/admin" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname === '/admin' ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
               <LayoutDashboard className="h-4 w-4" />
               Overview
+            </Link>
+            <Link href="/admin/analytics" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname === '/admin/analytics' ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+              <BarChart3 className="h-4 w-4" />
+              Analytics & Traffic
             </Link>
           </div>
 
@@ -292,6 +297,10 @@ export default function AdminLayout({
                   <Link onClick={() => setSidebarOpen(false)} href="/admin" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname === '/admin' ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
                     <LayoutDashboard className="h-4 w-4" />
                     Overview
+                  </Link>
+                  <Link onClick={() => setSidebarOpen(false)} href="/admin/analytics" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname === '/admin/analytics' ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                    <BarChart3 className="h-4 w-4" />
+                    Analytics & Traffic
                   </Link>
                 </div>
 

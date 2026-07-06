@@ -65,41 +65,41 @@ export default function ContactForm({ topics }: ContactFormProps) {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-xs font-semibold text-slate-400 block mb-1.5">First Name *</label>
-            <input 
+            <input
               name="firstName"
               value={formData.firstName}
               onChange={handleChange}
-              type="text" 
-              placeholder="John" 
-              className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-colors" 
+              type="text"
+              placeholder="John"
+              className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-colors"
             />
           </div>
           <div>
             <label className="text-xs font-semibold text-slate-400 block mb-1.5">Last Name</label>
-            <input 
+            <input
               name="lastName"
               value={formData.lastName}
               onChange={handleChange}
-              type="text" 
-              placeholder="Doe" 
-              className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-colors" 
+              type="text"
+              placeholder="Doe"
+              className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-colors"
             />
           </div>
         </div>
         <div>
           <label className="text-xs font-semibold text-slate-400 block mb-1.5">Email Address *</label>
-          <input 
+          <input
             name="email"
             value={formData.email}
             onChange={handleChange}
-            type="email" 
-            placeholder="john@example.com" 
-            className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-colors" 
+            type="email"
+            placeholder="ademola@example.com"
+            className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-colors"
           />
         </div>
         <div>
           <label htmlFor="contact-topic" className="text-xs font-semibold text-slate-400 block mb-1.5">Topic *</label>
-          <select 
+          <select
             name="topic"
             id="contact-topic"
             value={formData.topic}
@@ -112,13 +112,13 @@ export default function ContactForm({ topics }: ContactFormProps) {
         </div>
         <div>
           <label className="text-xs font-semibold text-slate-400 block mb-1.5">Message *</label>
-          <textarea 
+          <textarea
             name="message"
             value={formData.message}
             onChange={handleChange}
-            rows={5} 
-            placeholder="Tell us how we can help..." 
-            className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-colors resize-none" 
+            rows={5}
+            placeholder="Tell us how we can help..."
+            className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-colors resize-none"
           />
         </div>
         <button
