@@ -122,17 +122,119 @@ export const footerPagesData: Record<string, FooterPageData> = {
   // Resources
   'project-ideas': {
     title: 'Project Ideas',
-    subtitle: 'Curated list of final year project topics.',
+    subtitle: 'Browse 500+ approved computer science final year project topics.',
+    icon: Lightbulb,
+    content: [], // Loaded dynamically in component
+    ctaText: 'Get Source Code',
+    ctaLink: '/academic'
+  },
+
+  // Solar & Electrical Services
+  'solar-installation': {
+    title: 'Solar Installation',
+    subtitle: 'High-yield panels for residential & commercial properties.',
     icon: Lightbulb,
     content: [
       {
-        heading: 'Innovative Topics for 2026',
-        body: 'AI-Powered Student Result Management Systems, Blockchain-based Voting Platforms, IoT Smart Campus Solutions, and more. Browse our updated list of approved project ideas.'
+        heading: 'End-to-End Deployment',
+        body: 'We handle everything from site assessment and energy auditing to the final commissioning of your solar array.'
       }
     ],
-    ctaText: 'Browse Topics',
-    ctaLink: '/academic'
+    ctaText: 'Request Consultation',
+    ctaLink: '/solar#consultation'
   },
+  'battery-storage': {
+    title: 'Battery Storage',
+    subtitle: 'Military-grade lithium battery arrays for 24/7 power.',
+    icon: Lightbulb,
+    content: [
+      {
+        heading: 'Uninterruptible Power',
+        body: 'Store excess solar energy or grid power to ensure your operations never experience downtime.'
+      }
+    ],
+    ctaText: 'Request Consultation',
+    ctaLink: '/solar#consultation'
+  },
+  'electrical-wiring': {
+    title: 'Electrical Wiring',
+    subtitle: 'Industrial-grade wiring for large-scale operations.',
+    icon: Lightbulb,
+    content: [
+      {
+        heading: 'Industrial Standards',
+        body: 'Our certified engineers provide comprehensive wiring solutions that meet strict safety and load-bearing regulations.'
+      }
+    ],
+    ctaText: 'Request Consultation',
+    ctaLink: '/solar#consultation'
+  },
+  'commercial-solutions': {
+    title: 'Commercial Solutions',
+    subtitle: 'Full-scale energy solutions for offices & factories.',
+    icon: Lightbulb,
+    content: [
+      {
+        heading: 'Enterprise Energy',
+        body: 'Customized power solutions designed to significantly reduce corporate OPEX through sustainable energy generation.'
+      }
+    ],
+    ctaText: 'Request Consultation',
+    ctaLink: '/solar#consultation'
+  },
+  'smart-telemetry': {
+    title: 'Smart Telemetry',
+    subtitle: 'Real-time monitoring of your energy consumption.',
+    icon: Lightbulb,
+    content: [
+      {
+        heading: 'Live Energy Tracking',
+        body: 'Monitor your power generation, battery health, and consumption patterns via our mobile dashboard.'
+      }
+    ],
+    ctaText: 'Request Consultation',
+    ctaLink: '/solar#consultation'
+  },
+  'generator-integration': {
+    title: 'Generator Integration',
+    subtitle: 'Seamless hybrid integration with diesel/gas generators.',
+    icon: Lightbulb,
+    content: [
+      {
+        heading: 'Hybrid Power Systems',
+        body: 'We synchronize your existing generators with solar and battery arrays to optimize fuel consumption and automate switchovers.'
+      }
+    ],
+    ctaText: 'Request Consultation',
+    ctaLink: '/solar#consultation'
+  },
+  'ev-charging': {
+    title: 'EV Charging',
+    subtitle: 'Fast-charging stations for corporate and home parking.',
+    icon: Lightbulb,
+    content: [
+      {
+        heading: 'Future-Proof Infrastructure',
+        body: 'Deploy Level 2 and DC Fast Charging stations powered by your solar array to support electric vehicle fleets.'
+      }
+    ],
+    ctaText: 'Request Consultation',
+    ctaLink: '/solar#consultation'
+  },
+  'emergency-repairs': {
+    title: 'Emergency Repairs',
+    subtitle: '24/7 rapid response for critical electrical failures.',
+    icon: Lightbulb,
+    content: [
+      {
+        heading: 'Rapid Response Team',
+        body: 'Our emergency technicians are available around the clock to resolve catastrophic electrical failures and restore power.'
+      }
+    ],
+    ctaText: 'Request Consultation',
+    ctaLink: '/solar#consultation'
+  },
+
   'templates': {
     title: 'Document Templates',
     subtitle: 'Standardized formats for proposals and documentation.',

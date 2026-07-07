@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { databases } from '../services/appwrite';
 import { ID, Query } from 'node-appwrite';
 import { authenticateJWT, AuthenticatedRequest } from '../middleware/auth';
+import { sendEmail } from '../services/email';
 
 const router = Router();
 const DATABASE_ID = process.env.APPWRITE_DATABASE_ID || 'multicompany';
@@ -40,6 +41,30 @@ router.post('/requests', authenticateJWT, async (req: AuthenticatedRequest, res)
       ID.unique(),
       data
     );
+
+    // Send email to admins
+    const htmlContent = `
+      <h3>New Solar/Electrical Consultation Request</h3>
+      <p><strong>Client ID:</strong> ${userId}</p>
+      <p><strong>Job Type:</strong> ${jobType}</p>
+      <p><strong>Site Address:</strong> ${address}</p>
+      ${scheduledDate ? `<p><strong>Preferred Date:</strong> ${scheduledDate}</p>` : ''}
+      <hr />
+      <h4>Details & Technical Requirements:</h4>
+      <pre style="white-space: pre-wrap; font-family: sans-serif;">${description}</pre>
+    `;
+
+    await sendEmail({
+      to: [
+        'peterkehindeademola9@gmail.com',
+        'peterkehindeademola@gmail.com',
+        'ademolapeter233@gmail.com'
+      ],
+      subject: `[Solar Consultation] New Request: ${jobType}`,
+      html: htmlContent
+    }).catch(err => {
+      console.error('[Solar] Failed to send admin email:', err);
+    });
 
     res.status(201).json({
       message: 'Solar job requested successfully',
