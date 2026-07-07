@@ -74,7 +74,6 @@ export default function FaqsPage() {
             Get in touch
           </Link>
         </div>
-        </div>
       </main>
 
       <Footer />

@@ -4,7 +4,7 @@ import React from 'react';
 import { ArrowRight, MapPin } from 'lucide-react';
 import Link from 'next/link';
 
-import { solarProjects } from '../../../data/solarProjects';
+import { solarProjects } from '../../data/solarProjects';
 
 export function FeaturedProjects() {
   const projects = solarProjects;
