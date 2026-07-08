@@ -40,6 +40,16 @@ export default function RootLayout({
             gtag('config', 'G-CR4LWR93DK');
           `}
         </Script>
+
+        {/* Google AdSense Script - Only renders if NEXT_PUBLIC_ADSENSE_ID is set in .env */}
+        {process.env.NEXT_PUBLIC_ADSENSE_ID && (
+          <Script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_ID}`}
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+          />
+        )}
       </head>
       <body className="bg-slate-950 text-slate-100 min-h-screen antialiased">
         <AuthProvider>
