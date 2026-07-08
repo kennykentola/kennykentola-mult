@@ -21,7 +21,8 @@ export default function UniversalCheckoutPage() {
   const { user } = useAuth();
   
   const [job, setJob] = useState<any>(null);
-  const [bankDetails, setBankDetails] = useState<BankAccount | null>(null);
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [selectedBankId, setSelectedBankId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [method, setMethod] = useState<'card' | 'transfer'>('card');
   
@@ -39,12 +40,14 @@ export default function UniversalCheckoutPage() {
         // Fetch Job and Bank Details in parallel
         const [jobDoc, bankRes] = await Promise.all([
           databases.getDocument(dbId, moduleId as string, jobId as string),
-          databases.listDocuments(dbId, 'bank_accounts', [Query.limit(1)])
+          databases.listDocuments(dbId, 'bank_accounts')
         ]);
         
         setJob(jobDoc);
-        if (bankRes.documents.length > 0) {
-          setBankDetails(bankRes.documents[0] as unknown as BankAccount);
+        const fetchedBanks = bankRes.documents as unknown as BankAccount[];
+        setBankAccounts(fetchedBanks);
+        if (fetchedBanks.length > 0 && fetchedBanks[0].$id) {
+          setSelectedBankId(fetchedBanks[0].$id);
         }
       } catch (err) {
         console.error('Failed to fetch data for checkout:', err);
@@ -149,7 +152,7 @@ export default function UniversalCheckoutPage() {
       await submitPayment({
         type: moduleId as string,
         referenceId: jobId as string,
-        bankAccountId: bankDetails?.$id || 'unknown',
+        bankAccountId: selectedBankId || 'unknown',
         amount: price,
         receiptImage: receiptUrl,
         referenceNumber: `TRX-${Date.now()}` // Or add an input for the user to provide this
@@ -278,20 +281,41 @@ export default function UniversalCheckoutPage() {
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-lg font-bold text-white mb-4">Bank Transfer Details</h3>
-                    {bankDetails ? (
-                      <div className="bg-slate-950 rounded-xl border border-slate-800 p-4 space-y-3">
-                        <div className="flex justify-between border-b border-slate-800 pb-2">
-                          <span className="text-xs text-slate-500">Bank Name</span>
-                          <span className="text-sm font-bold text-white">{bankDetails.bankName}</span>
-                        </div>
-                        <div className="flex justify-between border-b border-slate-800 pb-2">
-                          <span className="text-xs text-slate-500">Account Name</span>
-                          <span className="text-sm font-bold text-white">{bankDetails.accountName}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-xs text-slate-500">Account Number</span>
-                          <span className="text-sm font-bold text-emerald-400 font-mono tracking-widest">{bankDetails.accountNumber}</span>
-                        </div>
+                    {bankAccounts.length > 0 ? (
+                      <div className="space-y-4">
+                        {bankAccounts.length > 1 && (
+                          <div className="space-y-2 mb-4">
+                            <label className="text-sm font-bold text-slate-400">Select Bank</label>
+                            <select 
+                              value={selectedBankId}
+                              onChange={(e) => setSelectedBankId(e.target.value)}
+                              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-blue-500 outline-none"
+                            >
+                              {bankAccounts.map((bank) => (
+                                <option key={bank.$id} value={bank.$id}>{bank.bankName}</option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+                        {(() => {
+                          const bankDetails = bankAccounts.find(b => b.$id === selectedBankId) || bankAccounts[0];
+                          return (
+                            <div className="bg-slate-950 rounded-xl border border-slate-800 p-4 space-y-3">
+                              <div className="flex justify-between border-b border-slate-800 pb-2">
+                                <span className="text-xs text-slate-500">Bank Name</span>
+                                <span className="text-sm font-bold text-white">{bankDetails.bankName}</span>
+                              </div>
+                              <div className="flex justify-between border-b border-slate-800 pb-2">
+                                <span className="text-xs text-slate-500">Account Name</span>
+                                <span className="text-sm font-bold text-white">{bankDetails.accountName}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-xs text-slate-500">Account Number</span>
+                                <span className="text-sm font-bold text-emerald-400 font-mono tracking-widest">{bankDetails.accountNumber}</span>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     ) : (
                       <div className="bg-slate-950 rounded-xl border border-slate-800 p-4 text-center">
@@ -311,7 +335,7 @@ export default function UniversalCheckoutPage() {
                           accept="image/*"
                           aria-label="Upload Payment Receipt"
                           onChange={handleReceiptUpload}
-                          disabled={isUploading || !bankDetails}
+                          disabled={isUploading || bankAccounts.length === 0}
                           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
                         />
                         {isUploading ? (
@@ -348,7 +372,7 @@ export default function UniversalCheckoutPage() {
 
                   <div className="pt-4 flex justify-end">
                     <button 
-                      disabled={!receiptUrl || isSubmittingTransfer || !bankDetails}
+                      disabled={!receiptUrl || isSubmittingTransfer || bankAccounts.length === 0}
                       onClick={submitManualTransfer}
                       className="px-8 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-xl shadow-blue-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >

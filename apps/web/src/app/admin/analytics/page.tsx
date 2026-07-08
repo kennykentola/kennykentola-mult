@@ -17,6 +17,7 @@ import {
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
+import { getSettingByKey } from '../../../features/settings/settingsService';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
@@ -47,6 +48,7 @@ export default function AdminAnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [iframeUrl, setIframeUrl] = useState('');
 
   useEffect(() => {
     const loadAnalytics = async () => {
@@ -59,6 +61,16 @@ export default function AdminAnalyticsPage() {
           throw new Error(d.error || 'Failed to load analytics');
         }
         setData(d);
+
+        // Fetch dynamic Looker Studio URL
+        try {
+          const url = await getSettingByKey('analytics_iframe_url');
+          if (url) {
+            setIframeUrl(url);
+          }
+        } catch (e) {
+          console.error('Failed to load analytics iframe URL', e);
+        }
       } catch (e: any) {
         setError(e.message);
       } finally {
@@ -162,14 +174,22 @@ export default function AdminAnalyticsPage() {
           </div>
         </div>
         <div className="w-full bg-slate-950 rounded-2xl overflow-hidden border border-white/5 relative" style={{ height: '800px' }}>
-          <iframe 
-            width="100%" 
-            height="100%" 
-            src="https://datastudio.google.com/embed/reporting/fba7ba84-bb9a-4b33-bf9b-0b00e4fd2d83/page/9zB3F" 
-            style={{ border: 0 }}
-            allowFullScreen 
-            sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-          ></iframe>
+          {iframeUrl ? (
+            <iframe 
+              width="100%" 
+              height="100%" 
+              src={iframeUrl} 
+              style={{ border: 0 }}
+              allowFullScreen 
+              sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+            ></iframe>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-slate-500 space-y-4">
+              <AlertCircle className="w-12 h-12 text-slate-600" />
+              <p>Analytics dashboard URL not configured.</p>
+              <p className="text-sm">Please set the Looker Studio Embed URL in Global Settings.</p>
+            </div>
+          )}
         </div>
       </div>
 

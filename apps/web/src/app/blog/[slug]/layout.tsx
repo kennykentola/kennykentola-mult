@@ -17,6 +17,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       };
     }
 
+    const imageUrl = post.coverImageUrl || post.coverImageId;
+
     return {
       title: `${post.title} | KennyKentola Blog`,
       description: post.excerpt || post.description || 'Read this post on KennyKentola',
@@ -24,11 +26,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title: post.title,
         description: post.excerpt || post.description || '',
         type: 'article',
-        publishedTime: post.publishedAt || post.createdAt,
-        authors: [post.author?.name || 'KennyKentola'],
-        images: post.coverImage ? [
+        publishedTime: post.publishedAt || post.$createdAt,
+        authors: [post.authorName || 'KennyKentola'],
+        images: imageUrl ? [
           {
-            url: post.coverImage,
+            url: imageUrl,
             width: 1200,
             height: 630,
             alt: post.title,
@@ -39,7 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         card: 'summary_large_image',
         title: post.title,
         description: post.excerpt || post.description || '',
-        images: post.coverImage ? [post.coverImage] : [],
+        images: imageUrl ? [imageUrl] : [],
       }
     };
   } catch (error) {

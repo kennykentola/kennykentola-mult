@@ -704,6 +704,14 @@ const collections: CollectionDef[] = [
       { key: 'isPublished', type: 'boolean', required: true, defaultValue: false },
       { key: 'publishedAt', type: 'datetime', required: false }
     ]
+  },
+  {
+    id: 'site_settings',
+    name: 'Site Settings',
+    attributes: [
+      { key: 'key', type: 'string', size: 100, required: true },
+      { key: 'value', type: 'string', size: 10000, required: true }
+    ]
   }
 ];
 

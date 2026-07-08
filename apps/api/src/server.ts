@@ -89,6 +89,7 @@ import blogRouter from './routes/blog';
 import orchestratorRouter from './routes/orchestrator';
 import notificationsRouter from './routes/notifications';
 import promptsRouter from './routes/prompts';
+import settingsRouter from './routes/settings';
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/orchestrator', orchestratorRouter);
 app.use('/api/v1/prompts', promptsRouter);
@@ -120,6 +121,8 @@ app.use('/api/v1/team', teamRouter);
 app.use('/api/v1/dashboard', dashboardRouter);
 app.use('/api/v1/blog', blogRouter);
 app.use('/api/v1/notifications', notificationsRouter);
+app.use('/api/v1/settings', settingsRouter);
+
 
 // Basic Health Check Endpoint
 app.get('/api/health', (req, res) => {

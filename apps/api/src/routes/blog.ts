@@ -53,18 +53,24 @@ router.get('/rss.xml', async (req, res) => {
 
     const CLIENT_URL = process.env.CLIENT_URL || 'https://kennykentola.com';
 
-    const items = posts.documents.map((post: any) => `
+    const items = posts.documents.map((post: any) => {
+      const imageUrl = post.coverImageUrl || post.coverImageId;
+      const imageTag = imageUrl ? `<img src="${imageUrl}" alt="${post.title}" /><br/>` : '';
+      const enclosure = imageUrl ? `<enclosure url="${imageUrl}" type="image/jpeg" length="0" />\n        <media:content url="${imageUrl}" medium="image" />` : '';
+
+      return `
       <item>
         <title><![CDATA[${post.title}]]></title>
         <link>${CLIENT_URL}/blog/${post.slug}</link>
         <guid>${CLIENT_URL}/blog/${post.slug}</guid>
         <pubDate>${new Date(post.publishedAt || post.$createdAt).toUTCString()}</pubDate>
-        <description><![CDATA[${post.excerpt || post.content.substring(0, 200)}]]></description>
+        <description><![CDATA[${imageTag}${post.excerpt || post.content.substring(0, 200)}]]></description>
+        ${enclosure}
       </item>
-    `).join('');
+    `}).join('');
 
     const rss = `<?xml version="1.0" encoding="UTF-8" ?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">
   <channel>
     <title>KennyKentola Blog</title>
     <link>${CLIENT_URL}/blog</link>
