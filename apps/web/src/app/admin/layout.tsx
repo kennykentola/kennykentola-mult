@@ -194,9 +194,13 @@ export default function AdminLayout({
               <Hammer className="h-4 w-4" />
               IT Contracts
             </Link>
-            <Link href="/admin/solar" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/solar') ? 'bg-yellow-500/10 text-yellow-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+            <Link href="/admin/solar" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/solar') && !pathname?.includes('/admin/solar-projects') ? 'bg-yellow-500/10 text-yellow-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
               <Zap className="h-4 w-4" />
-              Solar & Network
+              Solar Jobs
+            </Link>
+            <Link href="/admin/solar-projects" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/solar-projects') ? 'bg-yellow-500/10 text-yellow-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+              <Layout className="h-4 w-4" />
+              Solar Projects
             </Link>
           </div>
 
@@ -354,9 +358,13 @@ export default function AdminLayout({
                     <Hammer className="h-4 w-4" />
                     IT Contracts
                   </Link>
-                  <Link onClick={() => setSidebarOpen(false)} href="/admin/solar" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/solar') ? 'bg-yellow-500/10 text-yellow-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                  <Link onClick={() => setSidebarOpen(false)} href="/admin/solar" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/solar') && !pathname?.includes('/admin/solar-projects') ? 'bg-yellow-500/10 text-yellow-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
                     <Zap className="h-4 w-4" />
-                    Solar & Network
+                    Solar Jobs
+                  </Link>
+                  <Link onClick={() => setSidebarOpen(false)} href="/admin/solar-projects" className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${pathname?.includes('/admin/solar-projects') ? 'bg-yellow-500/10 text-yellow-400' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+                    <Layout className="h-4 w-4" />
+                    Solar Projects
                   </Link>
                 </div>
 

@@ -206,4 +206,87 @@ router.patch('/admin/:id', authenticateJWT, async (req: AuthenticatedRequest, re
   }
 });
 
+// ──────────────────────────────────────────────────
+// SOLAR PROJECTS: Public API to get projects
+// ──────────────────────────────────────────────────
+router.get('/projects', async (req, res) => {
+  try {
+    const response = await databases.listDocuments(DATABASE_ID, 'solar_projects', [
+      Query.limit(100),
+      Query.orderDesc('$createdAt')
+    ]);
+    res.status(200).json({ projects: response.documents });
+  } catch (err: any) {
+    console.error('[Solar Projects] Error fetching projects:', err.message);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.get('/projects/:id', async (req, res) => {
+  try {
+    const project = await databases.getDocument(DATABASE_ID, 'solar_projects', req.params.id);
+    res.status(200).json({ project });
+  } catch (err: any) {
+    console.error('[Solar Projects] Error fetching single project:', err.message);
+    res.status(404).json({ error: 'Project not found' });
+  }
+});
+
+// ──────────────────────────────────────────────────
+// ADMIN ONLY: Create/Update/Delete Solar Projects
+// ──────────────────────────────────────────────────
+router.post('/projects', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Unauthorized. Admins only.' });
+  }
+
+  const { title, size, location, type, savings, image, description, roi, co2Offset, gridIndependence, uptime, equipment, timeline } = req.body;
+
+  try {
+    const project = await databases.createDocument(DATABASE_ID, 'solar_projects', ID.unique(), {
+      title, size, location, type, savings, image, description,
+      roi: roi || '', co2Offset: co2Offset || '', gridIndependence: gridIndependence || '', 
+      uptime: uptime || '', equipment: Array.isArray(equipment) ? equipment : [], timeline: timeline || ''
+    });
+    res.status(201).json({ message: 'Project created successfully', project });
+  } catch (err: any) {
+    console.error('[Solar Projects] Error creating project:', err.message);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.put('/projects/:id', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Unauthorized. Admins only.' });
+  }
+
+  const { title, size, location, type, savings, image, description, roi, co2Offset, gridIndependence, uptime, equipment, timeline } = req.body;
+
+  try {
+    const project = await databases.updateDocument(DATABASE_ID, 'solar_projects', req.params.id, {
+      title, size, location, type, savings, image, description,
+      roi: roi || '', co2Offset: co2Offset || '', gridIndependence: gridIndependence || '', 
+      uptime: uptime || '', equipment: Array.isArray(equipment) ? equipment : [], timeline: timeline || ''
+    });
+    res.status(200).json({ message: 'Project updated successfully', project });
+  } catch (err: any) {
+    console.error('[Solar Projects] Error updating project:', err.message);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.delete('/projects/:id', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Unauthorized. Admins only.' });
+  }
+
+  try {
+    await databases.deleteDocument(DATABASE_ID, 'solar_projects', req.params.id);
+    res.status(200).json({ message: 'Project deleted successfully' });
+  } catch (err: any) {
+    console.error('[Solar Projects] Error deleting project:', err.message);
+    res.status(400).json({ error: err.message });
+  }
+});
+
 export default router;

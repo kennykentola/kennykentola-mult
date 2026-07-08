@@ -1,23 +1,55 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, MapPin, Zap, Clock, Leaf, ShieldCheck, CheckCircle2 } from 'lucide-react';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { Navbar } from '../../../../components/Navbar';
-import { solarProjects } from '../../../../data/solarProjects';
+import { getSolarProject, SolarProject } from '../../../../features/solar/solarProjectsService';
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = await params;
-  const project = solarProjects.find(p => p.id === resolvedParams.id);
-  if (!project) return { title: 'Not Found' };
-  return { title: `${project.title} - Case Study | Infinite Power` };
-}
+export default function PortfolioDetail() {
+  const params = useParams();
+  const id = params?.id as string;
+  const [project, setProject] = useState<SolarProject | null>(null);
+  const [loading, setLoading] = useState(true);
 
-export default async function PortfolioDetail({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = await params;
-  const project = solarProjects.find(p => p.id === resolvedParams.id);
+  useEffect(() => {
+    if (!id) return;
+    let mounted = true;
+    getSolarProject(id)
+      .then(data => {
+        if (mounted) {
+          setProject(data);
+          setLoading(false);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        if (mounted) setLoading(false);
+      });
+    return () => { mounted = false; };
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#050505] text-slate-200">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-slate-400 animate-pulse text-lg">Loading project details...</div>
+        </div>
+      </div>
+    );
+  }
 
   if (!project) {
-    notFound();
+    return (
+      <div className="min-h-screen bg-[#050505] text-slate-200">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-red-400 text-lg">Project not found</div>
+        </div>
+      </div>
+    );
   }
   
   return (
@@ -58,7 +90,7 @@ export default async function PortfolioDetail({ params }: { params: Promise<{ id
             <section>
               <h2 className="text-2xl font-bold text-white mb-6">Deployed Infrastructure</h2>
               <ul className="space-y-4">
-                {project.equipment.map((item, idx) => (
+                {(project.equipment || []).map((item, idx) => (
                   <li key={idx} className="flex items-start gap-4 p-4 rounded-2xl bg-slate-900 border border-slate-800">
                     <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0" />
                     <span className="text-slate-300 font-medium">{item}</span>
@@ -86,22 +118,22 @@ export default async function PortfolioDetail({ params }: { params: Promise<{ id
                 
                 <div className="pb-6 border-b border-slate-800">
                   <div className="text-sm text-slate-500 mb-1 flex items-center gap-2"><Leaf className="w-4 h-4" /> Carbon Offset</div>
-                  <div className="text-xl font-bold text-white">{project.metrics.co2Offset}</div>
+                  <div className="text-xl font-bold text-white">{project.co2Offset || 'N/A'}</div>
                 </div>
 
                 <div className="pb-6 border-b border-slate-800">
                   <div className="text-sm text-slate-500 mb-1">Grid Independence</div>
-                  <div className="text-xl font-bold text-white">{project.metrics.gridIndependence}</div>
+                  <div className="text-xl font-bold text-white">{project.gridIndependence || 'N/A'}</div>
                 </div>
 
                 <div className="pb-6 border-b border-slate-800">
                   <div className="text-sm text-slate-500 mb-1">Est. ROI Period</div>
-                  <div className="text-xl font-bold text-white">{project.metrics.roi}</div>
+                  <div className="text-xl font-bold text-white">{project.roi || 'N/A'}</div>
                 </div>
                 
                 <div>
                   <div className="text-sm text-slate-500 mb-1 flex items-center gap-2"><Clock className="w-4 h-4" /> Deployment Timeline</div>
-                  <div className="text-lg font-bold text-white">{project.timeline}</div>
+                  <div className="text-lg font-bold text-white">{project.timeline || 'N/A'}</div>
                 </div>
               </div>
               

@@ -165,7 +165,7 @@ export default function AdminAnalyticsPage() {
           <iframe 
             width="100%" 
             height="100%" 
-            src="https://lookerstudio.google.com/embed/reporting/fba7ba84-bb9a-4b33-bf9b-0b00e4fd2d83/page/9zB3F" 
+            src="https://datastudio.google.com/embed/reporting/fba7ba84-bb9a-4b33-bf9b-0b00e4fd2d83/page/9zB3F" 
             style={{ border: 0 }}
             allowFullScreen 
             sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
