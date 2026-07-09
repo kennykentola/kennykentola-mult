@@ -117,8 +117,7 @@ export function AIVideoGenerator() {
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8">
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
-        <h2 className="text-2xl font-bold text-white mb-2">Generate Code Explanation Video</h2>
-        <p className="text-slate-400 mb-6">Powered by Hugging Face (Free Open Source Models)</p>
+        <h2 className="text-2xl font-bold text-white mb-6">Generate Code Explanation Video</h2>
         
         <div className="flex flex-col md:flex-row gap-4">
           <input 
