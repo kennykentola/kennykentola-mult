@@ -303,7 +303,7 @@ export default function AdminPrintingPage() {
         </div>
       </div>
       </>
-    ) : (
+    ) : activeTab === 'pod' ? (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
