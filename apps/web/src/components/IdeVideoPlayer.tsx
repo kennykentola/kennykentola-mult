@@ -1,7 +1,6 @@
 'use client';
 import React, { useMemo, useEffect } from 'react';
 import { useCurrentFrame, useVideoConfig, Audio, AbsoluteFill } from 'remotion';
-import { usePlaying } from '@remotion/player';
 import { Highlight, themes } from 'prism-react-renderer';
 
 export const VIDEO_FPS = 30;
@@ -21,7 +20,6 @@ interface IdeVideoPlayerProps {
 export const IdeVideoPlayer: React.FC<IdeVideoPlayerProps> = ({ script, audioUrl }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { playing } = usePlaying();
 
   // Combine all code into one long string, or show them sequentially
   // For a simple demo, we will show the latest code snippet that "types" out over time
@@ -53,24 +51,11 @@ export const IdeVideoPlayer: React.FC<IdeVideoPlayerProps> = ({ script, audioUrl
   useEffect(() => {
     if (!audioUrl && currentStep && typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      if (playing) {
-        const utterance = new SpeechSynthesisUtterance(currentStep.text);
-        utterance.rate = 1.0;
-        window.speechSynthesis.speak(utterance);
-      }
+      const utterance = new SpeechSynthesisUtterance(currentStep.text);
+      utterance.rate = 1.0;
+      window.speechSynthesis.speak(utterance);
     }
-  }, [currentStepIndex, audioUrl, currentStep, playing]);
-
-  // Pause speech when video pauses
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      if (playing) {
-        window.speechSynthesis.resume();
-      } else {
-        window.speechSynthesis.pause();
-      }
-    }
-  }, [playing]);
+  }, [currentStepIndex, audioUrl, currentStep]);
 
   return (
     <AbsoluteFill className="bg-[#1E1E1E] text-white flex flex-col font-mono relative overflow-hidden">
