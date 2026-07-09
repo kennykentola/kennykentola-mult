@@ -47,8 +47,11 @@ export const IdeVideoPlayer = ({ script, audioUrl, voiceURI }: IdeVideoPlayerPro
   const currentTiming = stepTimings[currentStepIndex];
   
   const framesInCurrentStep = frame - (currentTiming ? currentTiming.start : 0);
-  const charsToReveal = Math.floor(framesInCurrentStep / 2);
-  const displayedCode = currentStep ? currentStep.code.slice(0, charsToReveal) : '';
+  
+  // Type 3 characters per frame (90 chars per sec) so it finishes quickly and stays on screen
+  const charsToReveal = Math.floor(framesInCurrentStep * 3);
+  const codeString = currentStep?.code || '';
+  const displayedCode = codeString.slice(0, charsToReveal);
 
   // Fallback to browser SpeechSynthesis if HuggingFace TTS failed
   useEffect(() => {
