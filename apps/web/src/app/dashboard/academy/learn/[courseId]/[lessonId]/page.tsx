@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Course, Lesson } from '@company/shared';
 import { VideoPlayer } from '@/components/academy/VideoPlayer';
+import { AIVideoGenerator } from '@/components/AIVideoGenerator';
 
 export default function LessonPlayerPage({ params }: { params: Promise<{ courseId: string, lessonId: string }> }) {
   const resolvedParams = use(params);
@@ -148,6 +149,16 @@ export default function LessonPlayerPage({ params }: { params: Promise<{ courseI
 
           <div className="prose prose-invert max-w-none text-muted">
             <p>{currentLesson.content || 'No text content provided for this lesson.'}</p>
+          </div>
+
+          <div className="mt-12 pt-8 border-t border-white/10">
+            <div className="bg-indigo-900/20 border border-indigo-500/30 rounded-xl p-4 mb-6">
+              <h3 className="text-lg font-bold text-indigo-400 mb-1">Need help understanding the code?</h3>
+              <p className="text-sm text-indigo-200">
+                If you get stuck on a coding challenge or want to understand a piece of code better, just ask our AI to explain it! It will write the code and explain it to you in a video.
+              </p>
+            </div>
+            <AIVideoGenerator />
           </div>
         </div>
       </div>
