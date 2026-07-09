@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { databases } from '../services/appwrite';
 import { ID, Query } from 'node-appwrite';
-import { authenticateJWT, AuthenticatedRequest } from '../middleware/auth';
+import { authenticateJWT, optionalAuthenticateJWT, AuthenticatedRequest } from '../middleware/auth';
 import { z } from 'zod';
 import { validateRequest } from '../middleware/validate';
 
@@ -25,11 +25,15 @@ const createProjectSchema = z.object({
 });
 
 // ──────────────────────────────────────────────────
-// AUTHENTICATED: Create a new academic project request
+// AUTHENTICATED OR GUEST: Create a new academic project request
 // ──────────────────────────────────────────────────
-router.post('/requests', authenticateJWT, validateRequest(createProjectSchema), async (req: AuthenticatedRequest, res) => {
-  const userId = req.user?.id;
-  const { title, description, universityName, department, degree, level, serviceScope, initialDocumentUrl } = req.body;
+router.post('/requests', optionalAuthenticateJWT, validateRequest(createProjectSchema), async (req: AuthenticatedRequest, res) => {
+  const userId = req.user?.id || 'guest';
+  let { title, description, universityName, department, degree, level, serviceScope, initialDocumentUrl, clientName, clientEmail, clientPhone } = req.body;
+
+  if (userId === 'guest') {
+    description = `[GUEST REQUEST] Name: ${clientName || 'N/A'} | Email: ${clientEmail || 'N/A'} | Phone: ${clientPhone || 'N/A'}\n\n${description}`;
+  }
 
   try {
     const project = await databases.createDocument(

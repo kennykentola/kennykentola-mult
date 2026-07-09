@@ -29,7 +29,7 @@ export default async function DynamicFooterPage({ params }: { params: Promise<{ 
 
   if (resolvedParams.slug === 'project-ideas') {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/academic-ideas`, { cache: 'no-store' });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}` + `/academic-ideas`, { cache: 'no-store' });
       if (res.ok) {
         const dynamicIdeas = await res.json();
         if (dynamicIdeas && dynamicIdeas.length > 0) {

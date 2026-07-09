@@ -34,7 +34,7 @@ export default function ManageAcademicIdeasPage() {
   const fetchIdeas = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/academic-ideas`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}` + `/academic-ideas`);
       if (res.ok) {
         const data = await res.json();
         setIdeas(data);
@@ -50,8 +50,8 @@ export default function ManageAcademicIdeasPage() {
     e.preventDefault();
     try {
       const url = editingId 
-        ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/academic-ideas/${editingId}`
-        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/academic-ideas`;
+        ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}` + `/academic-ideas/${editingId}`
+        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}` + `/academic-ideas`;
         
       const res = await fetch(url, {
         method: editingId ? 'PUT' : 'POST',
@@ -78,7 +78,7 @@ export default function ManageAcademicIdeasPage() {
     if (!confirm('Are you sure you want to delete this idea?')) return;
     
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/academic-ideas/${id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}` + `/academic-ideas/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`

@@ -8,6 +8,7 @@ import { Footer } from '../../components/Footer';
 import { ConsultationModal } from '../../components/ConsultationModal';
 import { requestAcademicProject } from '../../features/academic/academicService';
 import { subscribeToNewsletter } from '../../features/newsletter/newsletterService';
+import { useAuth } from '../../features/auth/AuthContext';
 import toast from 'react-hot-toast';
 import { 
   GraduationCap, BookOpen, Code, Terminal, MonitorSmartphone, Target, PlayCircle,
@@ -17,6 +18,7 @@ import {
 
 export default function AcademicLandingPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [subscribing, setSubscribing] = useState(false);
@@ -29,6 +31,9 @@ export default function AcademicLandingPage() {
     degree: 'BSc',
     level: 'Final Year',
     serviceScope: 'Full Package',
+    clientName: '',
+    clientEmail: '',
+    clientPhone: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,8 +41,14 @@ export default function AcademicLandingPage() {
     try {
       setLoading(true);
       await requestAcademicProject(formData);
-      toast.success('Thesis project submitted successfully! Track it in your student dashboard.');
-      router.push('/dashboard/academic');
+      
+      if (!user) {
+        toast.success('Project request submitted successfully! Please create an account to track your project.', { duration: 5000 });
+        router.push('/register');
+      } else {
+        toast.success('Thesis project submitted successfully! Track it in your student dashboard.');
+        router.push('/dashboard/academic');
+      }
     } catch (error: any) {
       toast.error(error.message || 'Failed to submit academic project');
     } finally {
@@ -440,6 +451,21 @@ export default function AcademicLandingPage() {
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">Project Description / Abstract</label>
                 <textarea required rows={4} placeholder="Briefly describe what the system is supposed to do..." value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50 resize-none"></textarea>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Full Name</label>
+                  <input type="text" placeholder="John Doe" value={formData.clientName} onChange={e => setFormData({...formData, clientName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Email Address</label>
+                  <input type="email" placeholder="john@example.com" value={formData.clientEmail} onChange={e => setFormData({...formData, clientEmail: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Phone Number</label>
+                  <input type="tel" placeholder="+234..." value={formData.clientPhone} onChange={e => setFormData({...formData, clientPhone: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+                </div>
               </div>
 
               <div className="pt-4 flex flex-col sm:flex-row gap-4">

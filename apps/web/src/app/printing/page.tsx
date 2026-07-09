@@ -2,28 +2,34 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../features/auth/AuthContext';
-import { getMyOrders } from '../../features/printing/printingService';
+import { getMyOrders, getPublicPodCatalog } from '../../features/printing/printingService';
 import { PrintOrder, ORDER_STATUS_LABELS, SERVICE_TYPE_LABELS } from '../../features/printing/types';
-import { Package, Clock, Printer, Plus, Download } from 'lucide-react';
+import { Package, Clock, Printer, Plus, Download, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 
 export default function PrintingDashboardPage() {
   const { profile } = useAuth();
+  const [activeTab, setActiveTab] = useState<'orders' | 'store'>('orders');
   const [orders, setOrders] = useState<PrintOrder[]>([]);
+  const [podItems, setPodItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchOrders() {
+    async function fetchData() {
       try {
-        const { orders } = await getMyOrders();
-        setOrders(orders);
+        const [ordersRes, podCatalog] = await Promise.all([
+          getMyOrders(),
+          getPublicPodCatalog()
+        ]);
+        setOrders(ordersRes.orders);
+        setPodItems(podCatalog);
       } catch (err) {
-        console.error('Failed to load printing orders:', err);
+        console.error('Failed to load printing dashboard data:', err);
       } finally {
         setLoading(false);
       }
     }
-    fetchOrders();
+    fetchData();
   }, []);
 
   if (!profile) return null;
@@ -48,16 +54,38 @@ export default function PrintingDashboardPage() {
         </div>
       </div>
 
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <Printer className="h-5 w-5 text-rose-400" />
-          Recent Orders
-        </h2>
-        <Link href="/printing/new" className="flex items-center gap-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 text-sm font-semibold transition-all shadow-lg shadow-rose-500/20">
-          <Plus className="h-4 w-4" />
-          New Order
-        </Link>
+      <div className="flex border-b border-white/5 space-x-8 mb-8">
+        <button
+          onClick={() => setActiveTab('orders')}
+          className={`pb-4 font-semibold text-sm border-b-2 transition-colors ${
+            activeTab === 'orders' ? 'border-rose-500 text-rose-400' : 'border-transparent text-slate-400 hover:text-white'
+          }`}
+        >
+          My Print Orders
+        </button>
+        <button
+          onClick={() => setActiveTab('store')}
+          className={`pb-4 font-semibold text-sm border-b-2 transition-colors flex items-center gap-2 ${
+            activeTab === 'store' ? 'border-rose-500 text-rose-400' : 'border-transparent text-slate-400 hover:text-white'
+          }`}
+        >
+          <ShoppingBag className="h-4 w-4" />
+          Merchandise Store
+        </button>
       </div>
+
+      {activeTab === 'orders' ? (
+        <>
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <Printer className="h-5 w-5 text-rose-400" />
+              Recent Orders
+            </h2>
+            <Link href="/printing/new" className="flex items-center gap-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 text-sm font-semibold transition-all shadow-lg shadow-rose-500/20">
+              <Plus className="h-4 w-4" />
+              New Order
+            </Link>
+          </div>
 
       {loading ? (
         <div className="animate-pulse space-y-4">
@@ -145,16 +173,52 @@ export default function PrintingDashboardPage() {
               </div>
             );
           })}
-        </div>
-      ) : (
-        <div className="rounded-3xl border border-dashed border-slate-800 bg-slate-950/30 p-12 text-center">
-          <Printer className="mx-auto h-12 w-12 text-slate-700 mb-4" />
-          <h3 className="text-lg font-bold text-white">No print orders yet</h3>
-          <p className="mt-2 text-sm text-slate-400 max-w-md mx-auto">
-            Get started by creating a new order. We support document printing, graphic design, ID cards, and more.
-          </p>
-        </div>
-      )}
+          </div>
+        ) : (
+          <div className="rounded-3xl border border-dashed border-slate-800 bg-slate-950/30 p-12 text-center">
+            <Printer className="mx-auto h-12 w-12 text-slate-700 mb-4" />
+            <h3 className="text-lg font-bold text-white">No print orders yet</h3>
+            <p className="mt-2 text-sm text-slate-400 max-w-md mx-auto">
+              Get started by creating a new order. We support document printing, graphic design, ID cards, and more.
+            </p>
+          </div>
+        )}
+      </>
+    ) : (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {podItems.map(item => (
+          <div key={item.$id} className="rounded-2xl border border-slate-800 bg-slate-900/50 overflow-hidden hover:border-slate-700 transition-colors">
+            <div className="aspect-square bg-slate-800/50 flex items-center justify-center p-4">
+              {item.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={item.imageUrl} alt={item.title} className="w-full h-full object-contain" />
+              ) : (
+                <Package className="h-12 w-12 text-slate-600" />
+              )}
+            </div>
+            <div className="p-5">
+              <h3 className="font-bold text-white line-clamp-1" title={item.title}>{item.title}</h3>
+              <p className="text-sm text-slate-400 mb-4 capitalize mt-1">{item.category}</p>
+              <div className="flex justify-between items-center pt-4 border-t border-slate-800">
+                <span className="font-bold text-rose-400">₦{item.basePrice.toLocaleString()}</span>
+                <Link href={`/printing/new?type=${item.category}&title=${encodeURIComponent(item.title)}`} className="text-sm text-white bg-rose-600 hover:bg-rose-500 px-3 py-1.5 rounded-lg font-medium shadow-md shadow-rose-500/20 transition-colors">
+                  Order Now
+                </Link>
+              </div>
+            </div>
+          </div>
+        ))}
+        {podItems.length === 0 && (
+          <div className="col-span-full rounded-3xl border border-dashed border-slate-800 bg-slate-950/30 p-12 text-center">
+            <ShoppingBag className="mx-auto h-12 w-12 text-slate-700 mb-4" />
+            <h3 className="text-lg font-bold text-white">Store is empty</h3>
+            <p className="mt-2 text-sm text-slate-400 max-w-md mx-auto">
+              Check back later for new merchandise designs!
+            </p>
+          </div>
+        )}
+      </div>
+    )}
     </div>
   );
 }

@@ -34,7 +34,7 @@ export default function ManageDesignPortfolioPage() {
   const fetchItems = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/design-portfolio`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}` + `/design-portfolio`);
       if (res.ok) {
         const data = await res.json();
         setItems(data);
@@ -50,7 +50,7 @@ export default function ManageDesignPortfolioPage() {
     const uploadData = new FormData();
     uploadData.append('file', file);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/upload`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}` + `/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -90,8 +90,8 @@ export default function ManageDesignPortfolioPage() {
       const payload = { ...formData, imageUrl: finalImageUrl };
       
       const url = editingId 
-        ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/design-portfolio/${editingId}`
-        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/design-portfolio`;
+        ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}` + `/design-portfolio/${editingId}`
+        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}` + `/design-portfolio`;
         
       const res = await fetch(url, {
         method: editingId ? 'PUT' : 'POST',
@@ -121,7 +121,7 @@ export default function ManageDesignPortfolioPage() {
     if (!confirm('Are you sure you want to delete this design?')) return;
     
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/design-portfolio/${id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}` + `/design-portfolio/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`

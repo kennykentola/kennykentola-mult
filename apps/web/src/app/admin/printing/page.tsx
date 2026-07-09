@@ -15,6 +15,7 @@ import {
   FileText,
   CreditCard
 } from 'lucide-react';
+import { PodCatalogModal } from '../../../features/printing/PodCatalogModal';
 
 type OrderStatus = 'pending' | 'processing' | 'ready' | 'delivered' | 'cancelled';
 
@@ -39,18 +40,31 @@ const statusConfig: Record<OrderStatus, { label: string; color: string; dotColor
 };
 
 export default function AdminPrintingPage() {
-  const [activeTab, setActiveTab] = useState<'orders' | 'pod'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'pod' | 'pricing'>('orders');
   const [filterStatus, setFilterStatus] = useState<OrderStatus | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [orders, setOrders] = useState<AdminPrintOrder[]>([]);
+  
+  // POD State
+  const [podItems, setPodItems] = useState<any[]>([]);
+  const [isPodModalOpen, setIsPodModalOpen] = useState(false);
+  const [editingPodItem, setEditingPodItem] = useState<any | undefined>(undefined);
+  
+  // Pricing State
+  const [pricingConfig, setPricingConfig] = useState<any | null>(null);
+  
   const [loading, setLoading] = useState(true);
 
   React.useEffect(() => {
     let cancelled = false;
     async function loadOrders() {
       try {
-        const { getAdminOrders } = await import('../../../features/printing/printingService');
-        const data = await getAdminOrders('all');
+        const { getAdminOrders, getAdminPodCatalog } = await import('../../../features/printing/printingService');
+        const [data, podData, pricingData] = await Promise.all([
+          getAdminOrders('all'),
+          getAdminPodCatalog(),
+          fetch('/api/v1/printing/pricing').then(r => r.json())
+        ]);
         if (!cancelled) {
           // map to AdminPrintOrder format expected by the UI
           setOrders(data.orders.map((o: any) => ({
@@ -64,9 +78,13 @@ export default function AdminPrintingPage() {
             files: Array.isArray(o.fileUrls) ? o.fileUrls.length : 0,
             paymentStatus: o.paymentStatus || 'pending'
           })));
+          setPodItems(podData);
+          if (pricingData?.pricing?.[0]) {
+            setPricingConfig(pricingData.pricing[0]);
+          }
         }
       } catch (err) {
-        console.error('Failed to load admin printing orders:', err);
+        console.error('Failed to load admin printing data:', err);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -134,6 +152,16 @@ export default function AdminPrintingPage() {
           }`}
         >
           Print-on-Demand Catalog
+        </button>
+        <button
+          onClick={() => setActiveTab('pricing')}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+            activeTab === 'pricing' 
+              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30' 
+              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
+          }`}
+        >
+          Pricing Rules
         </button>
       </div>
 
@@ -276,15 +304,164 @@ export default function AdminPrintingPage() {
       </div>
       </>
     ) : (
-        <div className="rounded-2xl border border-slate-800/50 bg-slate-900/30 p-8 text-center text-slate-400">
-          <Package className="h-12 w-12 text-slate-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-white mb-2">Print-on-Demand Catalog</h2>
-          <p className="max-w-md mx-auto mb-6">Manage merchandise designs, t-shirts, mugs, and other printable items that customers can order directly from the store.</p>
-          <button className="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold shadow-lg shadow-rose-500/20">
-            + Add New Merchandise Design
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-xl font-bold text-white">Print-on-Demand Catalog</h2>
+            <p className="text-slate-400 mt-1">Manage merchandise designs available for customers to order.</p>
+          </div>
+          <button 
+            onClick={() => { setEditingPodItem(undefined); setIsPodModalOpen(true); }}
+            className="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold shadow-lg shadow-rose-500/20"
+          >
+            + Add New Design
           </button>
         </div>
-      )}
+
+        {podItems.length === 0 ? (
+          <div className="rounded-2xl border border-slate-800/50 bg-slate-900/30 p-12 text-center text-slate-400">
+            <Package className="h-12 w-12 text-slate-600 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-white mb-2">No Merchandise Designs</h3>
+            <p className="max-w-md mx-auto mb-6">You haven't added any print-on-demand items yet. Add your first t-shirt, mug, or other merchandise design.</p>
+            <button 
+              onClick={() => { setEditingPodItem(undefined); setIsPodModalOpen(true); }}
+              className="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold shadow-lg shadow-rose-500/20"
+            >
+              + Add New Merchandise Design
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {podItems.map(item => (
+              <div key={item.$id} className="rounded-2xl border border-slate-800 bg-slate-900/50 overflow-hidden hover:border-slate-700 transition-colors">
+                <div className="aspect-square bg-slate-800/50 flex items-center justify-center p-4">
+                  {item.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={item.imageUrl} alt={item.title} className="w-full h-full object-contain" />
+                  ) : (
+                    <Package className="h-12 w-12 text-slate-600" />
+                  )}
+                </div>
+                <div className="p-5">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-bold text-white line-clamp-1" title={item.title}>{item.title}</h3>
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-lg ${item.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-slate-400'}`}>
+                      {item.status}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-400 mb-4 capitalize">{item.category}</p>
+                  <div className="flex justify-between items-center pt-4 border-t border-slate-800">
+                    <span className="font-bold text-rose-400">₦{item.basePrice.toLocaleString()}</span>
+                    <button 
+                      onClick={() => { setEditingPodItem(item); setIsPodModalOpen(true); }}
+                      className="text-sm text-indigo-400 hover:text-indigo-300 font-medium"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    ) : activeTab === 'pricing' ? (
+      <div className="space-y-6 max-w-2xl">
+        <div>
+          <h2 className="text-xl font-bold text-white">Pricing Rules</h2>
+          <p className="text-slate-400 mt-1">Configure base prices and multipliers for printing services.</p>
+        </div>
+        {pricingConfig ? (
+          <form 
+            className="space-y-6 bg-slate-900/30 border border-slate-800/50 p-8 rounded-2xl"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              try {
+                const { updatePricingConfig } = await import('../../../features/printing/printingService');
+                const updated = await updatePricingConfig(pricingConfig.$id, {
+                  pricePerUnit: pricingConfig.pricePerUnit,
+                  colorMultiplier: pricingConfig.colorMultiplier,
+                  doubleSidedDiscount: pricingConfig.doubleSidedDiscount
+                });
+                setPricingConfig(updated);
+                alert('Pricing config updated successfully!');
+              } catch (err: any) {
+                alert('Failed to update pricing config: ' + err.message);
+              }
+            }}
+          >
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Base Price Per Page (₦)</label>
+              <input
+                type="number"
+                required
+                min="0"
+                value={pricingConfig.pricePerUnit || 0}
+                onChange={e => setPricingConfig({...pricingConfig, pricePerUnit: Number(e.target.value)})}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-rose-500"
+              />
+              <p className="text-xs text-slate-500 mt-2">The default cost for a single B&W A4 page.</p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Color Multiplier</label>
+              <input
+                type="number"
+                step="0.1"
+                min="1"
+                required
+                value={pricingConfig.colorMultiplier || 1}
+                onChange={e => setPricingConfig({...pricingConfig, colorMultiplier: Number(e.target.value)})}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-rose-500"
+              />
+              <p className="text-xs text-slate-500 mt-2">Multiplier for color printing (e.g., 2 = 2x base price).</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Double Sided Discount</label>
+              <input
+                type="number"
+                step="0.05"
+                min="0"
+                max="1"
+                required
+                value={pricingConfig.doubleSidedDiscount || 0}
+                onChange={e => setPricingConfig({...pricingConfig, doubleSidedDiscount: Number(e.target.value)})}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-rose-500"
+              />
+              <p className="text-xs text-slate-500 mt-2">Discount for double-sided printing (e.g., 0.1 = 10% discount on total pages).</p>
+            </div>
+
+            <div className="pt-4 border-t border-slate-800">
+              <button
+                type="submit"
+                className="px-6 py-2.5 rounded-xl font-medium bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-500/20"
+              >
+                Save Pricing Rules
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="rounded-2xl border border-slate-800/50 bg-slate-900/30 p-8 text-center text-slate-400">
+            <p>Loading pricing configuration...</p>
+          </div>
+        )}
+      </div>
+    ) : null}
+
+      <PodCatalogModal
+        isOpen={isPodModalOpen}
+        onClose={() => setIsPodModalOpen(false)}
+        existingItem={editingPodItem}
+        onSuccess={(newItem) => {
+          setIsPodModalOpen(false);
+          setPodItems(prev => {
+            const exists = prev.find(p => p.$id === newItem.$id);
+            if (exists) return prev.map(p => p.$id === newItem.$id ? newItem : p);
+            return [newItem, ...prev];
+          });
+        }}
+      />
     </div>
   );
 }

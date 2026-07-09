@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   fetchAcademicProjectById, updateAcademicProject, sendAcademicMessage, 
@@ -17,7 +17,8 @@ import { useAuth } from '@/lib/auth';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
-export default function AdminAcademicProjectDetailPage({ params }: { params: { id: string } }) {
+export default function AdminAcademicProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: projectId } = use(params);
   const router = useRouter();
   const { user } = useAuth();
   const [project, setProject] = useState<AcademicProjectDto | null>(null);
@@ -45,7 +46,7 @@ export default function AdminAcademicProjectDetailPage({ params }: { params: { i
 
   useEffect(() => {
     loadData();
-  }, [params.id]);
+  }, [projectId]);
 
   useEffect(() => {
     if (activeTab === 'chat') {
@@ -56,13 +57,13 @@ export default function AdminAcademicProjectDetailPage({ params }: { params: { i
   const loadData = async () => {
     try {
       setLoading(true);
-      const data = await fetchAcademicProjectById(params.id);
+      const data = await fetchAcademicProjectById(projectId);
       setProject(data.project);
       setMessages(data.messages);
       
       const [tasksData, paymentsData] = await Promise.all([
-        fetchProjectTasks(params.id),
-        fetchProjectPayments(params.id)
+        fetchProjectTasks(projectId),
+        fetchProjectPayments(projectId)
       ]);
       setTasks(tasksData);
       setPayments(paymentsData);
@@ -81,7 +82,7 @@ export default function AdminAcademicProjectDetailPage({ params }: { params: { i
     const selected = mentors.find(m => m.userId === mentorId);
     if (!selected) return;
     try {
-      await updateAcademicProject(params.id, { 
+      await updateAcademicProject(projectId, { 
         assignedMentorId: selected.userId, 
         assignedMentorName: `${selected.firstName} ${selected.lastName}`
       });
@@ -94,7 +95,7 @@ export default function AdminAcademicProjectDetailPage({ params }: { params: { i
 
   const handleUpdateStatus = async (newStatus: string) => {
     try {
-      await updateAcademicProject(params.id, { status: newStatus });
+      await updateAcademicProject(projectId, { status: newStatus });
       toast.success('Status updated');
       loadData();
     } catch (err: any) {
@@ -106,7 +107,7 @@ export default function AdminAcademicProjectDetailPage({ params }: { params: { i
     const price = parseInt(priceStr, 10);
     if (isNaN(price)) return toast.error('Invalid price');
     try {
-      await updateAcademicProject(params.id, { price });
+      await updateAcademicProject(projectId, { price });
       toast.success('Total Quoted Price updated');
       loadData();
     } catch (err: any) {
@@ -118,7 +119,7 @@ export default function AdminAcademicProjectDetailPage({ params }: { params: { i
     const amountPaid = parseInt(amountStr, 10);
     if (isNaN(amountPaid)) return toast.error('Invalid amount');
     try {
-      await updateAcademicProject(params.id, { amountPaid });
+      await updateAcademicProject(projectId, { amountPaid });
       toast.success('Amount Paid updated');
       loadData();
     } catch (err: any) {
@@ -131,7 +132,7 @@ export default function AdminAcademicProjectDetailPage({ params }: { params: { i
     if (!newTaskTitle.trim()) return;
     try {
       setCreatingTask(true);
-      await createProjectTask(params.id, newTaskTitle.trim());
+      await createProjectTask(projectId, newTaskTitle.trim());
       setNewTaskTitle('');
       toast.success('Task created');
       loadData();
@@ -144,7 +145,7 @@ export default function AdminAcademicProjectDetailPage({ params }: { params: { i
 
   const handleToggleTask = async (taskId: string, currentStatus: boolean) => {
     try {
-      await updateProjectTask(params.id, taskId, !currentStatus);
+      await updateProjectTask(projectId, taskId, !currentStatus);
       loadData();
     } catch (err: any) {
       toast.error('Failed to update task');
@@ -154,7 +155,7 @@ export default function AdminAcademicProjectDetailPage({ params }: { params: { i
   const handleDeleteTask = async (taskId: string) => {
     if (!confirm('Delete this task?')) return;
     try {
-      await deleteProjectTask(params.id, taskId);
+      await deleteProjectTask(projectId, taskId);
       toast.success('Task deleted');
       loadData();
     } catch (err: any) {
@@ -165,7 +166,7 @@ export default function AdminAcademicProjectDetailPage({ params }: { params: { i
   const handleApprovePayment = async (paymentId: string) => {
     if (!confirm('Approve this payment? This will increment the Total Amount Paid.')) return;
     try {
-      await approveProjectPayment(params.id, paymentId);
+      await approveProjectPayment(projectId, paymentId);
       toast.success('Payment approved');
       loadData();
     } catch (err: any) {
@@ -178,7 +179,7 @@ export default function AdminAcademicProjectDetailPage({ params }: { params: { i
     if (!messageContent.trim()) return;
     try {
       setSendingMsg(true);
-      const newMsg = await sendAcademicMessage(params.id, messageContent);
+      const newMsg = await sendAcademicMessage(projectId, messageContent);
       setMessages(prev => [...prev, newMsg]);
       setMessageContent('');
     } catch (err: any) {
@@ -208,7 +209,7 @@ export default function AdminAcademicProjectDetailPage({ params }: { params: { i
     try {
       setUploadingDoc(true);
       const url = await uploadToCloudinary(file);
-      await updateAcademicProject(params.id, { documentationUrl: url });
+      await updateAcademicProject(projectId, { documentationUrl: url });
       toast.success('Thesis document uploaded');
       loadData();
     } catch (err: any) {
@@ -224,7 +225,7 @@ export default function AdminAcademicProjectDetailPage({ params }: { params: { i
     try {
       setUploadingCode(true);
       const url = await uploadToCloudinary(file);
-      await updateAcademicProject(params.id, { sourceCodeUrl: url });
+      await updateAcademicProject(projectId, { sourceCodeUrl: url });
       toast.success('Source code uploaded');
       loadData();
     } catch (err: any) {

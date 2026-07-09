@@ -36,7 +36,7 @@ export default function ManagePortfolioPage() {
   const fetchItems = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/portfolio`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}` + `/portfolio`);
       if (res.ok) {
         const data = await res.json();
         setItems(data);
@@ -52,7 +52,7 @@ export default function ManagePortfolioPage() {
     const uploadData = new FormData();
     uploadData.append('file', file);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/upload`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}` + `/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -86,8 +86,8 @@ export default function ManagePortfolioPage() {
       const payload = { ...formData, imageUrl: finalImageUrl };
       
       const url = editingId 
-        ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/portfolio/${editingId}`
-        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/portfolio`;
+        ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}` + `/portfolio/${editingId}`
+        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}` + `/portfolio`;
         
       const res = await fetch(url, {
         method: editingId ? 'PUT' : 'POST',
@@ -117,7 +117,7 @@ export default function ManagePortfolioPage() {
     if (!confirm('Are you sure you want to delete this project?')) return;
     
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/portfolio/${id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}` + `/portfolio/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`

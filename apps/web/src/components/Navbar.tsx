@@ -11,27 +11,30 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-[#050505]/80 backdrop-blur-xl">
       <div className="mx-auto max-w-7xl flex h-20 items-center justify-between px-6 lg:px-12">
         {/* Logo */}
-        <Link href="/" className="flex items-center group cursor-pointer" onClick={() => setIsOpen(false)}>
-          <img 
-            src="/logo.png" 
-            alt="KennyKentola Logo" 
-            className="h-10 md:h-12 w-auto object-contain transition-transform group-hover:scale-105 rounded-lg" 
-          />
-        </Link>
+        <div className="flex-1 flex items-center justify-start">
+          <Link href="/" className="flex items-center group cursor-pointer" onClick={() => setIsOpen(false)}>
+            <img 
+              src="/logo.png" 
+              alt="KennyKentola Logo" 
+              className="h-10 md:h-12 w-auto object-contain transition-transform group-hover:scale-105 rounded-lg" 
+            />
+          </Link>
+        </div>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
+        <nav className="hidden xl:flex items-center gap-5 text-sm font-medium text-slate-400">
           <Link href="/academy" className="hover:text-white transition-colors">Academy</Link>
           <Link href="/academic" className="hover:text-white transition-colors">Academic Guidance</Link>
           <Link href="/agency" className="hover:text-white transition-colors">Software Development</Link>
           <Link href="/about" className="hover:text-white transition-colors">About Us</Link>
+          <Link href="/contact" className="hover:text-white transition-colors">Contact Us</Link>
           <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
           <Link href="/solar" className="hover:text-white transition-colors">Solar / Electrical</Link>
-          <Link href="/printing" className="hover:text-white transition-colors">Printing & Graphics</Link>
+          <Link href="/design" className="hover:text-white transition-colors">Printing & Graphics</Link>
         </nav>
 
         {/* Desktop Actions */}
-        <div className="hidden md:flex items-center gap-4">
+        <div className="hidden md:flex flex-1 items-center justify-end gap-4">
           <Link href="/login" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
             Sign In
           </Link>
@@ -41,7 +44,7 @@ export function Navbar() {
         </div>
 
         {/* Mobile Actions & Hamburger */}
-        <div className="md:hidden flex items-center gap-3">
+        <div className="md:hidden flex flex-1 items-center justify-end gap-3">
           <Link href="/register" className="h-9 px-4 inline-flex items-center justify-center rounded-lg bg-white text-black text-xs font-semibold hover:bg-slate-200 transition-colors">
             Start
           </Link>
@@ -70,13 +73,16 @@ export function Navbar() {
           <Link href="/about" onClick={() => setIsOpen(false)} className="py-4 text-lg font-medium text-slate-300 hover:text-white border-b border-white/5">
             About Us
           </Link>
+          <Link href="/contact" onClick={() => setIsOpen(false)} className="py-4 text-lg font-medium text-slate-300 hover:text-white border-b border-white/5">
+            Contact Us
+          </Link>
           <Link href="/blog" onClick={() => setIsOpen(false)} className="py-4 text-lg font-medium text-slate-300 hover:text-white border-b border-white/5">
             Blog
           </Link>
           <Link href="/solar" onClick={() => setIsOpen(false)} className="py-4 text-lg font-medium text-slate-300 hover:text-white border-b border-white/5">
             Solar / Electrical
           </Link>
-          <Link href="/printing" onClick={() => setIsOpen(false)} className="py-4 text-lg font-medium text-slate-300 hover:text-white border-b border-white/5">
+          <Link href="/design" onClick={() => setIsOpen(false)} className="py-4 text-lg font-medium text-slate-300 hover:text-white border-b border-white/5">
             Printing & Graphics
           </Link>
           <Link href="/login" onClick={() => setIsOpen(false)} className="py-4 text-lg font-medium text-slate-300 hover:text-white border-b border-white/5">

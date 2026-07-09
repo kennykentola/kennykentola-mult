@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Mail, Phone, MapPin, MessageSquare, Clock, ArrowRight } from 'lucide-react';
+import { Navbar } from '../../components/Navbar';
 import ContactForm from '../../components/ContactForm';
 import { Footer } from '../../components/Footer';
 
@@ -62,22 +63,9 @@ const topics = [
 export default function ContactPage() {
   return (
     <div className="relative min-h-screen bg-slate-950 text-white font-sans">
+      <Navbar />
       <div className="absolute top-0 left-0 w-[40%] h-[40%] rounded-full bg-indigo-900/20 blur-[100px] pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-[30%] h-[30%] rounded-full bg-cyan-900/10 blur-[100px] pointer-events-none" />
-
-      {/* Nav */}
-      <header className="sticky top-0 z-50 border-b border-slate-900 bg-slate-950/80 backdrop-blur-md">
-        <div className="mx-auto max-w-7xl flex h-16 items-center justify-between px-6">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center font-bold text-white">K</div>
-            <span className="text-xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">KennyKentola</span>
-          </Link>
-          <div className="flex items-center gap-4 text-sm">
-            <Link href="/login" className="text-slate-400 hover:text-white transition-colors">Login</Link>
-            <Link href="/register" className="rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 px-5 py-2 font-semibold text-white hover:opacity-90 transition-opacity">Get Started</Link>
-          </div>
-        </div>
-      </header>
 
       <div className="mx-auto max-w-6xl px-6 pt-24 pb-24">
         {/* Header */}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Navbar } from '../../components/Navbar';
+import { Footer } from '../../components/Footer';
 import Link from 'next/link';
 import { 
   PenTool, 
@@ -16,7 +17,7 @@ import {
 
 async function getDesignPortfolio() {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/design-portfolio`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/design-portfolio`, {
       cache: 'no-store'
     });
     if (!res.ok) throw new Error('Failed to fetch');
@@ -52,7 +53,7 @@ export default async function DesignLandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link 
-              href="/printing"
+              href="/design/request"
               className="w-full sm:w-auto h-12 px-8 flex items-center justify-center gap-2 bg-rose-500 hover:bg-rose-400 text-black font-bold rounded-xl transition-colors"
             >
               Place Your Order
@@ -135,7 +136,7 @@ export default async function DesignLandingPage() {
             </p>
             
             <Link 
-              href="/printing"
+              href="/design/request"
               className="inline-flex items-center justify-center gap-2 h-14 px-8 bg-rose-500 hover:bg-rose-400 text-black font-black rounded-xl transition-colors shadow-[0_0_40px_rgba(244,63,94,0.3)] hover:shadow-[0_0_60px_rgba(244,63,94,0.5)]"
             >
               Start Your Design Project
@@ -145,6 +146,8 @@ export default async function DesignLandingPage() {
         </div>
 
       </main>
+
+      <Footer />
     </div>
   );
 }

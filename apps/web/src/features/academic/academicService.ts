@@ -57,7 +57,13 @@ export interface AcademicPaymentDto {
 }
 
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
-  const token = await getSessionJwt();
+  let token = null;
+  try {
+    token = await getSessionJwt();
+  } catch (err) {
+    // User is likely a guest, proceed without token
+  }
+  
   const headers = new Headers(options.headers || {});
   headers.set('Content-Type', 'application/json');
   if (token) {
@@ -81,6 +87,9 @@ export async function requestAcademicProject(data: {
   level?: string;
   serviceScope: string;
   initialDocumentUrl?: string;
+  clientName?: string;
+  clientEmail?: string;
+  clientPhone?: string;
 }): Promise<AcademicProjectDto> {
   const response = await fetchWithAuth(`${API_BASE}/academic-projects/requests`, {
     method: 'POST',

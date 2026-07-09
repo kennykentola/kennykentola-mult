@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 
 async function getPortfolioItems() {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/portfolio`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}` + `/portfolio`, {
       cache: 'no-store'
     });
     if (!res.ok) throw new Error('Failed to fetch');

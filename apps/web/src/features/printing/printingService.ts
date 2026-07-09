@@ -117,3 +117,63 @@ export async function verifyPayment(orderId: string, paymentStatus: 'paid' | 're
   });
   return data.order;
 }
+
+// ──────────────────────────────────────────────
+// POD Catalog (Admin & Public)
+// ──────────────────────────────────────────────
+
+export interface PodItem {
+  $id?: string;
+  title: string;
+  description: string;
+  imageUrl?: string;
+  category: string;
+  basePrice: number;
+  status: 'active' | 'draft';
+  createdAt?: string;
+}
+
+export async function getPublicPodCatalog(): Promise<PodItem[]> {
+  const data = await fetch(`${API_BASE}/printing/pod`).then(res => res.json());
+  return data.catalog || [];
+}
+
+export async function getAdminPodCatalog(): Promise<PodItem[]> {
+  const data = await fetchWithAuth(`${API_BASE}/printing/admin/pod`);
+  return data.catalog || [];
+}
+
+export async function createPodItem(item: Partial<PodItem>): Promise<PodItem> {
+  const data = await fetchWithAuth(`${API_BASE}/printing/admin/pod`, {
+    method: 'POST',
+    body: JSON.stringify(item)
+  });
+  return data.item;
+}
+
+export async function updatePodItem(id: string, item: Partial<PodItem>): Promise<PodItem> {
+  const data = await fetchWithAuth(`${API_BASE}/printing/admin/pod/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(item)
+  });
+  return data.item;
+}
+
+export async function deletePodItem(id: string): Promise<void> {
+  await fetchWithAuth(`${API_BASE}/printing/admin/pod/${id}`, {
+    method: 'DELETE'
+  });
+}
+
+// ──────────────────────────────────────────────
+// Pricing Config (Admin)
+// ──────────────────────────────────────────────
+
+export async function updatePricingConfig(id: string, data: Partial<PricingConfig>): Promise<PricingConfig> {
+  const res = await fetchWithAuth(`${API_BASE}/printing/admin/pricing/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  });
+  return res.item;
+}
+

@@ -10,6 +10,7 @@ const DATABASE_ID = process.env.APPWRITE_DATABASE_ID || 'multicompany';
 const PRINT_ORDERS_COLLECTION = 'print_orders';
 const PRICING_CONFIG_COLLECTION = 'pricing_config';
 const PRINT_MESSAGES_COLLECTION = 'print_messages';
+const POD_CATALOG_COLLECTION = 'pod_catalog';
 
 const createOrderSchema = z.object({
   body: z.object({
@@ -40,6 +41,155 @@ router.get('/pricing', async (_req, res) => {
     res.status(200).json({ pricing: pricing.documents });
   } catch (err: any) {
     console.error('[Printing] Error fetching pricing:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ──────────────────────────────────────────────────
+// ADMIN: Update pricing information
+// ──────────────────────────────────────────────────
+const pricingUpdateSchema = z.object({
+  body: z.object({
+    pricePerUnit: z.coerce.number().min(0),
+    colorMultiplier: z.coerce.number().min(1).optional(),
+    doubleSidedDiscount: z.coerce.number().min(0).max(1).optional()
+  })
+});
+
+router.put('/admin/pricing/:id', authenticateJWT, validateRequest(pricingUpdateSchema), async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Admin access required.' });
+  }
+  
+  try {
+    const doc = await databases.updateDocument(
+      DATABASE_ID,
+      PRICING_CONFIG_COLLECTION,
+      req.params.id,
+      {
+        pricePerUnit: req.body.pricePerUnit,
+        ...(req.body.colorMultiplier !== undefined && { colorMultiplier: req.body.colorMultiplier }),
+        ...(req.body.doubleSidedDiscount !== undefined && { doubleSidedDiscount: req.body.doubleSidedDiscount })
+      }
+    );
+    res.status(200).json({ item: doc });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ──────────────────────────────────────────────────
+// PUBLIC: Get POD Catalog
+// ──────────────────────────────────────────────────
+router.get('/pod', async (_req, res) => {
+  try {
+    const catalog = await databases.listDocuments(
+      DATABASE_ID,
+      POD_CATALOG_COLLECTION,
+      [Query.equal('status', 'active')]
+    );
+    res.status(200).json({ catalog: catalog.documents });
+  } catch (err: any) {
+    console.error('[Printing API] Failed to fetch POD catalog:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ──────────────────────────────────────────────────
+// ADMIN: Manage POD Catalog
+// ──────────────────────────────────────────────────
+const podSchema = z.object({
+  body: z.object({
+    title: z.string().min(1, 'Title is required'),
+    description: z.string().min(1, 'Description is required'),
+    imageUrl: z.string().optional(),
+    category: z.string().min(1, 'Category is required'),
+    basePrice: z.coerce.number().min(0),
+    status: z.enum(['active', 'draft']).optional().default('active')
+  })
+});
+
+router.post('/admin/pod', authenticateJWT, validateRequest(podSchema), async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Admin access required.' });
+  }
+  
+  try {
+    const doc = await databases.createDocument(
+      DATABASE_ID,
+      POD_CATALOG_COLLECTION,
+      ID.unique(),
+      {
+        title: req.body.title,
+        description: req.body.description,
+        imageUrl: req.body.imageUrl || '',
+        category: req.body.category,
+        basePrice: req.body.basePrice,
+        status: req.body.status,
+        createdAt: new Date().toISOString()
+      }
+    );
+    res.status(201).json({ item: doc });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/admin/pod/:id', authenticateJWT, validateRequest(podSchema), async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Admin access required.' });
+  }
+  
+  try {
+    const doc = await databases.updateDocument(
+      DATABASE_ID,
+      POD_CATALOG_COLLECTION,
+      req.params.id,
+      {
+        title: req.body.title,
+        description: req.body.description,
+        imageUrl: req.body.imageUrl || '',
+        category: req.body.category,
+        basePrice: req.body.basePrice,
+        status: req.body.status
+      }
+    );
+    res.status(200).json({ item: doc });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/admin/pod/:id', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Admin access required.' });
+  }
+  
+  try {
+    await databases.deleteDocument(
+      DATABASE_ID,
+      POD_CATALOG_COLLECTION,
+      req.params.id
+    );
+    res.status(200).json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/admin/pod', authenticateJWT, async (req: AuthenticatedRequest, res) => {
+  if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+    return res.status(403).json({ error: 'Admin access required.' });
+  }
+
+  try {
+    const catalog = await databases.listDocuments(
+      DATABASE_ID,
+      POD_CATALOG_COLLECTION,
+      [Query.orderDesc('createdAt')]
+    );
+    res.status(200).json({ catalog: catalog.documents });
+  } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
@@ -141,7 +291,7 @@ router.get('/orders/:orderId', authenticateJWT, async (req: AuthenticatedRequest
     ) as any;
 
     // Ensure user can only view their own orders (unless Admin)
-    if (order.userId !== req.user?.id && req.user?.role !== 'Admin') {
+    if (order.userId !== req.user?.id && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
       return res.status(403).json({ error: 'Access denied.' });
     }
 
@@ -156,7 +306,7 @@ router.get('/orders/:orderId', authenticateJWT, async (req: AuthenticatedRequest
 // ADMIN: List all print orders (with optional status filter)
 // ──────────────────────────────────────────────────
 router.get('/admin/orders', authenticateJWT, async (req: AuthenticatedRequest, res) => {
-  if (req.user?.role !== 'Admin' && req.user?.role !== 'Printer Operator') {
+  if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin' && req.user?.role !== 'Printer Operator') {
     return res.status(403).json({ error: 'Admin access required.' });
   }
 
@@ -198,7 +348,7 @@ const updateAdminOrderSchema = z.object({
 // ADMIN: Update order status (accept, process, ready, deliver, cancel)
 // ──────────────────────────────────────────────────
 router.patch('/admin/orders/:orderId', authenticateJWT, validateRequest(updateAdminOrderSchema), async (req: AuthenticatedRequest, res) => {
-  if (req.user?.role !== 'Admin' && req.user?.role !== 'Printer Operator') {
+  if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin' && req.user?.role !== 'Printer Operator') {
     return res.status(403).json({ error: 'Admin access required.' });
   }
 
@@ -261,7 +411,7 @@ router.patch('/orders/:orderId/receipt', authenticateJWT, async (req: Authentica
 // ADMIN: Verify Payment
 // ──────────────────────────────────────────────────
 router.patch('/admin/orders/:orderId/verify-payment', authenticateJWT, async (req: AuthenticatedRequest, res) => {
-  if (req.user?.role !== 'Admin' && req.user?.role !== 'Printer Operator') {
+  if (req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin' && req.user?.role !== 'Printer Operator') {
     return res.status(403).json({ error: 'Admin access required.' });
   }
 
@@ -288,7 +438,7 @@ router.get('/orders/:orderId/messages', authenticateJWT, async (req: Authenticat
 
   try {
     const order = await databases.getDocument(DATABASE_ID, PRINT_ORDERS_COLLECTION, orderId) as any;
-    if (order.userId !== req.user?.id && req.user?.role !== 'Admin' && req.user?.role !== 'Printer Operator') {
+    if (order.userId !== req.user?.id && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin' && req.user?.role !== 'Printer Operator') {
       return res.status(403).json({ error: 'Access denied.' });
     }
 

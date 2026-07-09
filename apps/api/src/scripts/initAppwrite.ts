@@ -176,6 +176,31 @@ const collections: CollectionDef[] = [
     ]
   },
   {
+    id: 'print_messages',
+    name: 'Print Messages',
+    attributes: [
+      { key: 'orderId', type: 'string', size: 50, required: true },
+      { key: 'senderId', type: 'string', size: 50, required: true },
+      { key: 'senderName', type: 'string', size: 150, required: true },
+      { key: 'content', type: 'string', size: 5000, required: true },
+      { key: 'fileUrl', type: 'string', size: 500, required: false },
+      { key: 'timestamp', type: 'datetime', required: true }
+    ]
+  },
+  {
+    id: 'pod_catalog',
+    name: 'Print-on-Demand Catalog',
+    attributes: [
+      { key: 'title', type: 'string', size: 150, required: true },
+      { key: 'description', type: 'string', size: 2000, required: true },
+      { key: 'imageUrl', type: 'string', size: 500, required: false },
+      { key: 'category', type: 'string', size: 50, required: true },
+      { key: 'basePrice', type: 'float', required: true },
+      { key: 'status', type: 'string', size: 20, required: true, default: 'active' },
+      { key: 'createdAt', type: 'datetime', required: false }
+    ]
+  },
+  {
     id: 'pricing_config',
     name: 'Pricing Config',
     attributes: [

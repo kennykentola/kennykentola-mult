@@ -32,7 +32,7 @@ export default function ManageThesisPage() {
   const fetchSamples = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/thesis-samples`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}` + `/thesis-samples`);
       if (res.ok) {
         const data = await res.json();
         setSamples(data);
@@ -48,8 +48,8 @@ export default function ManageThesisPage() {
     e.preventDefault();
     try {
       const url = editingId 
-        ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/thesis-samples/${editingId}`
-        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/thesis-samples`;
+        ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}` + `/thesis-samples/${editingId}`
+        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}` + `/thesis-samples`;
         
       const res = await fetch(url, {
         method: editingId ? 'PUT' : 'POST',
@@ -76,7 +76,7 @@ export default function ManageThesisPage() {
     if (!confirm('Are you sure you want to delete this sample?')) return;
     
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/thesis-samples/${id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}` + `/thesis-samples/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -170,9 +170,9 @@ export default function ManageThesisPage() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl shadow-2xl animate-in zoom-in-95 duration-200 my-8">
-            <div className="flex justify-between items-center p-6 border-b border-slate-800 sticky top-0 bg-slate-900 rounded-t-2xl z-10">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="flex justify-between items-center p-6 border-b border-slate-800 shrink-0">
               <h2 className="text-xl font-bold text-white">
                 {editingId ? 'Edit Thesis Sample' : 'New Thesis Sample'}
               </h2>
@@ -181,7 +181,7 @@ export default function ManageThesisPage() {
               </button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 md:col-span-1">
                   <label className="block text-sm font-semibold text-slate-300 mb-1.5">Title</label>
