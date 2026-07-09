@@ -7,7 +7,7 @@ export const VIDEO_FPS = 30;
 export const VIDEO_WIDTH = 1920;
 export const VIDEO_HEIGHT = 1080;
 
-interface ScriptItem {
+export interface ScriptItem {
   text: string;
   code: string;
 }
@@ -17,7 +17,7 @@ interface IdeVideoPlayerProps {
   audioUrl: string;
 }
 
-export const IdeVideoPlayer: React.FC<IdeVideoPlayerProps> = ({ script, audioUrl }) => {
+export const IdeVideoPlayer = ({ script, audioUrl }: IdeVideoPlayerProps) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 

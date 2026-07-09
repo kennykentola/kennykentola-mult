@@ -71,7 +71,7 @@ Each object must have:
     }
 
     // Combine all text for the voiceover
-    const fullText = scriptData.map(step => step.text).join('. ');
+    const fullText = scriptData.map((step: any) => step.text).join('. ');
 
     // 2. Generate Audio (TTS)
     // The HF serverless API frequently unloads TTS models if not used. 

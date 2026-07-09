@@ -2,13 +2,13 @@
 import React, { useState, useRef } from 'react';
 import { Player, PlayerRef } from '@remotion/player';
 import { Download, PlayCircle } from 'lucide-react';
-import { IdeVideoPlayer, VIDEO_FPS, VIDEO_WIDTH, VIDEO_HEIGHT } from './IdeVideoPlayer';
+import { IdeVideoPlayer, VIDEO_FPS, VIDEO_WIDTH, VIDEO_HEIGHT, ScriptItem } from './IdeVideoPlayer';
 
 export function AIVideoGenerator() {
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [videoData, setVideoData] = useState<{ script: any[], audioUrl: string } | null>(null);
+  const [videoData, setVideoData] = useState<{ script: ScriptItem[], audioUrl: string } | null>(null);
   const [recording, setRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
   const playerRef = useRef<PlayerRef>(null);
