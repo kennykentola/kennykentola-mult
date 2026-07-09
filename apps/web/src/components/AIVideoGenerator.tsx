@@ -1,6 +1,7 @@
 'use client';
-import React, { useState } from 'react';
-import { Player } from '@remotion/player';
+import React, { useState, useRef } from 'react';
+import { Player, PlayerRef } from '@remotion/player';
+import { Download, PlayCircle } from 'lucide-react';
 import { IdeVideoPlayer, VIDEO_FPS, VIDEO_WIDTH, VIDEO_HEIGHT } from './IdeVideoPlayer';
 
 export function AIVideoGenerator() {
@@ -8,6 +9,8 @@ export function AIVideoGenerator() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [videoData, setVideoData] = useState<{ script: any[], audioUrl: string } | null>(null);
+  const [recording, setRecording] = useState(false);
+  const playerRef = useRef<PlayerRef>(null);
 
   const handleGenerate = async () => {
     if (!prompt) return;
@@ -46,6 +49,53 @@ export function AIVideoGenerator() {
   // Or better, calculate based on script length. Let's do 60 frames (2s) per script item minimum
   const durationInFrames = videoData ? Math.max(900, videoData.script.length * 90) : 900;
 
+  const handleRecord = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { displaySurface: 'browser' } as any,
+        audio: true
+      });
+      
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+      const chunks: BlobPart[] = [];
+      
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+      
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'ai-code-video.webm';
+        a.click();
+        URL.revokeObjectURL(url);
+        setRecording(false);
+      };
+
+      mediaRecorder.start();
+      setRecording(true);
+
+      if (playerRef.current) {
+        playerRef.current.seekTo(0);
+        playerRef.current.play();
+      }
+
+      setTimeout(() => {
+        if (mediaRecorder.state === 'recording') {
+          const tracks = stream.getTracks();
+          tracks.forEach(track => track.stop());
+          mediaRecorder.stop();
+        }
+      }, (durationInFrames / VIDEO_FPS) * 1000 + 1000);
+
+    } catch (err) {
+      console.error('Recording failed', err);
+      setRecording(false);
+    }
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8">
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
@@ -77,8 +127,21 @@ export function AIVideoGenerator() {
       </div>
 
       {videoData && (
-        <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl shadow-2xl overflow-hidden aspect-video">
-           <Player
+        <div className="space-y-4">
+          <div className="flex justify-end gap-3">
+            <button 
+              onClick={handleRecord}
+              disabled={recording}
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-600/50 text-white px-4 py-2 rounded-xl font-bold transition-all"
+            >
+              <Download className="w-4 h-4" />
+              {recording ? 'Recording (Select this tab)...' : 'Record & Download Video'}
+            </button>
+          </div>
+          
+          <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl shadow-2xl overflow-hidden aspect-video relative">
+            <Player
+              ref={playerRef}
             component={IdeVideoPlayer}
             inputProps={{ script: videoData.script, audioUrl: videoData.audioUrl }}
             durationInFrames={durationInFrames}
