@@ -1,5 +1,5 @@
 'use client';
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useCurrentFrame, useVideoConfig, Audio, AbsoluteFill } from 'remotion';
 import { Highlight, themes } from 'prism-react-renderer';
 
@@ -43,10 +43,19 @@ export const IdeVideoPlayer: React.FC<IdeVideoPlayerProps> = ({ script, audioUrl
 
   const currentStep = script[currentStepIndex];
   
-  // Typing effect: reveal 1 character every 2 frames
   const framesInCurrentStep = frame - (currentStepIndex * totalFramesPerItem);
   const charsToReveal = Math.floor(framesInCurrentStep / 2);
   const displayedCode = currentStep ? currentStep.code.slice(0, charsToReveal) : '';
+
+  // Fallback to browser SpeechSynthesis if HuggingFace TTS failed
+  useEffect(() => {
+    if (!audioUrl && currentStep && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(currentStep.text);
+      utterance.rate = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+  }, [currentStepIndex, audioUrl, currentStep]);
 
   return (
     <AbsoluteFill className="bg-[#1E1E1E] text-white flex flex-col font-mono relative overflow-hidden">

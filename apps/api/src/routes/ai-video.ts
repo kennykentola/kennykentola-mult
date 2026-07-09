@@ -55,16 +55,21 @@ Each object must have:
     const fullText = scriptData.map(step => step.text).join('. ');
 
     // 2. Generate Audio (TTS)
-    // We use a high quality open source English TTS model available on the free serverless tier
-    const audioBlob = await hf.textToSpeech({
-      model: "espnet/kan-bayashi_ljspeech_vits",
-      inputs: fullText,
-    });
-
-    // Convert the audio Blob to a base64 string to send to the frontend
-    const arrayBuffer = await audioBlob.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const audioBase64 = `data:audio/wav;base64,${buffer.toString('base64')}`;
+    // The HF serverless API frequently unloads TTS models if not used. 
+    // We will attempt to generate audio, but if it fails, we will gracefully degrade.
+    let audioBase64 = null;
+    try {
+      const audioBlob = await hf.textToSpeech({
+        model: "suno/bark-small",
+        inputs: fullText,
+      });
+      const arrayBuffer = await audioBlob.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      audioBase64 = `data:audio/wav;base64,${buffer.toString('base64')}`;
+    } catch (ttsError) {
+      console.warn('[AIVideo] TTS Generation failed, falling back to browser synthesis:', ttsError);
+      // We don't throw, we just proceed without audioBase64
+    }
 
     return res.json({
       script: scriptData,
