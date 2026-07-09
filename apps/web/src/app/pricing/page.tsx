@@ -2,87 +2,107 @@ import React from 'react';
 import Link from 'next/link';
 import { ArrowRight, Check, Zap, Users, BookOpen, MessageSquare, Award, Star } from 'lucide-react';
 import { Footer } from '../../components/Footer';
+import { client } from '@/lib/appwrite';
+import { Databases, Query } from 'appwrite';
 
 export const metadata = {
   title: 'Pricing — KennyKentola Academy',
   description: 'Flexible pricing for courses, bootcamps, and professional services at KennyKentola.',
 };
 
-const plans = [
-  {
-    name: 'Free',
-    price: '₦0',
-    period: 'forever',
-    tagline: 'Start learning today',
-    color: 'border-slate-700',
-    badge: null,
-    cta: 'Get Started Free',
-    ctaHref: '/register',
-    ctaStyle: 'bg-slate-800 hover:bg-slate-700 text-white',
-    features: [
-      'Browse all published courses',
-      'Access free preview lessons',
-      'Community forum access',
-      'Basic profile & dashboard',
-    ],
-    notIncluded: ['Full course access', 'Assignments & grading', 'Certificates', 'Live classes', 'Instructor messages'],
-  },
-  {
-    name: 'Pro Student',
-    price: '₦5,000',
-    period: 'per course',
-    tagline: 'Full access to one course',
-    color: 'border-indigo-500/50',
-    badge: 'Most Popular',
-    cta: 'Enroll in a Course',
-    ctaHref: '/dashboard/courses',
-    ctaStyle: 'bg-gradient-to-r from-indigo-500 to-purple-600 hover:opacity-90 text-white',
-    features: [
-      'Full course access (all lessons)',
-      'Video lessons + notes',
-      'Assignment portal',
-      'Instructor grading & feedback',
-      'Course certificate on completion',
-      'Access to live classes',
-      'Community forum access',
-    ],
-    notIncluded: ['All-courses access', 'Priority support'],
-  },
-  {
-    name: 'Bootcamp',
-    price: '₦35,000',
-    period: 'per cohort',
-    tagline: 'Intensive program — 3 months',
-    color: 'border-emerald-500/30',
-    badge: 'Best Value',
-    cta: 'Apply for Bootcamp',
-    ctaHref: '/bootcamps',
-    ctaStyle: 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-90 text-white',
-    features: [
-      'Access to full bootcamp curriculum',
-      'Weekly live coaching sessions',
-      'Dedicated instructor + mentorship',
-      'Real-world project portfolio',
-      'Assignment grading & feedback',
-      'Job-ready certificate',
-      'Community + alumni network',
-      'Priority instructor messaging',
-    ],
-    notIncluded: [],
-  },
-];
+export const revalidate = 60; // Revalidate every 60 seconds
 
-const serviceRates = [
-  { service: 'Black & White Print', price: '₦30 / page' },
-  { service: 'Color Print', price: '₦80 / page' },
-  { service: 'Document Binding', price: '₦500+' },
-  { service: 'ID Card Design & Print', price: '₦2,000' },
-  { service: 'Custom Software MVP', price: 'From ₦150,000' },
-  { service: 'Website Design', price: 'From ₦80,000' },
-  { service: 'Solar Installation Quote', price: 'Free site survey' },
-];
+async function fetchSiteSettingsMap() {
+  const db = new Databases(client);
+  try {
+    const res = await db.listDocuments('multicompany', 'site_settings', [Query.limit(100)]);
+    const map: Record<string, string> = {};
+    for (const doc of res.documents) {
+      map[doc.key] = doc.value;
+    }
+    return map;
+  } catch (err) {
+    console.error('Failed to fetch pricing settings:', err);
+    return {};
+  }
+}
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const settings = await fetchSiteSettingsMap();
+
+  const plans = [
+    {
+      name: 'Free',
+      price: '₦0',
+      period: 'forever',
+      tagline: 'Start learning today',
+      color: 'border-slate-700',
+      badge: null,
+      cta: 'Get Started Free',
+      ctaHref: '/register',
+      ctaStyle: 'bg-slate-800 hover:bg-slate-700 text-white',
+      features: [
+        'Browse all published courses',
+        'Access free preview lessons',
+        'Community forum access',
+        'Basic profile & dashboard',
+      ],
+      notIncluded: ['Full course access', 'Assignments & grading', 'Certificates', 'Live classes', 'Instructor messages'],
+    },
+    {
+      name: 'Pro Student',
+      price: `₦${settings.price_pro_student || '5,000'}`,
+      period: 'per course',
+      tagline: 'Full access to one course',
+      color: 'border-indigo-500/50',
+      badge: 'Most Popular',
+      cta: 'Enroll in a Course',
+      ctaHref: '/dashboard/courses',
+      ctaStyle: 'bg-gradient-to-r from-indigo-500 to-purple-600 hover:opacity-90 text-white',
+      features: [
+        'Full course access (all lessons)',
+        'Video lessons + notes',
+        'Assignment portal',
+        'Instructor grading & feedback',
+        'Course certificate on completion',
+        'Access to live classes',
+        'Community forum access',
+      ],
+      notIncluded: ['All-courses access', 'Priority support'],
+    },
+    {
+      name: 'Bootcamp',
+      price: `₦${settings.price_bootcamp || '35,000'}`,
+      period: 'per cohort',
+      tagline: 'Intensive program — 3 months',
+      color: 'border-emerald-500/30',
+      badge: 'Best Value',
+      cta: 'Apply for Bootcamp',
+      ctaHref: '/bootcamps',
+      ctaStyle: 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-90 text-white',
+      features: [
+        'Access to full bootcamp curriculum',
+        'Weekly live coaching sessions',
+        'Dedicated instructor + mentorship',
+        'Real-world project portfolio',
+        'Assignment grading & feedback',
+        'Job-ready certificate',
+        'Community + alumni network',
+        'Priority instructor messaging',
+      ],
+      notIncluded: [],
+    },
+  ];
+
+  const serviceRates = [
+    { service: 'Black & White Print', price: `₦${settings.price_print_bw || '30'} / page` },
+    { service: 'Color Print', price: `₦${settings.price_print_color || '80'} / page` },
+    { service: 'Document Binding', price: `₦${settings.price_binding || '500'}+` },
+    { service: 'ID Card Design & Print', price: `₦${settings.price_id_card || '2,000'}` },
+    { service: 'Custom Software MVP', price: `From ₦${settings.price_mvp || '150,000'}` },
+    { service: 'Website Design', price: `From ₦${settings.price_website || '80,000'}` },
+    { service: 'Solar Installation Quote', price: 'Free site survey' },
+  ];
   return (
     <div className="relative min-h-screen bg-slate-950 text-white font-sans">
       <div className="absolute top-0 left-0 w-[40%] h-[40%] rounded-full bg-indigo-900/20 blur-[100px] pointer-events-none" />

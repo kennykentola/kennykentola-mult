@@ -21,6 +21,20 @@ export default function AdminSettingsPage() {
   const [analyticsUrl, setAnalyticsUrl] = useState('');
   const [savingAnalytics, setSavingAnalytics] = useState(false);
 
+  // Pricing State
+  const [siteSettingsIds, setSiteSettingsIds] = useState<Record<string, string>>({});
+  const [pricingSettings, setPricingSettings] = useState({
+    price_pro_student: '',
+    price_bootcamp: '',
+    price_print_bw: '',
+    price_print_color: '',
+    price_binding: '',
+    price_id_card: '',
+    price_mvp: '',
+    price_website: ''
+  });
+  const [savingPricing, setSavingPricing] = useState(false);
+
   useEffect(() => {
     fetchBankDetails();
     fetchSiteSettings();
@@ -49,13 +63,22 @@ export default function AdminSettingsPage() {
       const dbId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || 'multicompany';
       
       const res = await databases.listDocuments(dbId, 'site_settings', [
-        Query.equal('key', 'analytics_iframe_url'),
-        Query.limit(1)
+        Query.limit(50)
       ]);
 
-      if (res.documents.length > 0) {
-        setAnalyticsUrl(res.documents[0].value);
+      const newPricing = { ...pricingSettings };
+      const newIds: Record<string, string> = {};
+
+      for (const doc of res.documents) {
+        if (doc.key === 'analytics_iframe_url') {
+          setAnalyticsUrl(doc.value);
+        } else if (doc.key in newPricing) {
+          (newPricing as any)[doc.key] = doc.value;
+          newIds[doc.key] = doc.$id;
+        }
       }
+      setPricingSettings(newPricing);
+      setSiteSettingsIds(newIds);
     } catch (err) {
       console.error('Failed to fetch site settings:', err);
     } finally {
@@ -100,6 +123,31 @@ export default function AdminSettingsPage() {
       alert('Error: ' + err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSavePricing = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingPricing(true);
+    try {
+      const databases = new Databases(client);
+      const dbId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || 'multicompany';
+      
+      for (const [key, value] of Object.entries(pricingSettings)) {
+        const docId = siteSettingsIds[key];
+        if (docId) {
+          await databases.updateDocument(dbId, 'site_settings', docId, { value });
+        } else {
+          const res = await databases.createDocument(dbId, 'site_settings', ID.unique(), { key, value });
+          setSiteSettingsIds(prev => ({ ...prev, [key]: res.$id }));
+        }
+      }
+      alert('General pricing rules updated successfully!');
+    } catch (err: any) {
+      console.error('Failed to save pricing:', err);
+      alert('Error: ' + err.message);
+    } finally {
+      setSavingPricing(false);
     }
   };
 
@@ -284,6 +332,51 @@ export default function AdminSettingsPage() {
             </button>
           </div>
         </form>
+      </div>
+
+      <div className="glass-panel border border-border bg-slate-900/50 rounded-2xl overflow-hidden mt-8">
+        <div className="p-6 border-b border-border bg-slate-900/80 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-bold text-white">General Pricing Configuration</h2>
+          </div>
+        </div>
+        <div className="p-6">
+          <form onSubmit={handleSavePricing} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[
+                { key: 'price_pro_student', label: 'Pro Student Course (₦)' },
+                { key: 'price_bootcamp', label: 'Bootcamp Cohort (₦)' },
+                { key: 'price_print_bw', label: 'Black & White Print (₦)' },
+                { key: 'price_print_color', label: 'Color Print (₦)' },
+                { key: 'price_binding', label: 'Document Binding (₦)' },
+                { key: 'price_id_card', label: 'ID Card Design & Print (₦)' },
+                { key: 'price_mvp', label: 'Custom Software MVP (From ₦)' },
+                { key: 'price_website', label: 'Website Design (From ₦)' },
+              ].map(item => (
+                <div key={item.key}>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">{item.label}</label>
+                  <input
+                    type="text"
+                    value={(pricingSettings as any)[item.key]}
+                    onChange={(e) => setPricingSettings({ ...pricingSettings, [item.key]: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary"
+                    placeholder="e.g. 5,000"
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="pt-4">
+              <button
+                type="submit"
+                disabled={savingPricing}
+                className="flex items-center gap-2 px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl transition-all disabled:opacity-50"
+              >
+                <Save className="h-4 w-4" />
+                {savingPricing ? 'Saving...' : 'Save Pricing'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

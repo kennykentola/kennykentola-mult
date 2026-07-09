@@ -22,6 +22,32 @@ interface CollectionDef {
   attributes: AttributeDef[];
 }
 
+const defaultSiteSettings = [
+  { key: 'price_pro_student', value: '5,000' },
+  { key: 'price_bootcamp', value: '35,000' },
+  { key: 'price_print_bw', value: '30' },
+  { key: 'price_print_color', value: '80' },
+  { key: 'price_binding', value: '500' },
+  { key: 'price_id_card', value: '2,000' },
+  { key: 'price_mvp', value: '150,000' },
+  { key: 'price_website', value: '80,000' },
+];
+
+async function seedSiteSettingsData() {
+  try {
+    for (const setting of defaultSiteSettings) {
+      const existing = await databases.listDocuments(DATABASE_ID, 'site_settings', [
+        Query.equal('key', setting.key)
+      ]);
+      if (existing.documents.length === 0) {
+        await databases.createDocument(DATABASE_ID, 'site_settings', ID.unique(), setting);
+      }
+    }
+  } catch (e: any) {
+    console.warn(`[Seed] Failed to seed site settings: ${e.message}`);
+  }
+}
+
 const collections: CollectionDef[] = [
   {
     id: 'users_profile',
@@ -1221,6 +1247,9 @@ export async function initializeDatabase() {
 
   await seedBankAccountsData();
   console.log('[Appwrite Init] Bank accounts seed content ensured.');
+
+  await seedSiteSettingsData();
+  console.log('[Appwrite Init] Site settings seed content ensured.');
 
   await seedSolarProjects();
   console.log('[Appwrite Init] Solar projects seed content ensured.');
