@@ -10,6 +10,7 @@ export function AIVideoGenerator() {
   const [error, setError] = useState('');
   const [videoData, setVideoData] = useState<{ script: any[], audioUrl: string } | null>(null);
   const [recording, setRecording] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
   const playerRef = useRef<PlayerRef>(null);
 
   const handleGenerate = async () => {
@@ -97,6 +98,23 @@ export function AIVideoGenerator() {
   };
 
 
+  const togglePlay = () => {
+    if (playerRef.current) {
+      if (isPlaying) {
+        playerRef.current.pause();
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+          window.speechSynthesis.pause();
+        }
+      } else {
+        playerRef.current.play();
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+          window.speechSynthesis.resume();
+        }
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8">
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
@@ -130,6 +148,13 @@ export function AIVideoGenerator() {
       {videoData && (
         <div className="space-y-4">
           <div className="flex justify-end gap-3">
+            <button 
+              onClick={togglePlay}
+              className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl font-bold transition-all"
+            >
+              <PlayCircle className="w-4 h-4" />
+              {isPlaying ? 'Pause Video' : 'Play Video'}
+            </button>
             <button 
               onClick={handleRecord}
               disabled={recording}
