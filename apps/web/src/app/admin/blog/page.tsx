@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { AIVideoGenerator } from '../../../components/AIVideoGenerator';
 import { useRouter } from 'next/navigation';
 import { getAdminBlogPosts, deleteBlogPost } from '../../../features/blog/blogService';
 import { FileCheck, Plus, Edit, Trash2, Send, Loader2 } from 'lucide-react';
@@ -163,6 +164,10 @@ export default function AdminBlogPage() {
             </div>
           </div>
         )}
+
+        <div className="mt-16 border-t border-slate-800 pt-16">
+          <AIVideoGenerator />
+        </div>
       </div>
     </div>
   );

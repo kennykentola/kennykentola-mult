@@ -55,9 +55,9 @@ Each object must have:
     const fullText = scriptData.map(step => step.text).join('. ');
 
     // 2. Generate Audio (TTS)
-    // We use a high quality open source English TTS model
+    // We use a high quality open source English TTS model available on the free serverless tier
     const audioBlob = await hf.textToSpeech({
-      model: "facebook/mms-tts-eng",
+      model: "espnet/kan-bayashi_ljspeech_vits",
       inputs: fullText,
     });
 
