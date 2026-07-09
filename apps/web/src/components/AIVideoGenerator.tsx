@@ -44,11 +44,10 @@ export function AIVideoGenerator() {
     }
   };
 
-  // Calculate roughly how long the video is based on audio (assuming 1 char = 1 frame or roughly 150 words per min)
-  // But a simple approach is to set durationInFrames to a large enough number. 
-  // Let's assume 30 seconds for a quick example: 30 * 30 = 900
-  // Or better, calculate based on script length. Let's do 60 frames (2s) per script item minimum
-  const durationInFrames = videoData ? Math.max(900, videoData.script.length * 90) : 900;
+  // Calculate roughly how long the video is based on audio (assuming ~12 chars per second)
+  const durationInFrames = videoData 
+    ? Math.max(900, videoData.script.reduce((acc, step) => acc + Math.ceil(Math.max(4, step.text.length / 12) * VIDEO_FPS), 0))
+    : 900;
 
   const handleRecord = async () => {
     try {

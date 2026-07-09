@@ -24,26 +24,28 @@ export const IdeVideoPlayer: React.FC<IdeVideoPlayerProps> = ({ script, audioUrl
   // Combine all code into one long string, or show them sequentially
   // For a simple demo, we will show the latest code snippet that "types" out over time
   
-  // Calculate which script item we are currently on based on an arbitrary assumption 
-  // that each item takes e.g., 5 seconds (150 frames).
-  // A perfect implementation would sync this to the exact timestamp of the audio using an aligner API,
-  // but for free tier, we will just evenly space it out based on total duration.
-  
-  // Since we don't have accurate word-level timestamps without a paid API (like Deepgram), 
-  // we'll distribute the script items evenly across the frames.
-  const totalFramesPerItem = useMemo(() => {
-    // Arbitrary 4 seconds per script step just for visual pacing if not synced exactly
-    return fps * 4; 
-  }, [fps]);
+  // Pre-calculate the start and end frames for each step based on the length of the text.
+  // We assume a speaking rate of roughly ~12 characters per second.
+  const stepTimings = useMemo(() => {
+    let currentStart = 0;
+    return script.map((step) => {
+      const durationInSeconds = Math.max(4, step.text.length / 12);
+      const durationInFrames = Math.ceil(durationInSeconds * fps);
+      const timing = { start: currentStart, end: currentStart + durationInFrames, duration: durationInFrames };
+      currentStart += durationInFrames;
+      return timing;
+    });
+  }, [script, fps]);
 
-  const currentStepIndex = Math.min(
-    Math.floor(frame / totalFramesPerItem),
-    script.length - 1
-  );
+  const currentStepIndex = useMemo(() => {
+    const index = stepTimings.findIndex(t => frame >= t.start && frame < t.end);
+    return index !== -1 ? index : script.length - 1;
+  }, [frame, stepTimings, script.length]);
 
   const currentStep = script[currentStepIndex];
+  const currentTiming = stepTimings[currentStepIndex];
   
-  const framesInCurrentStep = frame - (currentStepIndex * totalFramesPerItem);
+  const framesInCurrentStep = frame - (currentTiming ? currentTiming.start : 0);
   const charsToReveal = Math.floor(framesInCurrentStep / 2);
   const displayedCode = currentStep ? currentStep.code.slice(0, charsToReveal) : '';
 
