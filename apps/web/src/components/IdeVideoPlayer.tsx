@@ -15,9 +15,10 @@ export interface ScriptItem {
 interface IdeVideoPlayerProps {
   script: ScriptItem[];
   audioUrl: string;
+  voiceURI?: string;
 }
 
-export const IdeVideoPlayer = ({ script, audioUrl }: IdeVideoPlayerProps) => {
+export const IdeVideoPlayer = ({ script, audioUrl, voiceURI }: IdeVideoPlayerProps) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
@@ -54,10 +55,19 @@ export const IdeVideoPlayer = ({ script, audioUrl }: IdeVideoPlayerProps) => {
     if (!audioUrl && currentStep && typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(currentStep.text);
+      
+      if (voiceURI) {
+        const voices = window.speechSynthesis.getVoices();
+        const selectedVoice = voices.find(v => v.voiceURI === voiceURI);
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+        }
+      }
+      
       utterance.rate = 1.0;
       window.speechSynthesis.speak(utterance);
     }
-  }, [currentStepIndex, audioUrl, currentStep]);
+  }, [currentStepIndex, audioUrl, currentStep, voiceURI]);
 
   return (
     <AbsoluteFill className="bg-[#1E1E1E] text-white flex flex-col font-mono relative overflow-hidden">

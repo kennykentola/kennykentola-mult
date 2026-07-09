@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Player, PlayerRef } from '@remotion/player';
 import { Download, PlayCircle } from 'lucide-react';
 import { IdeVideoPlayer, VIDEO_FPS, VIDEO_WIDTH, VIDEO_HEIGHT, ScriptItem } from './IdeVideoPlayer';
@@ -11,7 +11,26 @@ export function AIVideoGenerator() {
   const [videoData, setVideoData] = useState<{ script: ScriptItem[], audioUrl: string } | null>(null);
   const [recording, setRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [selectedVoiceURI, setSelectedVoiceURI] = useState('');
   const playerRef = useRef<PlayerRef>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      const loadVoices = () => {
+        const availableVoices = window.speechSynthesis.getVoices();
+        setVoices(availableVoices);
+        if (availableVoices.length > 0 && !selectedVoiceURI) {
+          // Default to the first English voice if possible, or just the first one
+          const defaultVoice = availableVoices.find(v => v.lang.startsWith('en')) || availableVoices[0];
+          setSelectedVoiceURI(defaultVoice.voiceURI);
+        }
+      };
+      
+      loadVoices();
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+  }, [selectedVoiceURI]);
 
   const handleGenerate = async () => {
     if (!prompt) return;
@@ -119,6 +138,7 @@ export function AIVideoGenerator() {
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
         <h2 className="text-2xl font-bold text-white mb-6">Generate Code Explanation Video</h2>
         
+        
         <div className="flex flex-col md:flex-row gap-4">
           <input 
             type="text" 
@@ -127,6 +147,19 @@ export function AIVideoGenerator() {
             value={prompt}
             onChange={e => setPrompt(e.target.value)}
           />
+          {voices.length > 0 && (
+            <select 
+              value={selectedVoiceURI}
+              onChange={(e) => setSelectedVoiceURI(e.target.value)}
+              className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none w-full md:w-48"
+            >
+              {voices.map(voice => (
+                <option key={voice.voiceURI} value={voice.voiceURI}>
+                  {voice.name} ({voice.lang})
+                </option>
+              ))}
+            </select>
+          )}
           <button 
             onClick={handleGenerate}
             disabled={loading || !prompt}
@@ -167,7 +200,7 @@ export function AIVideoGenerator() {
             <Player
               ref={playerRef}
             component={IdeVideoPlayer}
-            inputProps={{ script: videoData.script, audioUrl: videoData.audioUrl }}
+            inputProps={{ script: videoData.script, audioUrl: videoData.audioUrl, voiceURI: selectedVoiceURI }}
             durationInFrames={durationInFrames}
             compositionWidth={VIDEO_WIDTH}
             compositionHeight={VIDEO_HEIGHT}
