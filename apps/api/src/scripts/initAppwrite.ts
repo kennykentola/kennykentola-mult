@@ -1,5 +1,5 @@
 import { databases, storage } from '../services/appwrite';
-import { AppwriteException, Permission, Role } from 'node-appwrite';
+import { AppwriteException, Permission, Role, Query, ID } from 'node-appwrite';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -222,7 +222,7 @@ const collections: CollectionDef[] = [
       { key: 'imageUrl', type: 'string', size: 500, required: false },
       { key: 'category', type: 'string', size: 50, required: true },
       { key: 'basePrice', type: 'float', required: true },
-      { key: 'status', type: 'string', size: 20, required: true, default: 'active' },
+      { key: 'status', type: 'string', size: 20, required: true, defaultValue: 'active' },
       { key: 'createdAt', type: 'datetime', required: false }
     ]
   },
