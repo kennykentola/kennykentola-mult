@@ -177,3 +177,8 @@ export async function updatePricingConfig(id: string, data: Partial<PricingConfi
   return res.item;
 }
 
+export async function getPricingConfig() {
+  const res = await fetch(`${API_BASE}/printing/pricing`);
+  return res.json();
+}
+

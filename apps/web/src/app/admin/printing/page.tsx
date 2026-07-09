@@ -59,11 +59,11 @@ export default function AdminPrintingPage() {
     let cancelled = false;
     async function loadOrders() {
       try {
-        const { getAdminOrders, getAdminPodCatalog } = await import('../../../features/printing/printingService');
+        const { getAdminOrders, getAdminPodCatalog, getPricingConfig } = await import('../../../features/printing/printingService');
         const [data, podData, pricingData] = await Promise.all([
           getAdminOrders('all'),
           getAdminPodCatalog(),
-          fetch('/api/v1/printing/pricing').then(r => r.json())
+          getPricingConfig()
         ]);
         if (!cancelled) {
           // map to AdminPrintOrder format expected by the UI
