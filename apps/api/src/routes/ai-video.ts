@@ -32,7 +32,7 @@ Each object must have:
         { role: "system", content: systemPrompt },
         { role: "user", content: prompt }
       ],
-      max_tokens: 1000,
+      max_tokens: 3000,
       temperature: 0.2,
     });
 
@@ -47,8 +47,21 @@ Each object must have:
         scriptData = [scriptData];
       }
     } catch (e) {
-      console.error('Failed to parse HF script JSON:', scriptRaw);
-      return res.status(500).json({ error: 'Failed to generate valid script format.' });
+      // If the model hits the max_tokens limit, it might truncate the JSON array.
+      // We can try to salvage it by finding the last valid closing brace and appending a bracket.
+      const lastBraceIndex = scriptRaw.lastIndexOf('}');
+      if (lastBraceIndex !== -1) {
+        try {
+          const salvaged = scriptRaw.substring(0, lastBraceIndex + 1) + ']';
+          scriptData = JSON.parse(salvaged);
+        } catch (e2) {
+          console.error('Failed to parse and salvage HF script JSON:', scriptRaw);
+          return res.status(500).json({ error: 'Failed to generate valid script format. The code might be too long to explain in one video.' });
+        }
+      } else {
+        console.error('Failed to parse HF script JSON:', scriptRaw);
+        return res.status(500).json({ error: 'Failed to generate valid script format.' });
+      }
     }
 
     // Combine all text for the voiceover
