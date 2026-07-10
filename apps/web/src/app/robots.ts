@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/admin/', '/dashboard/', '/login', '/register', '/api/'],
     },
-    sitemap: 'https://kennykentola.com/sitemap.xml',
+    sitemap: 'https://kennykentola.dpdns.org/sitemap.xml',
   };
 }

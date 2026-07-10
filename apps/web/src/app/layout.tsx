@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'KennyKentola',
     description: 'Learn, Build, Print, Power with KennyKentola',
-    url: 'https://kennykentola.com',
+    url: 'https://kennykentola.dpdns.org',
     siteName: 'KennyKentola',
     type: 'website',
   }
