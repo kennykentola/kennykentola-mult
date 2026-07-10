@@ -94,8 +94,8 @@ export function Footer() {
               <li><Link href="/p/academic-guidance" className="hover:text-amber-500 transition-colors inline-block py-1">Academic Guidance</Link></li>
               <li><Link href="/p/software-development" className="hover:text-amber-500 transition-colors inline-block py-1">Software Development</Link></li>
               <li><Link href="/p/research-assistance" className="hover:text-amber-500 transition-colors inline-block py-1">Research Assistance</Link></li>
-              <li><Link href="/dashboard/solar/new" className="hover:text-amber-500 transition-colors inline-block py-1">Solar / Electrical</Link></li>
-              <li><Link href="/printing" className="hover:text-amber-500 transition-colors inline-block py-1">Printing & Graphics</Link></li>
+              <li><Link href="/solar" className="hover:text-amber-500 transition-colors inline-block py-1">Solar / Electrical</Link></li>
+              <li><Link href="/design" className="hover:text-amber-500 transition-colors inline-block py-1">Printing & Graphics</Link></li>
             </ul>
           </div>
 
