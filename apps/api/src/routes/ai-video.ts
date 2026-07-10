@@ -22,14 +22,14 @@ You must return a raw JSON array of objects representing the video timeline.
 Do NOT wrap the JSON in markdown code blocks.
 
 CRITICAL INSTRUCTIONS FOR DETAIL:
-You must provide EXTREMELY detailed, comprehensive, deep-dive explanations. Explain as if you are giving a 30-minute masterclass tutorial. Break down EVERY single concept, every single line of code, and every single tag or attribute.
-Do not skip over things. Generate a very long array of steps (20 to 50 steps if necessary) to cover the topic exhaustively.
-For example, if asked about HTML tags and attributes, do not just pick three. Cover 20+ common tags and their attributes in great detail.
+You must provide EXTREMELY detailed explanations. Break down EVERY concept and every line of code.
+Do not skip over things. Generate a long array of steps to cover the topic exhaustively.
+CRITICAL: The "code" field MUST NOT BE EMPTY in any step. Even if you are just explaining a concept, write bullet points, pseudo-code, or visual notes in the "code" field so the screen is never blank.
 
 Each object must have:
 {
-  "text": "The spoken explanation for this step. Make this extremely detailed and conversational.",
-  "code": "The code snippet that should be typed on screen during this step (only what's new or the full file context, keep it short)"
+  "text": "The spoken explanation for this step.",
+  "code": "The code snippet or visual text to show on screen. MUST NOT BE EMPTY. Do not use markdown backticks like \`\`\` around the code."
 }`;
 
     const chatResponse = await hf.chatCompletion({
@@ -69,6 +69,17 @@ Each object must have:
         return res.status(500).json({ error: 'Failed to generate valid script format.' });
       }
     }
+
+    // Clean up markdown inside the code field of each step
+    scriptData = scriptData.map((step: any) => {
+      let cleanedCode = step.code || '';
+      // Remove ```javascript, ```typescript, ```, etc.
+      cleanedCode = cleanedCode.replace(/```[a-zA-Z]*\n/g, '').replace(/```/g, '').trim();
+      return {
+        ...step,
+        code: cleanedCode || '// Explaining concept...' // Ensure it's never completely blank
+      };
+    });
 
     // Combine all text for the voiceover
     const fullText = scriptData.map((step: any) => step.text).join('. ');
