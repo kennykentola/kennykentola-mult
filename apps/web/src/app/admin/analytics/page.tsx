@@ -173,13 +173,14 @@ export default function AdminAnalyticsPage() {
             <Users className="h-5 w-5" />
           </div>
         </div>
-        <div className="w-full bg-slate-950 rounded-2xl overflow-hidden border border-white/5 relative" style={{ height: '800px' }}>
+        <div className="w-full bg-slate-950 rounded-2xl overflow-hidden border border-white/5 relative h-[800px]">
           {iframeUrl ? (
             <iframe 
               width="100%" 
               height="100%" 
               src={iframeUrl} 
-              style={{ border: 0 }}
+              className="border-0"
+              title="Google Analytics Dashboard"
               allowFullScreen 
               sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
             ></iframe>

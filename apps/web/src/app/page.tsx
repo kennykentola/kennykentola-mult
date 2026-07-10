@@ -19,7 +19,7 @@ export default function Home() {
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 backdrop-blur-md mb-8">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs font-semibold tracking-wider uppercase text-slate-300">The Ultimate Execution Engine</span>
+              <span className="text-xs font-semibold tracking-wider uppercase text-slate-200">The Ultimate Execution Engine</span>
             </div>
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tighter text-white leading-[1.1] mb-6">
               Your Complete <br />
@@ -45,7 +45,7 @@ export default function Home() {
           {/* Hero Feature Grid */}
           <div className="bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-8 md:p-10 shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 blur-[80px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/3" />
-            <h3 className="text-2xl font-bold text-white mb-8 tracking-tight">Our Core Services</h3>
+            <h2 className="text-2xl font-bold text-white mb-8 tracking-tight">Our Core Services</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="flex items-center gap-3">
                 <CheckCircle className="w-5 h-5 text-cyan-400 shrink-0" />
@@ -97,8 +97,9 @@ export default function Home() {
             {/* Background Image Setup (matching ecosystem style) */}
             <div className="absolute inset-0 z-0">
               <img 
-                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80" 
+                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=800" 
                 alt="Tech Academy" 
+                width="800" height="600" loading="lazy"
                 className="w-full h-full object-cover opacity-30 mix-blend-luminosity group-hover:opacity-60 transition-opacity duration-700" 
               />
               <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#0b1b42]/90 to-[#0b1b42]/80" />
@@ -161,7 +162,7 @@ export default function Home() {
               <div className="w-16 h-16 mx-auto bg-[#0b1b42] group-hover:bg-indigo-600 transition-colors rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg">
                 <ImageIcon className="w-8 h-8" />
               </div>
-              <h4 className="text-lg font-black text-[#0b1b42] mb-2">Flyers & Posters</h4>
+              <h3 className="text-lg font-black text-[#0b1b42] mb-2">Flyers & Posters</h3>
               <p className="text-slate-600 text-sm leading-relaxed">Eye-catching designs that deliver your message effectively.</p>
             </div>
 
@@ -169,7 +170,7 @@ export default function Home() {
               <div className="w-16 h-16 mx-auto bg-[#0b1b42] group-hover:bg-indigo-600 transition-colors rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg">
                 <Share2 className="w-8 h-8" />
               </div>
-              <h4 className="text-lg font-black text-[#0b1b42] mb-2">Social Media Designs</h4>
+              <h3 className="text-lg font-black text-[#0b1b42] mb-2">Social Media Designs</h3>
               <p className="text-slate-600 text-sm leading-relaxed">Engaging content that grows your brand and audience.</p>
             </div>
 
@@ -177,7 +178,7 @@ export default function Home() {
               <div className="w-16 h-16 mx-auto bg-[#0b1b42] group-hover:bg-indigo-600 transition-colors rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg">
                 <PenTool className="w-8 h-8" />
               </div>
-              <h4 className="text-lg font-black text-[#0b1b42] mb-2">Logos & Brand Identity</h4>
+              <h3 className="text-lg font-black text-[#0b1b42] mb-2">Logos & Brand Identity</h3>
               <p className="text-slate-600 text-sm leading-relaxed">Unique identities that represent your brand professionally.</p>
             </div>
 
@@ -185,7 +186,7 @@ export default function Home() {
               <div className="w-16 h-16 mx-auto bg-[#0b1b42] group-hover:bg-indigo-600 transition-colors rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg">
                 <Contact className="w-8 h-8" />
               </div>
-              <h4 className="text-lg font-black text-[#0b1b42] mb-2">Business Cards</h4>
+              <h3 className="text-lg font-black text-[#0b1b42] mb-2">Business Cards</h3>
               <p className="text-slate-600 text-sm leading-relaxed">Professional cards that leave a lasting impression.</p>
             </div>
 
@@ -193,7 +194,7 @@ export default function Home() {
               <div className="w-16 h-16 mx-auto bg-[#0b1b42] group-hover:bg-indigo-600 transition-colors rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg">
                 <LayoutTemplate className="w-8 h-8" />
               </div>
-              <h4 className="text-lg font-black text-[#0b1b42] mb-2">Banners</h4>
+              <h3 className="text-lg font-black text-[#0b1b42] mb-2">Banners</h3>
               <p className="text-slate-600 text-sm leading-relaxed">Bold and attractive banners for any occasion.</p>
             </div>
 
@@ -201,7 +202,7 @@ export default function Home() {
               <div className="w-16 h-16 mx-auto bg-[#0b1b42] group-hover:bg-indigo-600 transition-colors rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg">
                 <CalendarDays className="w-8 h-8" />
               </div>
-              <h4 className="text-lg font-black text-[#0b1b42] mb-2">Event Graphics</h4>
+              <h3 className="text-lg font-black text-[#0b1b42] mb-2">Event Graphics</h3>
               <p className="text-slate-600 text-sm leading-relaxed">Stunning visuals that make your events unforgettable.</p>
             </div>
 
@@ -209,7 +210,7 @@ export default function Home() {
               <div className="w-16 h-16 mx-auto bg-[#0b1b42] group-hover:bg-indigo-600 transition-colors rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg">
                 <Monitor className="w-8 h-8" />
               </div>
-              <h4 className="text-lg font-black text-[#0b1b42] mb-2">Website Design</h4>
+              <h3 className="text-lg font-black text-[#0b1b42] mb-2">Website Design</h3>
               <p className="text-slate-600 text-sm leading-relaxed">Modern, responsive websites that convert visitors to customers.</p>
             </div>
 
@@ -217,7 +218,7 @@ export default function Home() {
               <div className="w-16 h-16 mx-auto bg-[#0b1b42] group-hover:bg-indigo-600 transition-colors rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg">
                 <Film className="w-8 h-8" />
               </div>
-              <h4 className="text-lg font-black text-[#0b1b42] mb-2">Motion Graphics</h4>
+              <h3 className="text-lg font-black text-[#0b1b42] mb-2">Motion Graphics</h3>
               <p className="text-slate-600 text-sm leading-relaxed">Dynamic animations that bring your ideas to life.</p>
             </div>
             
@@ -225,7 +226,7 @@ export default function Home() {
               <div className="w-16 h-16 mx-auto bg-indigo-600 rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg shadow-indigo-500/30">
                 <BookOpen className="w-8 h-8" />
               </div>
-              <h4 className="text-lg font-black text-[#0b1b42] mb-2">Academic & Documentation</h4>
+              <h3 className="text-lg font-black text-[#0b1b42] mb-2">Academic & Documentation</h3>
               <p className="text-slate-600 text-sm leading-relaxed font-medium">Assignment & Project writing, Project Printing, and detailed academic guidance.</p>
             </div>
           </div>
@@ -235,8 +236,9 @@ export default function Home() {
         <div className="relative rounded-[2.5rem] mb-24 overflow-hidden border border-purple-500/30 group shadow-[0_0_80px_-15px_rgba(168,85,247,0.4)]">
           <div className="absolute inset-0 z-0">
             <img 
-              src="https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80" 
+              src="https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=800" 
               alt="AI Technology" 
+              width="800" height="600" loading="lazy"
               className="w-full h-full object-cover opacity-20 mix-blend-screen group-hover:opacity-40 transition-opacity duration-700" 
             />
             <div className="absolute inset-0 bg-gradient-to-br from-[#0a0514] via-purple-900/60 to-[#050505]/95" />
@@ -301,7 +303,7 @@ export default function Home() {
             {/* 1. Software Agency (Large, 2x2) */}
             <Link href="/agency" className="group relative overflow-hidden md:col-span-2 md:row-span-2 rounded-3xl border border-white/5 bg-white/5 backdrop-blur-sm transition-all hover:border-cyan-500/50 hover:bg-white/[0.07]">
               <div className="absolute inset-0 z-0">
-                <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80" alt="Code infrastructure" className="w-full h-full object-cover opacity-40 mix-blend-luminosity group-hover:opacity-80 transition-opacity duration-700" />
+                <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=800" alt="Code infrastructure" width="800" height="600" loading="lazy" className="w-full h-full object-cover opacity-40 mix-blend-luminosity group-hover:opacity-80 transition-opacity duration-700" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-transparent" />
               </div>
               <div className="relative z-10 flex flex-col justify-end h-full p-8 md:p-10">
@@ -321,7 +323,7 @@ export default function Home() {
             {/* 2. The Academy (Wide, 2x1) */}
             <Link href="/register?portal=academy" className="group relative overflow-hidden md:col-span-2 md:row-span-1 rounded-3xl border border-white/5 bg-white/5 backdrop-blur-sm transition-all hover:border-violet-500/50 hover:bg-white/[0.07]">
               <div className="absolute inset-0 z-0">
-                <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80" alt="Academy students" className="w-full h-full object-cover opacity-40 mix-blend-luminosity group-hover:opacity-80 transition-opacity duration-700" />
+                <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=800" alt="Academy students" width="800" height="600" loading="lazy" className="w-full h-full object-cover opacity-40 mix-blend-luminosity group-hover:opacity-80 transition-opacity duration-700" />
                 <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/90 to-transparent" />
               </div>
               <div className="relative z-10 flex flex-col justify-center h-full p-8 md:p-10 w-full md:w-3/4">
@@ -343,7 +345,7 @@ export default function Home() {
             {/* 3. Design & Printing (Square, 1x1) */}
             <Link href="/design" className="group relative overflow-hidden md:col-span-1 md:row-span-1 rounded-3xl border border-white/5 bg-white/5 backdrop-blur-sm transition-all hover:border-rose-500/50 hover:bg-white/[0.07]">
               <div className="absolute inset-0 z-0">
-                <img src="https://images.unsplash.com/photo-1562240020-ce31ccb0fa7d?auto=format&fit=crop&q=80" alt="Printing and design" className="w-full h-full object-cover opacity-40 mix-blend-luminosity group-hover:opacity-80 transition-opacity duration-700" />
+                <img src="https://images.unsplash.com/photo-1562240020-ce31ccb0fa7d?auto=format&fit=crop&q=80&w=800" alt="Printing and design" width="800" height="600" loading="lazy" className="w-full h-full object-cover opacity-40 mix-blend-luminosity group-hover:opacity-80 transition-opacity duration-700" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/70 to-transparent" />
               </div>
               <div className="relative z-10 flex flex-col justify-end h-full p-6">
@@ -361,7 +363,7 @@ export default function Home() {
             {/* 4. CS Thesis (Square, 1x1) */}
             <Link href="/academic" className="group relative overflow-hidden md:col-span-1 md:row-span-1 rounded-3xl border border-white/5 bg-white/5 backdrop-blur-sm transition-all hover:border-amber-500/50 hover:bg-white/[0.07]">
               <div className="absolute inset-0 z-0">
-                <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80" alt="Thesis documents" className="w-full h-full object-cover opacity-40 mix-blend-luminosity group-hover:opacity-80 transition-opacity duration-700" />
+                <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=800" alt="Thesis documents" width="800" height="600" loading="lazy" className="w-full h-full object-cover opacity-40 mix-blend-luminosity group-hover:opacity-80 transition-opacity duration-700" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/70 to-transparent" />
               </div>
               <div className="relative z-10 flex flex-col justify-end h-full p-6">
@@ -379,7 +381,7 @@ export default function Home() {
             {/* 5. Solar & Maintenance (Wide, 4x1) */}
             <Link href="/solar" className="group relative overflow-hidden md:col-span-4 md:row-span-1 rounded-3xl border border-white/5 bg-white/5 backdrop-blur-sm transition-all hover:border-emerald-500/50 hover:bg-white/[0.07]">
               <div className="absolute inset-0 z-0">
-                <img src="https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&q=80" alt="Solar panels" className="w-full h-full object-cover opacity-40 mix-blend-luminosity group-hover:opacity-80 transition-opacity duration-700" />
+                <img src="https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&q=80&w=800" alt="Solar panels" width="800" height="600" loading="lazy" className="w-full h-full object-cover opacity-40 mix-blend-luminosity group-hover:opacity-80 transition-opacity duration-700" />
                 <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/80 to-transparent" />
               </div>
               <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between h-full p-8 md:p-10">
@@ -416,28 +418,28 @@ export default function Home() {
                 <Users className="w-6 h-6" />
               </div>
               <div className="text-4xl md:text-5xl font-extrabold text-white mb-2">10k+</div>
-              <div className="text-sm font-medium text-slate-500 uppercase tracking-widest">Students Forged</div>
+              <div className="text-sm font-medium text-slate-400 uppercase tracking-widest">Students Forged</div>
             </div>
             <div className="flex flex-col items-center">
               <div className="w-12 h-12 mb-4 rounded-xl bg-white/5 flex items-center justify-center text-white">
                 <Activity className="w-6 h-6" />
               </div>
               <div className="text-4xl md:text-5xl font-extrabold text-white mb-2">99.9%</div>
-              <div className="text-sm font-medium text-slate-500 uppercase tracking-widest">Software Uptime</div>
+              <div className="text-sm font-medium text-slate-400 uppercase tracking-widest">Software Uptime</div>
             </div>
             <div className="flex flex-col items-center">
               <div className="w-12 h-12 mb-4 rounded-xl bg-white/5 flex items-center justify-center text-white">
                 <FileText className="w-6 h-6" />
               </div>
               <div className="text-4xl md:text-5xl font-extrabold text-white mb-2">500k</div>
-              <div className="text-sm font-medium text-slate-500 uppercase tracking-widest">Prints Delivered</div>
+              <div className="text-sm font-medium text-slate-400 uppercase tracking-widest">Prints Delivered</div>
             </div>
             <div className="flex flex-col items-center">
               <div className="w-12 h-12 mb-4 rounded-xl bg-white/5 flex items-center justify-center text-white">
                 <Zap className="w-6 h-6" />
               </div>
               <div className="text-4xl md:text-5xl font-extrabold text-white mb-2">1.2MW</div>
-              <div className="text-sm font-medium text-slate-500 uppercase tracking-widest">Solar Installed</div>
+              <div className="text-sm font-medium text-slate-400 uppercase tracking-widest">Solar Installed</div>
             </div>
           </div>
         </div>

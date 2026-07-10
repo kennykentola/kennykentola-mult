@@ -67,45 +67,45 @@ export function Footer() {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Mail className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                <Mail className="w-4 h-4 text-amber-500 mt-2 shrink-0" />
                 <div className="flex flex-col break-all">
-                  <a href="mailto:peterkehindeademola9@gmail.com" className="hover:text-amber-500 transition-colors">peterkehindeademola9@gmail.com</a>
-                  <a href="mailto:peterkehindeademola@gmail.com" className="hover:text-amber-500 transition-colors">peterkehindeademola@gmail.com</a>
-                  <a href="mailto:ademolapeter233@gmail.com" className="hover:text-amber-500 transition-colors">ademolapeter233@gmail.com</a>
+                  <a href="mailto:peterkehindeademola9@gmail.com" className="hover:text-amber-500 transition-colors inline-block py-1.5">peterkehindeademola9@gmail.com</a>
+                  <a href="mailto:peterkehindeademola@gmail.com" className="hover:text-amber-500 transition-colors inline-block py-1.5">peterkehindeademola@gmail.com</a>
+                  <a href="mailto:ademolapeter233@gmail.com" className="hover:text-amber-500 transition-colors inline-block py-1.5">ademolapeter233@gmail.com</a>
                 </div>
               </div>
             </div>
           </div>
           
           <div className="min-w-0">
-            <h4 className="font-bold text-white mb-6">Company</h4>
+            <h2 className="font-bold text-white mb-6">Company</h2>
             <ul className="space-y-3 text-sm text-slate-400">
-              <li><Link href="/about" className="hover:text-amber-500 transition-colors">About Us</Link></li>
-              <li><Link href="/p/our-experts" className="hover:text-amber-500 transition-colors">Our Experts</Link></li>
-              <li><Link href="/p/careers" className="hover:text-amber-500 transition-colors">Careers</Link></li>
-              <li><Link href="/blog" className="hover:text-amber-500 transition-colors">Blog</Link></li>
-              <li><Link href="/help-center" className="hover:text-amber-500 transition-colors">Help Center</Link></li>
+              <li><Link href="/about" className="hover:text-amber-500 transition-colors inline-block py-1">About Us</Link></li>
+              <li><Link href="/p/our-experts" className="hover:text-amber-500 transition-colors inline-block py-1">Our Experts</Link></li>
+              <li><Link href="/p/careers" className="hover:text-amber-500 transition-colors inline-block py-1">Careers</Link></li>
+              <li><Link href="/blog" className="hover:text-amber-500 transition-colors inline-block py-1">Blog</Link></li>
+              <li><Link href="/help-center" className="hover:text-amber-500 transition-colors inline-block py-1">Help Center</Link></li>
             </ul>
           </div>
 
           <div className="min-w-0">
-            <h4 className="font-bold text-white mb-6">Services</h4>
+            <h2 className="font-bold text-white mb-6">Services</h2>
             <ul className="space-y-3 text-sm text-slate-400">
-              <li><Link href="/p/academic-guidance" className="hover:text-amber-500 transition-colors">Academic Guidance</Link></li>
-              <li><Link href="/p/software-development" className="hover:text-amber-500 transition-colors">Software Development</Link></li>
-              <li><Link href="/p/research-assistance" className="hover:text-amber-500 transition-colors">Research Assistance</Link></li>
-              <li><Link href="/dashboard/solar/new" className="hover:text-amber-500 transition-colors">Solar / Electrical</Link></li>
-              <li><Link href="/printing" className="hover:text-amber-500 transition-colors">Printing & Graphics</Link></li>
+              <li><Link href="/p/academic-guidance" className="hover:text-amber-500 transition-colors inline-block py-1">Academic Guidance</Link></li>
+              <li><Link href="/p/software-development" className="hover:text-amber-500 transition-colors inline-block py-1">Software Development</Link></li>
+              <li><Link href="/p/research-assistance" className="hover:text-amber-500 transition-colors inline-block py-1">Research Assistance</Link></li>
+              <li><Link href="/dashboard/solar/new" className="hover:text-amber-500 transition-colors inline-block py-1">Solar / Electrical</Link></li>
+              <li><Link href="/printing" className="hover:text-amber-500 transition-colors inline-block py-1">Printing & Graphics</Link></li>
             </ul>
           </div>
 
           <div className="min-w-0">
-            <h4 className="font-bold text-white mb-6">Resources</h4>
+            <h2 className="font-bold text-white mb-6">Legal</h2>
             <ul className="space-y-3 text-sm text-slate-400">
-              <li><Link href="/p/project-ideas" className="hover:text-amber-500 transition-colors">Project Ideas</Link></li>
-              <li><Link href="/p/templates" className="hover:text-amber-500 transition-colors">Templates</Link></li>
-              <li><Link href="/p/tutorials" className="hover:text-amber-500 transition-colors">Tutorials</Link></li>
-              <li><Link href="/faqs" className="hover:text-amber-500 transition-colors">FAQs</Link></li>
+              <li><Link href="/privacy" className="hover:text-white transition-colors inline-block py-1">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-white transition-colors inline-block py-1">Terms of Service</Link></li>
+              <li><Link href="/refund" className="hover:text-white transition-colors inline-block py-1">Refund Policy</Link></li>
+              <li><Link href="/disclaimer" className="hover:text-white transition-colors inline-block py-1">Disclaimer</Link></li>
             </ul>
           </div>
         </div>
