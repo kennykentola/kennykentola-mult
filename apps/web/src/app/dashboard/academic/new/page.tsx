@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import { Loader2, ArrowLeft, Lightbulb, Code, UserCheck, CheckCircle2, GraduationCap, UploadCloud } from 'lucide-react';
 import Link from 'next/link';
 
-type RequestType = 'Topic Selection' | 'Proposal Development' | 'Chapter Assistance' | 'Full Implementation';
+type RequestType = 'Topic Selection' | 'Proposal Development' | 'Chapter Assistance' | 'Full Implementation' | 'Complete Done-For-You Package';
 
 export default function RequestAcademicProjectPage() {
   const router = useRouter();
@@ -22,7 +22,8 @@ export default function RequestAcademicProjectPage() {
     (defaultType === 'topic' ? 'Topic Selection' : 
      defaultType === 'proposal' ? 'Proposal Development' : 
      defaultType === 'chapters' ? 'Chapter Assistance' : 
-     defaultType === 'implementation' ? 'Full Implementation' : null)
+     defaultType === 'implementation' ? 'Full Implementation' : 
+     defaultType === 'complete' ? 'Complete Done-For-You Package' : null)
   );
 
   const [formData, setFormData] = useState({
@@ -43,7 +44,7 @@ export default function RequestAcademicProjectPage() {
       await requestAcademicProject({
         ...formData,
         serviceScope: requestType,
-        title: requestType === 'Topic Selection' ? `Topic Selection Request - ${formData.department}` : formData.title,
+        title: (requestType === 'Topic Selection' || requestType === 'Complete Done-For-You Package') ? `${requestType} Request - ${formData.department}` : formData.title,
         initialDocumentUrl,
       });
       toast.success('Request submitted successfully!');
@@ -120,6 +121,21 @@ export default function RequestAcademicProjectPage() {
                 <p className="text-sm text-slate-400">Software and complete thesis built for you.</p>
                 {requestType === 'Full Implementation' && <CheckCircle2 className="absolute top-4 right-4 text-amber-500 w-5 h-5" />}
               </div>
+              <div 
+                onClick={() => setRequestType('Complete Done-For-You Package')}
+                className={`cursor-pointer rounded-2xl border-2 p-6 transition-all md:col-span-2 ${requestType === 'Complete Done-For-You Package' ? 'border-amber-500 bg-amber-500/10' : 'border-white/5 bg-white/5 hover:border-white/20'}`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`p-4 rounded-xl ${requestType === 'Complete Done-For-You Package' ? 'bg-amber-500/20 text-amber-500' : 'bg-white/5 text-slate-400'}`}>
+                    <GraduationCap className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-white mb-1">Complete Done-For-You Package</h4>
+                    <p className="text-sm text-slate-400">We will choose the topic, write the proposal, develop the software, and write Chapters 1-5.</p>
+                  </div>
+                </div>
+                {requestType === 'Complete Done-For-You Package' && <CheckCircle2 className="absolute top-4 right-4 text-amber-500 w-5 h-5" />}
+              </div>
             </div>
           </div>
 
@@ -174,7 +190,7 @@ export default function RequestAcademicProjectPage() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  {requestType === 'Topic Selection' && 'Areas of Interest / Preferences'}
+                  {(requestType === 'Topic Selection' || requestType === 'Complete Done-For-You Package') && 'Areas of Interest / Preferences'}
                   {requestType === 'Proposal Development' && 'Brief Description of the Topic'}
                   {requestType === 'Chapter Assistance' && 'Which chapters do you need help with?'}
                   {requestType === 'Full Implementation' && 'Full Software & Thesis Requirements'}
@@ -183,7 +199,7 @@ export default function RequestAcademicProjectPage() {
                   required 
                   rows={4} 
                   placeholder={
-                    requestType === 'Topic Selection' 
+                    (requestType === 'Topic Selection' || requestType === 'Complete Done-For-You Package')
                       ? "e.g., I am interested in Artificial Intelligence, Healthcare, or Fintech..." 
                       : requestType === 'Proposal Development'
                       ? "Briefly explain what the project is about and any specific requirements from your supervisor..."
@@ -200,13 +216,13 @@ export default function RequestAcademicProjectPage() {
               {/* FILE UPLOAD SECTION */}
               <div className="bg-slate-900 border border-white/10 rounded-xl p-6 relative">
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  {requestType === 'Topic Selection' && 'Attach University Guidelines (Optional)'}
+                  {(requestType === 'Topic Selection' || requestType === 'Complete Done-For-You Package') && 'Attach University Guidelines (Optional)'}
                   {requestType === 'Proposal Development' && 'Attach Draft Proposal or Guidelines (Optional)'}
                   {requestType === 'Chapter Assistance' && 'Attach Current Work / Chapters (Optional)'}
                   {requestType === 'Full Implementation' && 'Attach Approved Proposal / Guidelines (Optional)'}
                 </label>
                 <p className="text-xs text-slate-500 mb-4">
-                  {requestType === 'Topic Selection' && 'If your department has specific rules for topics, please upload them here.'}
+                  {(requestType === 'Topic Selection' || requestType === 'Complete Done-For-You Package') && 'If your department has specific rules for topics, please upload them here.'}
                   {requestType === 'Proposal Development' && 'If you have a draft or specific formats required, upload it here.'}
                   {requestType === 'Chapter Assistance' && 'Upload what you have written so far so we can review it.'}
                   {requestType === 'Full Implementation' && 'Upload your approved proposal, chapter one, or any system design documents.'}

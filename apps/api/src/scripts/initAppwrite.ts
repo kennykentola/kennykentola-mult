@@ -614,7 +614,8 @@ const collections: CollectionDef[] = [
       { key: 'documentationUrl', type: 'string', size: 500, required: false },
       { key: 'sourceCodeUrl', type: 'string', size: 500, required: false },
       { key: 'paymentId', type: 'string', size: 50, required: false },
-      { key: 'serviceScope', type: 'string', size: 100, required: false, defaultValue: 'Full Process' }
+      { key: 'serviceScope', type: 'string', size: 100, required: false, defaultValue: 'Full Process' },
+      { key: 'initialDocumentUrl', type: 'string', size: 1000, required: false }
     ]
   },
   {
