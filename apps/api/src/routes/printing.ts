@@ -4,6 +4,7 @@ import { ID, Query } from 'node-appwrite';
 import { authenticateJWT, AuthenticatedRequest } from '../middleware/auth';
 import { z } from 'zod';
 import { validateRequest } from '../middleware/validate';
+import { sendEmail } from '../services/email';
 
 const router = Router();
 const DATABASE_ID = process.env.APPWRITE_DATABASE_ID || 'multicompany';
@@ -240,8 +241,33 @@ router.post('/orders', authenticateJWT, validateRequest(createOrderSchema), asyn
         fileType: 'document',
         printingType: 'document',
         doubleSided: sides === 'double'
-      }
     );
+
+    // Notify Admins
+    try {
+      await sendEmail({
+        to: [
+          'peterkehindeademola9@gmail.com',
+          'peterkehindeademola@gmail.com',
+          'ademolapeter233@gmail.com'
+        ],
+        replyTo: req.user?.email || undefined,
+        subject: `[New Print Order] ${title} from ${req.user?.name || 'Customer'}`,
+        html: `
+          <h3>New Print Order Received</h3>
+          <p><strong>Customer Name:</strong> ${req.user?.name || 'Unknown'}</p>
+          <p><strong>Customer Email:</strong> ${req.user?.email || 'Unknown'}</p>
+          <p><strong>Service Type:</strong> ${serviceType}</p>
+          <p><strong>Title:</strong> ${title}</p>
+          <p><strong>Quantity:</strong> ${quantity}</p>
+          <p><strong>Special Instructions:</strong><br/>${specialInstructions || 'None'}</p>
+          <hr/>
+          <p>Please log in to the admin dashboard to review and quote this order.</p>
+        `
+      });
+    } catch (emailErr) {
+      console.error('[Printing] Admin notification email failed:', emailErr);
+    }
 
     res.status(201).json({
       message: 'Print order created successfully',

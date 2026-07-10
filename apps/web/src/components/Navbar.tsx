@@ -22,7 +22,7 @@ export function Navbar() {
         </div>
 
         {/* Desktop Nav */}
-        <nav className="hidden xl:flex items-center gap-5 text-sm font-medium text-slate-400 mr-8">
+        <nav className="hidden xl:flex items-center gap-3 2xl:gap-5 text-[13px] 2xl:text-sm font-medium text-slate-400 mx-4">
           <Link href="/academy" className="hover:text-white transition-colors">Academy</Link>
           <Link href="/academic" className="hover:text-white transition-colors">Academic Guidance</Link>
           <Link href="/agency" className="hover:text-white transition-colors">Software Development</Link>

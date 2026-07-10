@@ -285,8 +285,10 @@ export default function UniversalCheckoutPage() {
                       <div className="space-y-4">
                         {bankAccounts.length > 1 && (
                           <div className="space-y-2 mb-4">
-                            <label className="text-sm font-bold text-slate-400">Select Bank</label>
+                            <label htmlFor="bankSelect" className="text-sm font-bold text-slate-400">Select Bank</label>
                             <select 
+                              id="bankSelect"
+                              title="Select Bank"
                               value={selectedBankId}
                               onChange={(e) => setSelectedBankId(e.target.value)}
                               className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-blue-500 outline-none"

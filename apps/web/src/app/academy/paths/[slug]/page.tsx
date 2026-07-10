@@ -8,13 +8,14 @@ import { fetchLearningPathBySlug, LearningPath, CurriculumModule } from '../../.
 import { ArrowLeft, Clock, GraduationCap, ChevronRight, CheckCircle2, FileCode2 } from 'lucide-react';
 import * as Icons from 'lucide-react';
 
-export default function LearningPathPage({ params }: { params: { slug: string } }) {
+export default function LearningPathPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = React.use(params);
   const [path, setPath] = useState<LearningPath | null>(null);
   const [curriculum, setCurriculum] = useState<CurriculumModule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchLearningPathBySlug(params.slug)
+    fetchLearningPathBySlug(slug)
       .then(data => {
         setPath(data);
         try {
@@ -25,7 +26,7 @@ export default function LearningPathPage({ params }: { params: { slug: string } 
       })
       .catch(() => setPath(null))
       .finally(() => setIsLoading(false));
-  }, [params.slug]);
+  }, [slug]);
 
   if (isLoading) {
     return <div className="min-h-screen bg-[#0A0A0A] text-slate-400 flex items-center justify-center">Loading path...</div>;

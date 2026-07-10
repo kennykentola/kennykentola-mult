@@ -391,8 +391,11 @@ export default function AdminPrintingPage() {
             }}
           >
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Base Price Per Page (₦)</label>
+              <label htmlFor="pricePerUnit" className="block text-sm font-medium text-slate-300 mb-2">Base Price Per Page (₦)</label>
               <input
+                id="pricePerUnit"
+                title="Base Price Per Page"
+                placeholder="e.g. 50"
                 type="number"
                 required
                 min="0"
@@ -404,8 +407,11 @@ export default function AdminPrintingPage() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Color Multiplier</label>
+              <label htmlFor="colorMultiplier" className="block text-sm font-medium text-slate-300 mb-2">Color Multiplier</label>
               <input
+                id="colorMultiplier"
+                title="Color Multiplier"
+                placeholder="e.g. 2"
                 type="number"
                 step="0.1"
                 min="1"
@@ -418,8 +424,11 @@ export default function AdminPrintingPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Double Sided Discount</label>
+              <label htmlFor="doubleSidedDiscount" className="block text-sm font-medium text-slate-300 mb-2">Double Sided Discount</label>
               <input
+                id="doubleSidedDiscount"
+                title="Double Sided Discount"
+                placeholder="e.g. 0.1"
                 type="number"
                 step="0.05"
                 min="0"
