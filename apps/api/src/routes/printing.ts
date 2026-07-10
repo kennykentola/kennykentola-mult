@@ -241,6 +241,7 @@ router.post('/orders', authenticateJWT, validateRequest(createOrderSchema), asyn
         fileType: 'document',
         printingType: 'document',
         doubleSided: sides === 'double'
+      }
     );
 
     // Notify Admins
