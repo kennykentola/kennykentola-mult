@@ -151,24 +151,45 @@ export default function RequestAcademicProjectPage() {
                 </div>
               </div>
 
-              {requestType !== 'Topic Selection' && (
+              {requestType === 'Proposal Development' && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Approved Project Title</label>
+                  <input required type="text" placeholder="Enter your approved topic..." value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                </div>
+              )}
+
+              {requestType === 'Chapter Assistance' && (
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">Project Title</label>
-                  <input required type="text" placeholder="Enter your approved topic..." value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                  <input required type="text" placeholder="Enter your project topic..." value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                </div>
+              )}
+
+              {requestType === 'Full Implementation' && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Approved Project Title</label>
+                  <input required type="text" placeholder="Enter your approved project topic..." value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500" />
                 </div>
               )}
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  {requestType === 'Topic Selection' ? 'Any specific areas of interest?' : 'Project Description / Requirements'}
+                  {requestType === 'Topic Selection' && 'Areas of Interest / Preferences'}
+                  {requestType === 'Proposal Development' && 'Brief Description of the Topic'}
+                  {requestType === 'Chapter Assistance' && 'Which chapters do you need help with?'}
+                  {requestType === 'Full Implementation' && 'Full Software & Thesis Requirements'}
                 </label>
                 <textarea 
                   required 
                   rows={4} 
                   placeholder={
                     requestType === 'Topic Selection' 
-                      ? "I am interested in Artificial Intelligence, Healthcare, or Fintech..." 
-                      : "Briefly explain what the system should do..."
+                      ? "e.g., I am interested in Artificial Intelligence, Healthcare, or Fintech..." 
+                      : requestType === 'Proposal Development'
+                      ? "Briefly explain what the project is about and any specific requirements from your supervisor..."
+                      : requestType === 'Chapter Assistance'
+                      ? "e.g., I need help writing Chapter 3 (Methodology) and analyzing my data..."
+                      : "Provide a detailed explanation of what the software should do, core features, etc..."
                   }
                   value={formData.description} 
                   onChange={e => setFormData({...formData, description: e.target.value})} 
@@ -179,10 +200,16 @@ export default function RequestAcademicProjectPage() {
               {/* FILE UPLOAD SECTION */}
               <div className="bg-slate-900 border border-white/10 rounded-xl p-6 relative">
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Attach Initial Document (Optional)
+                  {requestType === 'Topic Selection' && 'Attach University Guidelines (Optional)'}
+                  {requestType === 'Proposal Development' && 'Attach Draft Proposal or Guidelines (Optional)'}
+                  {requestType === 'Chapter Assistance' && 'Attach Current Work / Chapters (Optional)'}
+                  {requestType === 'Full Implementation' && 'Attach Approved Proposal / Guidelines (Optional)'}
                 </label>
                 <p className="text-xs text-slate-500 mb-4">
-                  If you have a proposal, university guidelines, or a draft chapter, please upload it here.
+                  {requestType === 'Topic Selection' && 'If your department has specific rules for topics, please upload them here.'}
+                  {requestType === 'Proposal Development' && 'If you have a draft or specific formats required, upload it here.'}
+                  {requestType === 'Chapter Assistance' && 'Upload what you have written so far so we can review it.'}
+                  {requestType === 'Full Implementation' && 'Upload your approved proposal, chapter one, or any system design documents.'}
                 </p>
                 <div className="flex items-center gap-4">
                   <label className="cursor-pointer bg-white/5 hover:bg-white/10 text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 border border-white/10">
