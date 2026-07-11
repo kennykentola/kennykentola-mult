@@ -34,6 +34,7 @@ type ApiCourse = {
   price: number;
   isPublished: boolean;
   lessonCount: number;
+  aiVideoEnabled?: boolean;
 };
 
 type ApiLesson = {
@@ -1434,6 +1435,7 @@ router.post('/courses', authenticateJWT, async (req: AuthenticatedRequest, res) 
       coverImage: coverImage || '',
       price: price !== undefined ? Number(price) : 0,
       isPublished: isPublished !== undefined ? Boolean(isPublished) : false,
+      aiVideoEnabled: aiVideoEnabled ?? true,
       lessonCount: 0
     });
 
@@ -1511,12 +1513,12 @@ router.patch('/courses/:courseId', authenticateJWT, async (req: AuthenticatedReq
       return res.status(403).json({ error: 'You do not own this course.' });
     }
 
-    const allowedFields = ['title', 'description', 'category', 'level', 'summary', 'coverImage', 'price', 'isPublished'];
+    const allowedFields = ['title', 'description', 'category', 'level', 'summary', 'coverImage', 'price', 'isPublished', 'aiVideoEnabled'];
     const updateData: Record<string, any> = {};
     for (const key of allowedFields) {
       if (updates[key] !== undefined) {
         if (key === 'price') updateData[key] = Number(updates[key]);
-        else if (key === 'isPublished') updateData[key] = Boolean(updates[key]);
+        else if (key === 'isPublished' || key === 'aiVideoEnabled') updateData[key] = Boolean(updates[key]);
         else updateData[key] = updates[key];
       }
     }
