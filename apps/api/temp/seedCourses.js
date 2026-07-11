@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: '../.env' });
 const { Client, Databases, ID, Permission, Role } = require('node-appwrite');
 
 const client = new Client()
