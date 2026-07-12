@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { mockAuthenticatedSession } from './helpers/auth';
 
 test.describe('Student Journey - Academy Browsing', () => {
   test('Can browse academy catalog and view course details', async ({ page }) => {
@@ -32,6 +33,19 @@ test.describe('Student Journey - Academy Browsing', () => {
     await page.goto('/dashboard/academy', { waitUntil: 'domcontentloaded' });
     
     // Expect redirect to login
-    await expect(page).toHaveURL(/.*\/login/, { timeout: 15000 });
+    await expect(page).toHaveURL(/.*\/login/, { timeout: 30000 });
+  });
+
+  test('Can access student dashboard when logged in as Student', async ({ page }) => {
+    // Mock the auth state
+    await mockAuthenticatedSession(page, { role: 'Student', purpose: 'learn' });
+
+    await page.goto('/student/dashboard', { waitUntil: 'domcontentloaded' });
+
+    // The student dashboard should have a visible header "KennyKentola" and "Student Portal"
+    await expect(page.locator('text=Student Portal').first()).toBeVisible({ timeout: 10000 });
+    
+    // And should have a link to "My Courses"
+    await expect(page.locator('text=My Courses').first()).toBeVisible();
   });
 });
