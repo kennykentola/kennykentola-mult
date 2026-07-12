@@ -194,13 +194,7 @@ export default function DashboardLayout({
           )}
         </nav>
 
-        {/* User Card */}
         <div className="p-4 border-t border-slate-900 bg-slate-900/20">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1 flex justify-end">
-              <NotificationBell />
-            </div>
-          </div>
           <div className="flex items-center gap-3 mb-4">
             <div className="h-9 w-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-sm font-bold text-indigo-400 uppercase">
               {profile.firstName[0]}
@@ -328,6 +322,13 @@ export default function DashboardLayout({
             </button>
           </div>
         </header>
+
+        {/* Desktop Header for Notifications */}
+        <div className="hidden lg:flex h-16 px-10 items-center justify-end sticky top-0 z-20 pointer-events-none -mb-16">
+          <div className="pointer-events-auto">
+            <NotificationBell />
+          </div>
+        </div>
 
         {/* Dynamic Page Workspace */}
         <main className="flex-1 p-6 lg:p-10 relative">

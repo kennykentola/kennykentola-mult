@@ -24,7 +24,7 @@ export default function CourseRatingModal({ courseId, courseTitle, onClose, onSu
       if (!profile) return;
       try {
         const res = await fetchCourseTestimonials(courseId);
-        const reviewed = res.testimonials.some(t => t.userId === profile.userId);
+        const reviewed = res.testimonials.some(t => t.studentId === profile.userId || t.userId === profile.userId);
         setHasReviewed(reviewed);
         if (reviewed) {
           onSubmitted();

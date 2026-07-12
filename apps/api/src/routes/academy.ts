@@ -20,6 +20,70 @@ const STUDENT_WORKSPACES_COLLECTION = 'student_workspaces';
 const COURSE_QNA_COLLECTION = 'course_qna';
 const COURSE_QNA_REPLIES_COLLECTION = 'course_qna_replies';
 
+// SEED ENDPOINT
+router.get('/seed-demo-courses', async (req, res) => {
+  try {
+    const coursesToSeed = [
+      {
+        title: 'Full-Stack Web Development Bootcamp',
+        description: 'Master React, Node.js, Next.js, and Databases in this comprehensive bootcamp.',
+        category: 'Programming',
+        level: 'Advanced',
+        price: 35000,
+        isPublished: true,
+        aiVideoEnabled: true,
+        summary: 'Master the MERN stack and Next.js.',
+        coverImage: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=800',
+      },
+      {
+        title: 'AI Prompt Engineering & Tools',
+        description: 'Learn how to use AI to 10x your productivity.',
+        category: 'Artificial Intelligence',
+        level: 'Beginner',
+        price: 5000,
+        isPublished: true,
+        aiVideoEnabled: true,
+        summary: 'Automate workflows with AI.',
+        coverImage: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=800',
+      },
+      {
+        title: 'Graphic Design Basics (Free)',
+        description: 'Learn the basics of Graphic Design.',
+        category: 'Design',
+        level: 'Beginner',
+        price: 0,
+        isPublished: true,
+        aiVideoEnabled: false,
+        summary: 'Introduction to visual design.',
+        coverImage: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?q=80&w=800',
+      }
+    ];
+
+    const results = [];
+    for (const c of coursesToSeed) {
+      const doc = await databases.createDocument(DATABASE_ID, COURSES_COLLECTION, ID.unique(), {
+        title: c.title,
+        description: c.description,
+        instructorId: 'system-seed',
+        instructorName: 'KennyKentola Admin',
+        category: c.category,
+        level: c.level,
+        price: c.price,
+        isPublished: c.isPublished,
+        aiVideoEnabled: c.aiVideoEnabled,
+        summary: c.summary,
+        coverImage: c.coverImage,
+        lessonCount: 0
+      });
+      results.push(doc);
+    }
+    
+    res.json({ message: 'Seeded courses successfully', courses: results });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 type ApiCourse = {
   id: string;
   title: string;
@@ -172,8 +236,10 @@ async function listCourseLessons(courseId: string, user?: AuthenticatedRequest['
       ]);
       console.log(`[listCourseLessons] User ${user.id} enrollments total: ${enrollments.total}`);
       if (enrollments.total > 0) {
-        console.log(`[listCourseLessons] Enrollment paymentStatus: ${(enrollments.documents[0] as any).paymentStatus}`);
-        if ((enrollments.documents[0] as any).paymentStatus === 'paid') {
+        const enrollmentPaymentStatus = (enrollments.documents[0] as any).paymentStatus;
+        console.log(`[listCourseLessons] Enrollment paymentStatus: ${enrollmentPaymentStatus}`);
+        // Unlock lessons if payment is 'paid' OR 'verifying' (receipt already submitted)
+        if (enrollmentPaymentStatus === 'paid' || enrollmentPaymentStatus === 'verifying') {
           isPurchased = true;
         }
       }
@@ -366,7 +432,6 @@ router.get('/courses', async (_req, res) => {
   try {
     const courses = await databases.listDocuments(DATABASE_ID, COURSES_COLLECTION, [
       Query.equal('isPublished', true),
-      Query.orderAsc('title'),
       Query.limit(100)
     ]);
 
@@ -376,6 +441,9 @@ router.get('/courses', async (_req, res) => {
         return mapCourse(courseDoc, await getLessonCount(courseDoc.$id, Number(courseDoc.lessonCount || 0)));
       })
     );
+
+    // Sort alphabetically by title in JS (avoids requiring a composite DB index)
+    mapped.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
 
     res.status(200).json({ courses: mapped, total: mapped.length });
   } catch (err: any) {
@@ -664,16 +732,22 @@ router.get('/me/progress', authenticateJWT, async (req: AuthenticatedRequest, re
     const enrollmentDocs = await getEnrollmentDocs(userId || '');
 
     // Batch fetch all enrolled courses at once instead of N getDocument calls
-    const courseIds = enrollmentDocs.map((d: any) => d.courseId).filter(Boolean);
+    const courseIds = [...new Set(enrollmentDocs.map((d: any) => d.courseId).filter(Boolean))];
     const courseMap = new Map<string, any>();
     if (courseIds.length > 0) {
       try {
+        // Appwrite limit max is 100
+        const limit = Math.min(courseIds.length, 100);
+        // Appwrite has issues if the array has more than 100 items, so chunk if needed. Here we just take 100.
+        const chunkedIds = courseIds.slice(0, 100);
         const courseBatch = await databases.listDocuments(DATABASE_ID, COURSES_COLLECTION, [
-          Query.equal('$id', courseIds),
-          Query.limit(courseIds.length)
+          Query.equal('$id', chunkedIds as string[]),
+          Query.limit(limit)
         ]);
         courseBatch.documents.forEach((c: any) => courseMap.set(c.$id, c));
-      } catch {}
+      } catch (err: any) {
+        console.error('[Academy] Error fetching course batch:', err.message);
+      }
     }
 
     // Batch fetch lessons per course in parallel
@@ -1969,10 +2043,17 @@ router.get('/courses/:courseId/testimonials', async (req, res) => {
     const testimonialsList = await databases.listDocuments(DATABASE_ID, 'testimonials', [
       Query.equal('courseId', courseId),
       Query.equal('isApproved', true),
-      Query.orderDesc('createdAt'),
       Query.limit(50)
     ]);
-    res.status(200).json({ testimonials: testimonialsList.documents });
+    // Sort by createdAt descending in JS (avoids composite index requirement)
+    testimonialsList.documents.sort((a: any, b: any) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    const mappedTestimonials = testimonialsList.documents.map((t: any) => ({
+      ...t,
+      content: t.reviewText || t.content
+    }));
+    res.status(200).json({ testimonials: mappedTestimonials });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -1983,16 +2064,21 @@ router.post('/courses/:courseId/testimonials', authenticateJWT, async (req: Auth
   const userId = req.user?.id;
   const { content, rating } = req.body;
   
+  if (!content || !rating) {
+    return res.status(400).json({ error: 'Content and rating are required.' });
+  }
+  
   try {
     const profile = await getProfileDoc(userId || '');
     const authorName = profile ? `${(profile as any).firstName} ${(profile as any).lastName}` : req.user?.name || 'Student';
 
     const testimonial = await databases.createDocument(DATABASE_ID, 'testimonials', ID.unique(), {
       userId,
-      studentId: userId, // Added to fix Appwrite missing attribute error
+      studentId: userId,
       authorName,
       courseId,
-      content,
+      content: content,
+      reviewText: content, 
       rating: Number(rating || 5),
       isApproved: false, // requires admin approval
       createdAt: new Date().toISOString()

@@ -124,14 +124,14 @@ export default function AdminCurriculumPage({ params }: { params: Promise<{ id: 
   }
 
   async function handleSave() {
-    if (!form.title.trim()) { setError('Lesson title is required.'); return; }
+    if (!(form.title || '').trim()) { setError('Lesson title is required.'); return; }
     setSaving(true);
     setError('');
     const jwt = await getSessionJwt();
     const payload = {
-      title: form.title.trim(),
-      content: form.content.trim(),
-      videoUrl: form.videoUrl.trim(),
+      title: (form.title || '').trim(),
+      content: (form.content || '').trim(),
+      videoUrl: (form.videoUrl || '').trim(),
       order: Number(form.order),
       durationMinutes: Number(form.durationMinutes),
       isPreview: Boolean(form.isPreview),

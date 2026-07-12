@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { BookOpen, Code, Settings, Printer, GraduationCap, Sun, ArrowRight, Activity, Users, FileText, Zap, CheckCircle, Image as ImageIcon, Share2, PenTool, Contact, LayoutTemplate, CalendarDays, Monitor, Film, Lightbulb, Bot } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
+import FeaturedCourses from '../components/FeaturedCourses';
+
 export default function Home() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#050505] font-sans text-slate-200">
@@ -231,6 +233,9 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* FEATURED COURSES FROM ACADEMY */}
+        <FeaturedCourses />
 
         {/* AI PROMPT ENGINEERING MASTERCLASS PROMO */}
         <div className="relative rounded-[2.5rem] mb-24 overflow-hidden border border-purple-500/30 group shadow-[0_0_80px_-15px_rgba(168,85,247,0.4)]">

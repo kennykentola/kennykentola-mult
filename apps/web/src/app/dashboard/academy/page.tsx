@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/features/auth/AuthContext';
 import { client } from '@/lib/appwrite';
 import { Databases, Query } from 'appwrite';
 import Link from 'next/link';

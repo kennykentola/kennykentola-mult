@@ -9,7 +9,7 @@ import Script from 'next/script';
 export const metadata: Metadata = {
   title: 'KennyKentola — Software, Academy, Printing & Solar',
   description: 'KennyKentola is a leading multi-company platform offering Programming Academy courses, custom Software Agency services, IT Maintenance, Graphic & Printing, and Solar Installation in Nigeria and worldwide.',
-  keywords: 'KennyKentola, Kenny Kentola, software agency, programming academy, web development, app development, solar installation, printing press, Ibadan, Lagos, Nigeria',
+  keywords: 'KennyKentola, Kenny Kentola,kennykentola-digital, digital-kentola, kenny-kentola-digital, digital, software agency, programming academy, web development, app development, solar installation, printing press, Ibadan, Lagos, Nigeria',
   openGraph: {
     title: 'KennyKentola',
     description: 'Learn, Build, Print, Power with KennyKentola',
@@ -27,9 +27,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <Script 
-          src="https://www.googletagmanager.com/gtag/js?id=G-CR4LWR93DK" 
-          strategy="afterInteractive" 
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-CR4LWR93DK"
+          strategy="afterInteractive"
         />
         <Script id="google-analytics" strategy="afterInteractive">
           {`
@@ -54,8 +54,8 @@ export default function RootLayout({
       <body className="bg-slate-950 text-slate-100 min-h-screen antialiased">
         <AuthProvider>
           <SocketProvider>
-            <Toaster 
-              position="top-right" 
+            <Toaster
+              position="top-right"
               toastOptions={{
                 duration: 5000,
                 style: {

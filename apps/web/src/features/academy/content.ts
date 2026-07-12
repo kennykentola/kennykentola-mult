@@ -25,7 +25,7 @@ export const academyOverview = {
 
 export const enrolledCourses: AcademyCourse[] = [
   {
-    id: 'nextjs-15',
+    id: 'fullstack-nextjs',
     title: 'Full-Stack React and Next.js 15',
     description:
       'Master the App Router, Server Components, Server Actions, Suspense, and middleware with Appwrite integration.',

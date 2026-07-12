@@ -241,7 +241,12 @@ export default function CourseWorkspacePage() {
           await pyodide.runPythonAsync(codeToRun);
           setOutput(pyLogs.length > 0 ? pyLogs.join('\n') : '(No output)');
         } catch (pyErr: any) {
-          setOutput('[ERROR] ' + (pyErr?.message || String(pyErr)));
+          const errMsg = pyErr?.message || String(pyErr);
+          if (errMsg.includes("No module named 'tkinter'")) {
+            setOutput("[ERROR] 'tkinter' is a desktop graphical UI library. It cannot be run directly inside a web browser. If you want to build and test GUI apps, you will need to run this code locally on your own computer.");
+          } else {
+            setOutput('[ERROR] ' + errMsg);
+          }
         }
       } else {
         setOutput(`Executing ${selectedLanguage} on remote server...`);
@@ -470,10 +475,16 @@ export default function CourseWorkspacePage() {
                                try {
                                  await submitCoursePayment(courseData.course.id, reader.result as string, courseData.course.price);
                                  setMessage('Payment receipt submitted successfully! Pending admin verification.');
-                                 // Update local state
-                                 if (courseData.enrollment) {
-                                   courseData.enrollment.paymentStatus = 'verifying';
-                                 }
+                                 
+                                 // Optimistically update local state immediately for instant feedback
+                                 setCourseData(prev => prev ? {
+                                   ...prev,
+                                   enrollment: prev.enrollment ? { ...prev.enrollment, paymentStatus: 'verifying' } : prev.enrollment,
+                                   lessons: prev.lessons.map(l => ({ ...l, isLocked: false }))
+                                 } : prev);
+
+                                 // Optionally re-fetch in the background
+                                 fetchAcademyCourse(courseData.course.id).then(setCourseData).catch(console.error);
                                } catch (err: any) {
                                  setError(err.message || 'Failed to submit payment.');
                                } finally {
