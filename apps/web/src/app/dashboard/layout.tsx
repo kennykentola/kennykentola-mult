@@ -133,8 +133,13 @@ export default function DashboardLayout({
       {/* Sidebar - Desktop */}
       <aside className="hidden lg:flex flex-col w-64 border-r border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 h-screen z-30 shrink-0">
         <div className="flex h-16 items-center px-6 border-b border-slate-900 gap-2">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center font-bold text-white shadow-md">
-            K
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center font-bold text-white shadow-md overflow-hidden">
+            {profile.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              <>{profile.firstName[0]}</>
+            )}
           </div>
           <div className="min-w-0">
             <span className="block text-lg font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
@@ -196,9 +201,13 @@ export default function DashboardLayout({
 
         <div className="p-4 border-t border-slate-900 bg-slate-900/20">
           <div className="flex items-center gap-3 mb-4">
-            <div className="h-9 w-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-sm font-bold text-indigo-400 uppercase">
-              {profile.firstName[0]}
-              {profile.lastName[0]}
+            <div className="h-9 w-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-sm font-bold text-indigo-400 uppercase overflow-hidden">
+              {profile.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <>{profile.firstName[0]}{profile.lastName[0]}</>
+              )}
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-bold text-white truncate">{profile.firstName} {profile.lastName}</p>
@@ -292,8 +301,13 @@ export default function DashboardLayout({
         {/* Mobile Header Bar */}
         <header className="lg:hidden h-16 border-b border-slate-900 bg-slate-950/80 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-20">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white">
-              K
+            <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white overflow-hidden">
+              {profile.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <>{profile.firstName[0]}</>
+              )}
             </div>
             <div>
               <span className="block text-lg font-bold text-white">KennyKentola</span>

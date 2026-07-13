@@ -33,9 +33,6 @@ const diskStorage = multer.diskStorage({
 const upload = multer({ storage: diskStorage, limits: { fileSize: 500 * 1024 * 1024 } }); // 500MB limit
 
 router.post('/', authenticateJWT, upload.single('file'), async (req: AuthenticatedRequest, res) => {
-  if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
-    return res.status(403).json({ error: 'Instructor access required.' });
-  }
 
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded.' });

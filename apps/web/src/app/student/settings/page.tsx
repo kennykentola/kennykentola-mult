@@ -9,7 +9,8 @@ import {
   Bell, 
   Save, 
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  Camera
 } from 'lucide-react';
 import { useAuth } from '../../../features/auth/AuthContext';
 import { getSessionJwt } from '../../../lib/sessionJwt';
@@ -26,6 +27,7 @@ export default function StudentSettingsPage() {
   const [emailNotifications, setEmailNotifications] = useState(profile?.emailNotifications ?? true);
   const [smsNotifications, setSmsNotifications] = useState(profile?.smsNotifications ?? false);
   const [loading, setLoading] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
 
@@ -58,10 +60,49 @@ export default function StudentSettingsPage() {
 
       await refreshProfile();
       setSuccess('Settings updated successfully!');
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
       setError(err?.message || 'Unable to save settings.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setAvatarUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const uploadRes = await fetch(`${API_BASE}/upload`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${await getSessionJwt()}`
+        },
+        body: formData
+      });
+      
+      if (!uploadRes.ok) throw new Error('Upload failed');
+      const uploadData = await uploadRes.json();
+      
+      await fetch(`${API_BASE}/auth/profile`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${await getSessionJwt()}`
+        },
+        body: JSON.stringify({ avatarUrl: uploadData.url })
+      });
+      
+      await refreshProfile();
+    } catch (err) {
+      console.error(err);
+      setError('Failed to upload profile picture');
+    } finally {
+      setAvatarUploading(false);
     }
   };
 
@@ -142,6 +183,35 @@ export default function StudentSettingsPage() {
                 <h3 className="text-lg font-bold text-white border-b border-slate-900 pb-3">
                   Profile Details
                 </h3>
+
+                  <div className="flex flex-col items-center sm:items-start sm:flex-row gap-6 mb-6">
+                    <div className="relative shrink-0">
+                      <div className="h-24 w-24 rounded-full bg-slate-800 border border-slate-700 overflow-hidden flex items-center justify-center text-3xl font-bold text-indigo-400 uppercase">
+                        {profile.avatarUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          <>{profile.firstName[0]}{profile.lastName[0]}</>
+                        )}
+                      </div>
+                      {avatarUploading && (
+                        <div className="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center">
+                          <Loader2 className="h-6 w-6 text-white animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col justify-center text-center sm:text-left">
+                      <span className="text-sm font-semibold text-slate-300">Profile Picture</span>
+                      <span className="text-xs text-slate-500 mt-1 max-w-xs mb-3">Upload a professional headshot to personalize your profile across the academy platform.</span>
+                      <div>
+                        <label className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors shadow-sm disabled:opacity-50">
+                          <Camera className="h-4 w-4" />
+                          {avatarUploading ? 'Uploading...' : 'Upload Picture'}
+                          <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={avatarUploading} />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
 
                 <div className="grid gap-6 sm:grid-cols-2">
                   <div className="space-y-2">

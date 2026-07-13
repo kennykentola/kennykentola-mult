@@ -93,26 +93,27 @@ export default function ProfilePage() {
       <div className="grid gap-6 md:grid-cols-3">
         {/* Left Card: Account Card */}
         <div className="md:col-span-1 glass-panel border border-white/5 bg-slate-900/20 rounded-2xl p-6 flex flex-col items-center text-center">
-          <div className="relative group mb-4">
-            <div className="h-20 w-20 rounded-full bg-slate-800 border border-slate-700 overflow-hidden flex items-center justify-center text-3xl font-bold text-indigo-400 uppercase">
-              {profile.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <>{profile.firstName[0]}{profile.lastName[0]}</>
+          <div className="relative mb-4 flex flex-col items-center">
+            <div className="relative group mb-3">
+              <div className="h-20 w-20 rounded-full bg-slate-800 border border-slate-700 overflow-hidden flex items-center justify-center text-3xl font-bold text-indigo-400 uppercase shadow-lg">
+                {profile.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <>{profile.firstName[0]}{profile.lastName[0]}</>
+                )}
+              </div>
+              {avatarUploading && (
+                <div className="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center">
+                  <Loader2 className="h-5 w-5 text-white animate-spin" />
+                </div>
               )}
             </div>
             
-            <label className="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
-              {avatarUploading ? (
-                <Loader2 className="h-5 w-5 text-white animate-spin" />
-              ) : (
-                <>
-                  <Camera className="h-5 w-5 text-white mb-1" />
-                  <span className="text-[9px] font-bold text-white uppercase tracking-wider">Upload</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={avatarUploading} />
-                </>
-              )}
+            <label className="inline-flex items-center justify-center gap-2 px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 text-indigo-300 text-[10px] font-bold rounded-lg cursor-pointer transition-colors shadow-sm disabled:opacity-50">
+              <Camera className="h-3.5 w-3.5" />
+              {avatarUploading ? 'UPLOADING...' : 'CHANGE PICTURE'}
+              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={avatarUploading} />
             </label>
           </div>
 

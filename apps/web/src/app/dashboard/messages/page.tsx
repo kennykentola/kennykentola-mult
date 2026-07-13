@@ -96,10 +96,18 @@ export default function MessagesPage() {
     };
   }, [socket, activeRoom]);
 
+  // Join Room when socket connects or room changes
+  useEffect(() => {
+    if (!activeRoom || !socket || !connected) return;
+    socket.emit('join_chat', activeRoom.$id);
+    return () => {
+      socket.emit('leave_chat', activeRoom.$id);
+    };
+  }, [activeRoom, socket, connected]);
+
   // Fetch Messages when room changes
   useEffect(() => {
     if (!activeRoom) return;
-    joinChat(activeRoom.$id);
 
     const fetchHistory = async () => {
       try {
@@ -113,8 +121,6 @@ export default function MessagesPage() {
       }
     };
     fetchHistory();
-
-    return () => leaveChat(activeRoom.$id);
   }, [activeRoom]);
 
   // Auto-scroll to bottom
