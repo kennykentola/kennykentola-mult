@@ -10,7 +10,7 @@ export const metadata = {
 };
 
 const team = [
-  { name: 'Kenny Kentola', role: 'Founder & Lead Instructor', initials: 'KK', color: 'from-indigo-500 to-purple-600', logo: true },
+  { name: 'Kenny Kentola', role: 'Founder & Lead Instructor', initials: 'KK', color: 'from-indigo-500 to-purple-600' },
   { name: 'Academy Team', role: 'Instructors & Mentors', initials: 'AT', color: 'from-emerald-500 to-teal-600' },
   { name: 'Dev Team', role: 'Software Engineers', initials: 'DT', color: 'from-cyan-500 to-blue-600' },
 ];
@@ -91,15 +91,9 @@ export default function AboutPage() {
       <section className="mx-auto max-w-5xl px-6 pb-24">
         <h2 className="text-3xl font-bold text-center mb-12">The Team Behind It</h2>
         <div className="grid sm:grid-cols-3 gap-6">
-          {team.map(({ name, role, initials, color, logo }) => (
+          {team.map(({ name, role, initials, color }) => (
             <div key={name} className="rounded-2xl border border-white/5 bg-slate-900/30 p-6 text-center">
-              {logo ? (
-                <div className="h-16 w-16 mx-auto mb-4 bg-[#0A0A0A] rounded-2xl border border-white/10 shadow-xl overflow-hidden p-1">
-                  <img src="/8aa52611-294c-4f56-9132-f6a62f271095-Photoroom.png" alt={name} className="w-full h-full object-contain" />
-                </div>
-              ) : (
-                <div className={`h-16 w-16 rounded-2xl bg-gradient-to-tr ${color} flex items-center justify-center text-white text-xl font-black mx-auto mb-4`}>{initials}</div>
-              )}
+              <div className={`h-16 w-16 rounded-2xl bg-gradient-to-tr ${color} flex items-center justify-center text-white text-xl font-black mx-auto mb-4`}>{initials}</div>
               <div className="font-bold text-white">{name}</div>
               <div className="text-xs text-slate-500 mt-1">{role}</div>
             </div>
