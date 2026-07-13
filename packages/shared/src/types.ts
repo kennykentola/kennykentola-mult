@@ -32,6 +32,7 @@ export interface Course {
   category?: string;
   summary?: string;
   level?: string;
+  aiVideoEnabled?: boolean;
 }
 
 export interface Lesson {

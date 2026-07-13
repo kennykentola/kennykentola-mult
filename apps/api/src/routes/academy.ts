@@ -1489,7 +1489,7 @@ router.post('/courses', authenticateJWT, async (req: AuthenticatedRequest, res) 
     return res.status(403).json({ error: 'Instructor access required.' });
   }
 
-  const { title, description, category, level, summary, coverImage, price, isPublished } = req.body;
+  const { title, description, category, level, summary, coverImage, price, isPublished, aiVideoEnabled } = req.body;
 
   if (!title || !description) {
     return res.status(400).json({ error: 'Title and description are required.' });

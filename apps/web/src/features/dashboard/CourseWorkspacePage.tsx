@@ -238,11 +238,23 @@ export default function CourseWorkspacePage() {
             codeToRun = codeToRun.replace('// Write your code here...', '').trim();
           }
           
-          await pyodide.runPythonAsync(codeToRun);
-          setOutput(pyLogs.length > 0 ? pyLogs.join('\n') : '(No output)');
+          const _origErr = console.error;
+          console.error = (...args: any[]) => {
+            // Next.js intercepts console.error and shows an overlay. 
+            // We suppress Pyodide's internal console.error during execution so it just goes to our output panel.
+            pyLogs.push('[ERROR] ' + args.join(' '));
+          };
+          
+          try {
+            await pyodide.loadPackagesFromImports(codeToRun);
+            await pyodide.runPythonAsync(codeToRun);
+            setOutput(pyLogs.length > 0 ? pyLogs.join('\n') : '(No output)');
+          } finally {
+            console.error = _origErr;
+          }
         } catch (pyErr: any) {
           const errMsg = pyErr?.message || String(pyErr);
-          if (errMsg.includes("No module named 'tkinter'")) {
+          if (errMsg.toLowerCase().includes('tkinter')) {
             setOutput("[ERROR] 'tkinter' is a desktop graphical UI library. It cannot be run directly inside a web browser. If you want to build and test GUI apps, you will need to run this code locally on your own computer.");
           } else {
             setOutput('[ERROR] ' + errMsg);

@@ -59,7 +59,7 @@ export default function AcademyDashboardPage() {
 
       // Fetch user enrollments
       const enrollmentsRes = await databases.listDocuments(dbId, 'course_enrollments', [
-        Query.equal('userId', user!.$id)
+        Query.equal('userId', user!.id)
       ]);
       
       // Match enrollments to course details

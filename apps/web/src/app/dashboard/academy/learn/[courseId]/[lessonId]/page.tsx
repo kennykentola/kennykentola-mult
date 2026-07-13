@@ -52,7 +52,7 @@ export default function LessonPlayerPage({ params }: { params: Promise<{ courseI
 
       // 3. Fetch User Progress for this course
       const progressRes = await databases.listDocuments(dbId, 'lesson_progress', [
-        Query.equal('studentId', user!.$id),
+        Query.equal('studentId', user!.id),
         Query.equal('courseId', resolvedParams.courseId)
       ]);
       setProgressLog(progressRes.documents);
@@ -82,7 +82,7 @@ export default function LessonPlayerPage({ params }: { params: Promise<{ courseI
         }
       } else {
         await databases.createDocument(dbId, 'lesson_progress', ID.unique(), {
-          studentId: user!.$id,
+          studentId: user!.id,
           courseId: course!.$id,
           lessonId: currentLesson!.$id,
           isCompleted: true,
