@@ -226,7 +226,7 @@ export default function CourseDetailPage() {
             <article className="mt-8 flex flex-col gap-8 rounded-[2rem] border border-white/10 bg-gradient-to-b from-white/5 to-transparent p-8 sm:flex-row sm:items-start lg:p-10">
               <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[1.5rem] bg-[#0A0A0A] border border-white/10 shadow-xl overflow-hidden p-2">
                 <img 
-                  src="/8aa52611-294c-4f56-9132-f6a62f271095-Photoroom.png" 
+                  src="/logo.png" 
                   alt="Kenny Kentola Logo"
                   className="w-full h-full object-contain"
                 />
