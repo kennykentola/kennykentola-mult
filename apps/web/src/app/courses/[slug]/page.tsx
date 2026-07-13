@@ -256,7 +256,7 @@ export default function CourseDetailPage() {
           <section className="px-4 md:px-6">
             <div className="relative overflow-hidden rounded-[2.5rem] p-10 text-center shadow-2xl md:p-16 border border-white/10">
               <div className="absolute inset-0 z-0">
-                <img src={course.image} alt="Background" className="w-full h-full object-cover opacity-20" />
+                <img src="/8aa52611-294c-4f56-9132-f6a62f271095-Photoroom.png" alt="Background" className="w-full h-full object-cover opacity-20" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-[#050505]/40" />
               </div>
               
