@@ -14,7 +14,7 @@ export function Navbar() {
         <div className="flex-1 flex items-center justify-start">
           <Link href="/" className="flex items-center group cursor-pointer" onClick={() => setIsOpen(false)} aria-label="Home">
             <img 
-              src="/logo.png" 
+              src="/8aa52611-294c-4f56-9132-f6a62f271095-Photoroom.png" 
               alt="KennyKentola Logo" 
               width="150" height="40"
               className="h-10 md:h-12 w-auto object-contain transition-transform group-hover:scale-105 rounded-lg" 

@@ -38,17 +38,29 @@ export default function Home() {
                 Start a Project
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <Link href="/academy" className="w-full sm:w-auto h-14 px-8 inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white text-base font-medium hover:bg-white/10 transition-colors backdrop-blur-md">
+              <Link href="/courses" className="w-full sm:w-auto h-14 px-8 inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white text-base font-medium hover:bg-white/10 transition-colors backdrop-blur-md">
                 Explore the Academy
               </Link>
             </div>
           </div>
           
-          {/* Hero Feature Grid */}
+          {/* Hero Image */}
+          <div className="relative w-full h-full flex items-center justify-center min-h-[400px]">
+            <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/20 via-transparent to-indigo-500/20 blur-[100px] rounded-full pointer-events-none" />
+            <img 
+              src="/8aa52611-294c-4f56-9132-f6a62f271095-Photoroom.png" 
+              alt="KennyKentola Team" 
+              className="relative z-10 w-full max-h-[600px] object-contain drop-shadow-[0_0_40px_rgba(99,102,241,0.2)] hover:scale-[1.02] transition-transform duration-500" 
+            />
+          </div>
+        </div>
+
+        {/* OUR CORE SERVICES */}
+        <div className="mb-20 max-w-5xl mx-auto">
           <div className="bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-8 md:p-10 shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 blur-[80px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/3" />
-            <h2 className="text-2xl font-bold text-white mb-8 tracking-tight">Our Core Services</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <h2 className="text-2xl font-bold text-white mb-8 tracking-tight text-center md:text-left">Our Core Services</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
               <div className="flex items-center gap-3">
                 <CheckCircle className="w-5 h-5 text-cyan-400 shrink-0" />
                 <span className="text-slate-300 text-sm font-medium">Software Engineering</span>
@@ -83,7 +95,7 @@ export default function Home() {
               </div>
             </div>
             
-            <div className="mt-10 pt-6 border-t border-white/10 flex flex-wrap gap-4">
+            <div className="mt-10 pt-6 border-t border-white/10 flex flex-wrap gap-4 justify-center md:justify-start">
               <span className="px-3 py-1 rounded-full bg-white/5 text-slate-400 text-xs font-semibold">✨ Fast service</span>
               <span className="px-3 py-1 rounded-full bg-white/5 text-slate-400 text-xs font-semibold">✨ Affordable prices</span>
               <span className="px-3 py-1 rounded-full bg-white/5 text-slate-400 text-xs font-semibold">✨ Neat & professional</span>
@@ -99,7 +111,7 @@ export default function Home() {
             {/* Background Image Setup (matching ecosystem style) */}
             <div className="absolute inset-0 z-0">
               <img 
-                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=800" 
+                src="/images/home-hero-banner.png" 
                 alt="Tech Academy" 
                 width="800" height="600" loading="lazy"
                 className="w-full h-full object-cover opacity-30 mix-blend-luminosity group-hover:opacity-60 transition-opacity duration-700" 
