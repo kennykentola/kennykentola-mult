@@ -37,7 +37,7 @@ export default async function FeaturedCourses() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
-        {courses.slice(0, 3).map((course: any) => (
+        {courses.slice(0, 6).map((course: any) => (
           <div key={course.id} className="group relative bg-[#0b1b42]/30 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl hover:border-indigo-500/50 transition-all duration-500 hover:-translate-y-2 flex flex-col">
             {/* Cover Image */}
             <div className="relative h-48 w-full overflow-hidden">
