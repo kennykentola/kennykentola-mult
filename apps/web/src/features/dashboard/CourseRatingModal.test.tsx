@@ -55,7 +55,7 @@ describe('CourseRatingModal', () => {
 
   it('auto-submits and closes if user already reviewed', async () => {
     vi.mocked(api.fetchCourseTestimonials).mockResolvedValueOnce({ 
-      testimonials: [{ userId: 'user123', content: 'Great', rating: 5, isApproved: true, createdAt: '' }] 
+      testimonials: [{ userId: 'user123', authorName: 'Test User', content: 'Great', rating: 5, isApproved: true, createdAt: '' }] 
     });
 
     const { container } = render(

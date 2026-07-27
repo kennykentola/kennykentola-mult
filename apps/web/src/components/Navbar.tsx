@@ -24,6 +24,7 @@ export function Navbar() {
 
         {/* Desktop Nav */}
         <nav className="hidden xl:flex items-center gap-3 2xl:gap-5 text-[13px] 2xl:text-sm font-medium text-slate-400 mx-4">
+          <Link href="/courses" className="hover:text-white transition-colors">Courses</Link>
           <Link href="/academy" className="hover:text-white transition-colors">Academy</Link>
           <Link href="/academic" className="hover:text-white transition-colors">Academic Guidance</Link>
           <Link href="/agency" className="hover:text-white transition-colors">Software Development</Link>
@@ -62,6 +63,9 @@ export function Navbar() {
       {/* Mobile Menu Overlay */}
       {isOpen && (
         <div className="md:hidden absolute top-20 left-0 w-full bg-[#050505] border-b border-white/10 flex flex-col p-6 shadow-2xl animate-in slide-in-from-top-2">
+          <Link href="/courses" onClick={() => setIsOpen(false)} className="py-4 text-lg font-medium text-slate-300 hover:text-white border-b border-white/5">
+            Courses
+          </Link>
           <Link href="/academy" onClick={() => setIsOpen(false)} className="py-4 text-lg font-medium text-slate-300 hover:text-white border-b border-white/5">
             Academy
           </Link>

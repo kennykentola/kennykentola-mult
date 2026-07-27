@@ -5,11 +5,27 @@ import { Toaster } from 'react-hot-toast';
 
 import { SocketProvider } from '../features/chat/SocketContext';
 import Script from 'next/script';
+import { PwaRegistration } from '../components/PwaRegistration';
 
 export const metadata: Metadata = {
   title: 'KennyKentola — Software, Academy, Printing & Solar',
   description: 'KennyKentola is a leading multi-company platform offering Programming Academy courses, custom Software Agency services, IT Maintenance, Graphic & Printing, and Solar Installation in Nigeria and worldwide.',
   keywords: 'KennyKentola, Kenny Kentola,kennykentola-digital, digital-kentola, kenny-kentola-digital, digital, software agency, programming academy, web development, app development, solar installation, printing press, Ibadan, Lagos, Nigeria',
+  applicationName: 'KennyKentola',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    title: 'KennyKentola',
+    statusBarStyle: 'black-translucent',
+  },
+  icons: {
+    icon: [
+      { url: '/favicon.png' },
+      { url: '/pwa-icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/pwa-icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [{ url: '/pwa-icon-192.png', sizes: '192x192', type: 'image/png' }],
+  },
   openGraph: {
     title: 'KennyKentola',
     description: 'Learn, Build, Print, Power with KennyKentola',
@@ -52,6 +68,7 @@ export default function RootLayout({
         )}
       </head>
       <body className="bg-slate-950 text-slate-100 min-h-screen antialiased">
+        <PwaRegistration />
         <AuthProvider>
           <SocketProvider>
             <Toaster

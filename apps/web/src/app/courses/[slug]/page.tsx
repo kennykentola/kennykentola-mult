@@ -62,7 +62,7 @@ export default function CourseDetailPage() {
               
               <div className="mt-8 flex flex-wrap items-center gap-4">
                 <a 
-                  href={`/dashboard/academy/courses/${course.id || slug}`}
+                  href={`/dashboard/academy/courses/${course.slug || slug}`}
                   className="inline-flex h-12 items-center justify-center rounded-xl bg-white px-8 text-sm font-bold text-black transition-all hover:bg-slate-200"
                 >
                   Enroll Now
