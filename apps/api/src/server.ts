@@ -2,6 +2,17 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import {
+  authLimiter,
+  aiLimiter,
+  aiVideoLimiter,
+  orchestratorLimiter,
+  executeLimiter,
+  uploadLimiter,
+  paymentLimiter,
+  contactLimiter,
+  newsletterLimiter
+} from './middleware/rateLimiters';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
@@ -45,12 +56,17 @@ const corsOptions = {
 // Middleware
 app.use(helmet());
 app.set('trust proxy', 1);
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 300,
-  standardHeaders: true,
-  legacyHeaders: false
-}));
+// Global backstop limiter — applies to every route not covered by a tighter per-route limiter.
+// Health-check endpoint is excluded so load-balancer probes don't consume quota.
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => req.path === '/api/health' || req.method === 'OPTIONS'
+  })
+);
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
@@ -91,16 +107,24 @@ import orchestratorRouter from './routes/orchestrator';
 import notificationsRouter from './routes/notifications';
 import promptsRouter from './routes/prompts';
 import settingsRouter from './routes/settings';
-app.use('/api/v1/auth', authRouter);
-app.use('/api/v1/orchestrator', orchestratorRouter);
+// ── High-risk routes: stricter per-route limiters applied BEFORE the router ──
+app.use('/api/v1/auth', authLimiter, authRouter);
+app.use('/api/v1/orchestrator', orchestratorLimiter, orchestratorRouter);
+app.use('/api/v1/ai', aiLimiter, aiRouter);
+app.use('/api/v1/ai-video', aiVideoLimiter, aiVideoRouter);
+app.use('/api/v1/execute', executeLimiter, executeRouter);
+app.use('/api/v1/upload', uploadLimiter, uploadRouter);
+app.use('/api/v1/payments', paymentLimiter, paymentsRouter);
+app.use('/api/v1/contact', contactLimiter, contactRoutes);
+app.use('/api/v1/newsletter', newsletterLimiter, newsletterRouter);
+
+// ── Standard routes: covered by global 300 req/15-min backstop only ──
 app.use('/api/v1/prompts', promptsRouter);
 app.use('/api/v1/printing', printingRouter);
 app.use('/api/v1/academy', academyRouter);
-app.use('/api/v1/payments', paymentsRouter);
 app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/super-admin', superAdminRouter);
 app.use('/api/v1/chat', chatRouter);
-app.use('/api/v1/upload', uploadRouter);
 app.use('/api/v1/projects', projectsRouter);
 app.use('/api/v1/academic-projects', academicProjectsRouter);
 app.use('/api/v1/academic-ideas', academicIdeasRouter);
@@ -112,12 +136,7 @@ app.use('/api/v1/solar', solarRouter);
 app.use('/api/v1/telemetry', telemetryRouter);
 app.use('/api/v1/learning-paths', learningPathsRouter);
 app.use('/api/v1/tickets', ticketsRouter);
-app.use('/api/v1/execute', executeRouter);
-app.use('/api/v1/ai', aiRouter);
-app.use('/api/v1/ai-video', aiVideoRouter);
 app.use('/api/v1/inventory', inventoryRouter);
-app.use('/api/v1/contact', contactRoutes);
-app.use('/api/v1/newsletter', newsletterRouter);
 app.use('/api/v1/agency', agencyRouter);
 app.use('/api/v1/team', teamRouter);
 app.use('/api/v1/dashboard', dashboardRouter);
