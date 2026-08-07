@@ -16,12 +16,56 @@
  * • Orchestrator      → multi-provider AI credit protection
  * • AI-video          → HuggingFace quota protection
  *
- * NOTE: express-rate-limit v7 uses an in-memory store by default.
- * If you scale to multiple API instances (e.g. Render auto-scaling) you MUST
- * add a shared store (e.g. `rate-limit-redis`) so counters are shared.
+ * Store strategy
+ * ──────────────
+ * When REDIS_URL is set (Render production), all counters are stored in Redis
+ * so they are shared across every API instance (safe for auto-scaling).
+ * When REDIS_URL is absent (local dev), in-memory store is used transparently.
  */
 
-import rateLimit from 'express-rate-limit';
+import rateLimit, { Options } from 'express-rate-limit';
+import Redis from 'ioredis';
+import { RedisStore } from 'rate-limit-redis';
+
+// ─────────────────────────────────────────────────────────
+// Redis client — only created if REDIS_URL is available
+// ─────────────────────────────────────────────────────────
+let redisClient: Redis | null = null;
+
+if (process.env.REDIS_URL) {
+  redisClient = new Redis(process.env.REDIS_URL, {
+    // Render's free Redis can have occasional cold starts — retry quietly
+    maxRetriesPerRequest: 3,
+    enableReadyCheck: false,
+    lazyConnect: true,
+  });
+
+  redisClient.on('error', (err) => {
+    // Log but don't crash the server — in-memory will take over for this request
+    console.error('[RateLimit Redis] Connection error:', err.message);
+  });
+
+  console.log('[RateLimit] Redis store active for rate limiting.');
+} else {
+  console.warn('[RateLimit] REDIS_URL not set — using in-memory store (safe for single instance only).');
+}
+
+/**
+ * Returns a RedisStore if Redis is available, otherwise undefined (in-memory).
+ * The `prefix` keeps each limiter's keys isolated in Redis.
+ */
+function makeStore(prefix: string): Partial<Options> {
+  if (!redisClient) return {};
+  const client = redisClient;
+  return {
+    store: new RedisStore({
+      // rate-limit-redis v4 sendCommand: first element is command, rest are args
+      sendCommand: (command: string, ...args: string[]) =>
+        client.call(command, ...args) as Promise<number>,
+      prefix: `rl:${prefix}:`,
+    }),
+  };
+}
 
 // ─────────────────────────────────────────────────────────
 // Helpers
@@ -40,6 +84,7 @@ export const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: skipOptions,
+  ...makeStore('auth'),
   message: {
     error: 'Too many authentication attempts from this IP. Please try again in 15 minutes.'
   }
@@ -55,6 +100,7 @@ export const aiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: skipOptions,
+  ...makeStore('ai'),
   message: {
     error: 'AI request limit reached. Please wait a moment before sending more requests.'
   }
@@ -70,6 +116,7 @@ export const aiVideoLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: skipOptions,
+  ...makeStore('ai-video'),
   message: {
     error: 'AI video generation limit reached. Please wait 10 minutes before trying again.'
   }
@@ -85,6 +132,7 @@ export const orchestratorLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: skipOptions,
+  ...makeStore('orchestrator'),
   message: {
     error: 'Orchestrator rate limit exceeded. Please wait before generating more content.'
   }
@@ -100,6 +148,7 @@ export const executeLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: skipOptions,
+  ...makeStore('execute'),
   message: {
     error: 'Code execution limit reached. Please wait before running more code.'
   }
@@ -115,6 +164,7 @@ export const uploadLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: skipOptions,
+  ...makeStore('upload'),
   message: {
     error: 'Upload limit reached. Please wait 15 minutes before uploading more files.'
   }
@@ -130,6 +180,7 @@ export const paymentLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: skipOptions,
+  ...makeStore('payments'),
   message: {
     error: 'Too many payment requests. Please wait 15 minutes before trying again.'
   }
@@ -145,6 +196,7 @@ export const contactLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: skipOptions,
+  ...makeStore('contact'),
   message: {
     error: 'Too many contact submissions. Please wait 15 minutes before submitting again.'
   }
@@ -160,6 +212,7 @@ export const newsletterLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: skipOptions,
+  ...makeStore('newsletter'),
   message: {
     error: 'Too many newsletter requests. Please wait 15 minutes before trying again.'
   }
