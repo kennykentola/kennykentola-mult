@@ -59,7 +59,7 @@ export async function generateAIResponse(apiMessages: any[]) {
     const candidateOrModels = [
       'liquid/lfm-2.5-2.6b:free',
       'nvidia/nemotron-3.5-lightning:free',
-      'recursive/flint-v1.0:free'
+      'dots-studio/dots-3-note-preview:free'
     ];
 
     for (const model of candidateOrModels) {

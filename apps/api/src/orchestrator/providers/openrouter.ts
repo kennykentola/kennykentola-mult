@@ -13,9 +13,7 @@ export class OpenRouterAdapter implements TextProviderAdapter {
     const candidateModels = [
       'liquid/lfm-2.5-2.6b:free',
       'nvidia/nemotron-3.5-lightning:free',
-      'recursive/flint-v1.0:free',
-      'meta-llama/llama-3.2-3b-instruct:free',
-      'google/gemma-2-9b-it:free'
+      'dots-studio/dots-3-note-preview:free'
     ];
 
     let lastError: Error | null = null;
