@@ -6,7 +6,7 @@ import { StabilityAdapter } from '../orchestrator/providers/stability';
 import { XaiAdapter } from '../orchestrator/providers/xai';
 import { GroqAdapter } from '../orchestrator/providers/groq';
 import { OpenRouterAdapter } from '../orchestrator/providers/openrouter';
-import { PollinationsAdapter } from '../orchestrator/providers/pollinations';
+import { PollinationsAdapter, PollinationsTextAdapter } from '../orchestrator/providers/pollinations';
 import { databases } from '../services/appwrite';
 import { ID } from 'node-appwrite';
 import dotenv from 'dotenv';
@@ -54,6 +54,10 @@ if (process.env.OPENROUTER_API_KEY || process.env.ORCH_OPENROUTER_API_KEY) {
   const openRouterAdapter = new OpenRouterAdapter(key!);
   textManager.addProvider('openrouter_text', 'OpenRouter (Free)', 2, 10, openRouterAdapter);
 }
+
+// Add Pollinations AI for completely free text (infallible fallback)
+const pollinationsTextAdapter = new PollinationsTextAdapter();
+textManager.addProvider('pollinations_text', 'Pollinations AI (Free)', 6, 100, pollinationsTextAdapter);
 
 // Add Pollinations AI for completely free images
 const pollinationsAdapter = new PollinationsAdapter();

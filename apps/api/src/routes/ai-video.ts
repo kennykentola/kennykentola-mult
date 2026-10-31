@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticateJWT } from '../middleware/auth';
 import { HfInference } from '@huggingface/inference';
+import { generateAIResponse } from './ai';
 
 const router = Router();
 
@@ -32,17 +33,26 @@ Each object must have:
   "code": "The code snippet or visual text to show on screen. MUST NOT BE EMPTY. Do not use markdown backticks like \`\`\` around the code."
 }`;
 
-    const chatResponse = await hf.chatCompletion({
-      model: "Qwen/Qwen2.5-Coder-32B-Instruct", // excellent coding model with fast free API
-      messages: [
+    let scriptRaw = '[]';
+    try {
+      const chatResponse = await hf.chatCompletion({
+        model: "Qwen/Qwen2.5-Coder-32B-Instruct", // excellent coding model with fast free API
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: prompt }
+        ],
+        max_tokens: 3000,
+        temperature: 0.2,
+      });
+      scriptRaw = chatResponse.choices[0].message.content || '[]';
+    } catch (hfErr: any) {
+      console.warn('[AI Video] HuggingFace inference failed, falling back to central AI generator...', hfErr.message);
+      const aiRes = await generateAIResponse([
         { role: "system", content: systemPrompt },
         { role: "user", content: prompt }
-      ],
-      max_tokens: 3000,
-      temperature: 0.2,
-    });
-
-    let scriptRaw = chatResponse.choices[0].message.content || '[]';
+      ]);
+      scriptRaw = aiRes.content || '[]';
+    }
     // Clean up potential markdown formatting
     scriptRaw = scriptRaw.replace(/```json/g, '').replace(/```/g, '').trim();
     

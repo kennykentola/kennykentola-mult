@@ -10,25 +10,43 @@ export class OpenRouterAdapter implements TextProviderAdapter {
   }
 
   async generateText(params: GenerateTextParams): Promise<string> {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.apiKey}`,
-        'HTTP-Referer': this.siteUrl
-      },
-      body: JSON.stringify({
-        model: 'google/gemma-2-9b-it:free',
-        messages: [{ role: 'user', content: params.prompt }],
-        max_tokens: params.maxTokens || 1000
-      })
-    });
+    const candidateModels = [
+      'liquid/lfm-2.5-2.6b:free',
+      'nvidia/nemotron-3.5-lightning:free',
+      'recursive/flint-v1.0:free',
+      'meta-llama/llama-3.2-3b-instruct:free',
+      'google/gemma-2-9b-it:free'
+    ];
 
-    if (!response.ok) {
-      throw new Error(`OpenRouter Text Error: ${response.status} ${response.statusText}`);
+    let lastError: Error | null = null;
+    for (const model of candidateModels) {
+      try {
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.apiKey}`,
+            'HTTP-Referer': this.siteUrl
+          },
+          body: JSON.stringify({
+            model,
+            messages: [{ role: 'user', content: params.prompt }],
+            max_tokens: params.maxTokens || 1000
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          return data.choices[0].message.content;
+        }
+
+        const errText = await response.text();
+        lastError = new Error(`OpenRouter ${model} failed: ${response.status} ${errText}`);
+      } catch (err: any) {
+        lastError = err;
+      }
     }
 
-    const data = await response.json();
-    return data.choices[0].message.content;
+    throw lastError || new Error('All OpenRouter models failed.');
   }
 }

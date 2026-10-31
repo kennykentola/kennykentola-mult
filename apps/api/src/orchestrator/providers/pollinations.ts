@@ -1,4 +1,23 @@
-import { ImageProviderAdapter, GenerateImageParams } from './base';
+import { ImageProviderAdapter, TextProviderAdapter, GenerateImageParams, GenerateTextParams } from './base';
+
+export class PollinationsTextAdapter implements TextProviderAdapter {
+  async generateText(params: GenerateTextParams): Promise<string> {
+    const response = await fetch('https://text.pollinations.ai/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: params.prompt }],
+        model: 'openai'
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Pollinations Text Error: ${response.status} ${response.statusText}`);
+    }
+
+    return response.text();
+  }
+}
 
 export class PollinationsAdapter implements ImageProviderAdapter {
   constructor() {}

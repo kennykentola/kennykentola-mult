@@ -5,98 +5,121 @@ import { v2 as cloudinary } from 'cloudinary';
 const router = Router();
 
 // Helper function to call AI providers with fallback
-async function generateAIResponse(apiMessages: any[]) {
-  const GROQ_API_KEY = process.env.GROQ_API_KEY;
-  const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+export async function generateAIResponse(apiMessages: any[]) {
+  const GROQ_API_KEY = process.env.GROQ_API_KEY || process.env.ORCH_GROQ_API_KEY;
+  const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || process.env.ORCH_OPENROUTER_API_KEY;
 
-  let lastError = null;
+  let lastError: any = null;
 
   // 1. Try Groq (Primary, ultra-fast)
   if (GROQ_API_KEY) {
-    try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${GROQ_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: 'llama-3.1-8b-instant',
-          messages: apiMessages,
-          temperature: 0.7,
-        })
-      });
-      if (!response.ok) {
+    const candidateGroqModels = [
+      'openai/gpt-oss-120b',
+      'qwen/qwen3.8-27b',
+      'openai/gpt-oss-20b',
+      'llama-3.3-70b-versatile',
+      'llama-3.1-8b-instant'
+    ];
+
+    for (const model of candidateGroqModels) {
+      try {
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${GROQ_API_KEY}`
+          },
+          body: JSON.stringify({
+            model,
+            messages: apiMessages,
+            temperature: 0.7,
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.choices?.[0]?.message?.content) {
+            return { 
+              content: data.choices[0].message.content,
+              provider: `groq (${model})`
+            };
+          }
+        }
         const text = await response.text();
-        throw new Error(`Groq HTTP error! status: ${response.status}, body: ${text}`);
+        lastError = new Error(`Groq [${model}] HTTP ${response.status}: ${text}`);
+      } catch (err: any) {
+        lastError = err;
       }
-      const data = await response.json();
-      return { 
-        content: data.choices[0].message.content,
-        provider: 'groq'
-      };
-    } catch (err: any) {
-      console.warn('[AI] Groq failed, falling back to OpenRouter...', err.message);
-      lastError = err;
     }
+    console.warn('[AI] Groq failed, falling back to OpenRouter...', lastError?.message);
   }
 
   // 2. Try OpenRouter (Secondary)
   if (OPENROUTER_API_KEY) {
-    try {
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-          'HTTP-Referer': process.env.CLIENT_URL || 'http://localhost:3000',
-        },
-        body: JSON.stringify({
-          model: 'google/gemma-2-9b-it:free',
-          messages: apiMessages,
-          temperature: 0.7,
-        })
-      });
-      if (!response.ok) {
+    const candidateOrModels = [
+      'liquid/lfm-2.5-2.6b:free',
+      'nvidia/nemotron-3.5-lightning:free',
+      'recursive/flint-v1.0:free'
+    ];
+
+    for (const model of candidateOrModels) {
+      try {
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+            'HTTP-Referer': process.env.CLIENT_URL || 'http://localhost:3000',
+          },
+          body: JSON.stringify({
+            model,
+            messages: apiMessages,
+            temperature: 0.7,
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.choices?.[0]?.message?.content) {
+            return { 
+              content: data.choices[0].message.content,
+              provider: `openrouter (${model})`
+            };
+          }
+        }
         const text = await response.text();
-        throw new Error(`OpenRouter HTTP error! status: ${response.status}, body: ${text}`);
+        lastError = new Error(`OpenRouter [${model}] HTTP ${response.status}: ${text}`);
+      } catch (err: any) {
+        lastError = err;
       }
-      const data = await response.json();
-      return { 
-        content: data.choices[0].message.content,
-        provider: 'openrouter'
-      };
-    } catch (err: any) {
-      console.warn('[AI] OpenRouter failed, falling back to Gemini...', err.message);
-      lastError = err;
     }
+    console.warn('[AI] OpenRouter failed, falling back to Pollinations...', lastError?.message);
   }
 
-  // 3. Try Gemini (Tertiary Fallback)
-  if (GEMINI_API_KEY) {
-    try {
-      const geminiMessages = apiMessages.map(m => ({
-        role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: m.content }]
-      }));
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: geminiMessages
-        })
-      });
-      if (!response.ok) throw new Error(`Gemini HTTP error! status: ${response.status}`);
-      const data = await response.json();
-      return {
-        content: data.candidates[0].content.parts[0].text,
-        provider: 'gemini'
-      };
-    } catch (err: any) {
-      console.error('[AI] Gemini failed...', err.message);
-      lastError = err;
+  // 3. Try Pollinations.ai (Infallible Zero-Failure Fallback - No Key Required)
+  try {
+    const response = await fetch('https://text.pollinations.ai/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: apiMessages,
+        model: 'openai'
+      })
+    });
+
+    if (response.ok) {
+      const content = await response.text();
+      if (content && content.trim().length > 0) {
+        return {
+          content: content.trim(),
+          provider: 'pollinations (free fallback)'
+        };
+      }
     }
+    const text = await response.text();
+    lastError = new Error(`Pollinations HTTP ${response.status}: ${text}`);
+  } catch (err: any) {
+    lastError = err;
   }
 
   throw new Error(`All AI providers failed or are not configured. Details: ${lastError?.message}`);
