@@ -142,6 +142,17 @@ export default function AdminCoursesPage() {
     loadCourses();
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (modalOpen) setModalOpen(false);
+        if (deletingCourseId) setDeletingCourseId(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [modalOpen, deletingCourseId]);
+
   const showSuccess = (msg: string) => {
     setSuccessMsg(msg);
     setTimeout(() => setSuccessMsg(''), 4500);
@@ -645,31 +656,45 @@ export default function AdminCoursesPage() {
 
       {/* Edit / Create Course Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
-          <div className="w-full max-w-2xl bg-slate-900 rounded-3xl border border-indigo-500/20 shadow-2xl p-6 sm:p-8 my-8 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800 sticky top-0 bg-slate-900 z-10">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/85 backdrop-blur-md overflow-hidden"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setModalOpen(false);
+          }}
+        >
+          <div 
+            className="relative w-full max-w-2xl bg-slate-900 rounded-3xl border border-indigo-500/30 shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[88vh] overflow-hidden my-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header - Fixed at Top, NEVER Hidden */}
+            <div className="flex items-center justify-between px-6 py-4 sm:px-8 sm:py-5 border-b border-slate-800 bg-slate-900/95 backdrop-blur shrink-0 z-20">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
                   <Pencil className="w-5 h-5" />
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold text-white">
+                <div className="min-w-0">
+                  <h2 className="text-lg sm:text-xl font-bold text-white leading-tight truncate">
                     {isEditing ? 'Edit Course & Pricing' : 'Create New Academy Course'}
                   </h2>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-400 mt-0.5 line-clamp-1 truncate">
                     {isEditing ? `Modifying: ${formData.title}` : 'Add a brand new course to the catalog.'}
                   </p>
                 </div>
               </div>
               <button 
+                type="button"
                 onClick={() => setModalOpen(false)}
-                className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition-colors"
+                className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-700/60 hover:border-rose-500/30 flex items-center justify-center transition-all cursor-pointer shrink-0 shadow-sm ml-3"
+                title="Close modal (Esc)"
+                aria-label="Close modal"
               >
-                ✕
+                <X className="w-5 h-5 stroke-[2.5]" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveForm} className="space-y-5 mt-6">
+            {/* Modal Form with Scrollable Content */}
+            <form onSubmit={handleSaveForm} className="flex flex-col flex-1 overflow-hidden min-h-0">
+              <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-5">
               {/* Title */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
@@ -952,34 +977,43 @@ export default function AdminCoursesPage() {
                   <span className="text-sm font-semibold text-slate-300">Enable AI Video Generator</span>
                 </label>
               </div>
+            </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-4 border-t border-slate-800 sticky bottom-0 bg-slate-900 z-10">
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  className="flex-1 py-3 rounded-xl border border-slate-700 text-sm font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={formSaving || uploadingCover || uploadingPdf}
-                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 text-sm font-bold text-white transition-all disabled:opacity-60 flex items-center justify-center gap-2 shadow-[0_0_20px_-5px_rgba(99,102,241,0.5)]"
-                >
-                  {formSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {isEditing ? 'Save Changes' : 'Create Course'}
-                </button>
-              </div>
-            </form>
-          </div>
+            {/* Modal Footer - Fixed at Bottom, Always Visible */}
+            <div className="flex gap-3 px-6 py-4 sm:px-8 border-t border-slate-800 bg-slate-900/95 backdrop-blur shrink-0 z-20">
+              <button
+                type="button"
+                onClick={() => setModalOpen(false)}
+                className="flex-1 py-3 rounded-xl border border-slate-700 text-sm font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={formSaving || uploadingCover || uploadingPdf}
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 text-sm font-bold text-white transition-all disabled:opacity-60 flex items-center justify-center gap-2 shadow-[0_0_20px_-5px_rgba(99,102,241,0.5)]"
+              >
+                {formSaving && <Loader2 className="h-4 w-4 animate-spin" />}
+                {isEditing ? 'Save Changes' : 'Create Course'}
+              </button>
+            </div>
+          </form>
         </div>
-      )}
+      </div>
+    )}
 
       {/* Delete Confirmation Modal */}
       {deletingCourseId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="w-full max-w-sm bg-slate-900 rounded-2xl border border-rose-500/20 shadow-2xl p-6">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setDeletingCourseId(null);
+          }}
+        >
+          <div 
+            className="w-full max-w-sm bg-slate-900 rounded-2xl border border-rose-500/20 shadow-2xl p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mb-4">
               <Trash2 className="h-6 w-6 text-rose-400" />
             </div>
