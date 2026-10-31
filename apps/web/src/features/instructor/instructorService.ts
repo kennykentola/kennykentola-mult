@@ -220,8 +220,8 @@ export async function getInstructorStudents() {
   return data.enrollments;
 }
 
-/** Upload a video to Cloudinary/Appwrite */
-export async function uploadVideo(file: File) {
+/** Upload any asset (Image, PDF, Video) to Cloudinary/Appwrite */
+export async function uploadFile(file: File): Promise<{ url: string; message?: string }> {
   const token = await getSessionJwt();
   const formData = new FormData();
   formData.append('file', file);
@@ -240,4 +240,9 @@ export async function uploadVideo(file: File) {
   }
 
   return res.json();
+}
+
+/** Upload a video to Cloudinary/Appwrite */
+export async function uploadVideo(file: File) {
+  return uploadFile(file);
 }

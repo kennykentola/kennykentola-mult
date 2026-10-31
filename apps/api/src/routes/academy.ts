@@ -99,6 +99,7 @@ type ApiCourse = {
   isPublished: boolean;
   lessonCount: number;
   aiVideoEnabled?: boolean;
+  pdfUrl?: string;
 };
 
 type ApiLesson = {
@@ -184,7 +185,8 @@ const mapCourse = (course: any, lessonCount: number): ApiCourse => ({
   coverImage: course.coverImage,
   price: Number(course.price || 0),
   isPublished: Boolean(course.isPublished),
-  lessonCount
+  lessonCount,
+  pdfUrl: course.pdfUrl || ''
 });
 
 const mapLesson = (lesson: any, isLocked = false): ApiLesson => ({
@@ -1500,7 +1502,7 @@ const handleCreateCourse = async (req: AuthenticatedRequest, res: any) => {
     return res.status(403).json({ error: 'Instructor or Admin access required.' });
   }
 
-  const { title, description, category, level, summary, coverImage, price, isPublished, aiVideoEnabled, instructorName } = req.body;
+  const { title, description, category, level, summary, coverImage, price, isPublished, aiVideoEnabled, instructorName, pdfUrl } = req.body;
 
   if (!title || !description) {
     return res.status(400).json({ error: 'Title and description are required.' });
@@ -1518,6 +1520,7 @@ const handleCreateCourse = async (req: AuthenticatedRequest, res: any) => {
       level: level || 'Beginner',
       summary: summary || '',
       coverImage: coverImage || '',
+      pdfUrl: pdfUrl || '',
       price: price !== undefined ? Number(price) : 0,
       isPublished: isPublished !== undefined ? Boolean(isPublished) : false,
       aiVideoEnabled: aiVideoEnabled ?? true,
@@ -1608,7 +1611,7 @@ const handleUpdateCourse = async (req: AuthenticatedRequest, res: any) => {
       return res.status(403).json({ error: 'You do not own this course.' });
     }
 
-    const allowedFields = ['title', 'description', 'category', 'level', 'summary', 'coverImage', 'price', 'isPublished', 'aiVideoEnabled', 'instructorName'];
+    const allowedFields = ['title', 'description', 'category', 'level', 'summary', 'coverImage', 'price', 'isPublished', 'aiVideoEnabled', 'instructorName', 'pdfUrl'];
     const updateData: Record<string, any> = {};
     for (const key of allowedFields) {
       if (updates[key] !== undefined) {

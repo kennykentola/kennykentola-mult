@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { 
   BookOpen, 
@@ -18,9 +18,14 @@ import {
   X,
   Sparkles,
   CheckCircle2,
-  Layers
+  Layers,
+  UploadCloud,
+  FileText,
+  ExternalLink,
+  ImageIcon
 } from 'lucide-react';
 import { getSessionJwt } from '../../../lib/sessionJwt';
+import { uploadFile } from '../../../features/instructor/instructorService';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
@@ -51,6 +56,7 @@ interface CourseItem {
   level?: string;
   summary?: string;
   coverImage?: string;
+  pdfUrl?: string;
   price: number;
   isPublished: boolean;
   aiVideoEnabled?: boolean;
@@ -93,6 +99,12 @@ export default function AdminCoursesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formSaving, setFormSaving] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+
+  const coverFileInputRef = useRef<HTMLInputElement>(null);
+  const pdfFileInputRef = useRef<HTMLInputElement>(null);
+
   const [formData, setFormData] = useState({
     id: '',
     title: '',
@@ -102,6 +114,7 @@ export default function AdminCoursesPage() {
     summary: '',
     description: '',
     coverImage: '',
+    pdfUrl: '',
     instructorName: '',
     isPublished: true,
     aiVideoEnabled: true
@@ -131,7 +144,7 @@ export default function AdminCoursesPage() {
 
   const showSuccess = (msg: string) => {
     setSuccessMsg(msg);
-    setTimeout(() => setSuccessMsg(''), 4000);
+    setTimeout(() => setSuccessMsg(''), 4500);
   };
 
   const handleTogglePublish = async (course: CourseItem) => {
@@ -164,6 +177,54 @@ export default function AdminCoursesPage() {
     }
   };
 
+  // Upload Cover Image handler
+  const handleCoverFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Please upload a valid image file (PNG, JPG, WEBP).');
+      return;
+    }
+
+    setUploadingCover(true);
+    setError('');
+    try {
+      const res = await uploadFile(file);
+      setFormData(prev => ({ ...prev, coverImage: res.url }));
+      showSuccess('Cover image uploaded successfully!');
+    } catch (err: any) {
+      setError(err.message || 'Failed to upload cover image.');
+    } finally {
+      setUploadingCover(false);
+      if (coverFileInputRef.current) coverFileInputRef.current.value = '';
+    }
+  };
+
+  // Upload PDF Syllabus handler
+  const handlePdfFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      setError('Please select a valid PDF file (.pdf).');
+      return;
+    }
+
+    setUploadingPdf(true);
+    setError('');
+    try {
+      const res = await uploadFile(file);
+      setFormData(prev => ({ ...prev, pdfUrl: res.url }));
+      showSuccess(`PDF syllabus uploaded successfully!`);
+    } catch (err: any) {
+      setError(err.message || 'Failed to upload PDF syllabus.');
+    } finally {
+      setUploadingPdf(false);
+      if (pdfFileInputRef.current) pdfFileInputRef.current.value = '';
+    }
+  };
+
   // Open Edit Modal
   const handleOpenEdit = (course: CourseItem) => {
     setIsEditing(true);
@@ -176,6 +237,7 @@ export default function AdminCoursesPage() {
       summary: course.summary || '',
       description: course.description || '',
       coverImage: course.coverImage || '',
+      pdfUrl: course.pdfUrl || '',
       instructorName: course.instructorName || '',
       isPublished: Boolean(course.isPublished),
       aiVideoEnabled: course.aiVideoEnabled ?? true
@@ -195,6 +257,7 @@ export default function AdminCoursesPage() {
       summary: '',
       description: '',
       coverImage: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=800',
+      pdfUrl: '',
       instructorName: 'KennyKentola Academy',
       isPublished: true,
       aiVideoEnabled: true
@@ -217,6 +280,7 @@ export default function AdminCoursesPage() {
         summary: formData.summary,
         description: formData.description,
         coverImage: formData.coverImage,
+        pdfUrl: formData.pdfUrl,
         instructorName: formData.instructorName,
         isPublished: formData.isPublished,
         aiVideoEnabled: formData.aiVideoEnabled
@@ -228,7 +292,7 @@ export default function AdminCoursesPage() {
           body: JSON.stringify(payload),
         });
         const updatedCourse = res.course || { ...payload, id: formData.id };
-        setCourses(prev => prev.map(c => c.id === formData.id ? { ...c, ...updatedCourse, price: payload.price } : c));
+        setCourses(prev => prev.map(c => c.id === formData.id ? { ...c, ...updatedCourse, price: payload.price, pdfUrl: payload.pdfUrl } : c));
         showSuccess(`Course "${formData.title}" updated successfully! Price set to ₦${Number(payload.price).toLocaleString()}`);
       } else {
         const res = await fetchWithAuth(`${API_BASE}/academy/courses`, {
@@ -294,7 +358,7 @@ export default function AdminCoursesPage() {
             </span>
           </div>
           <p className="text-slate-400 text-sm mt-1">
-            Manage course pricing (₦ NGN), course titles, descriptions, curriculum, and publication statuses.
+            Manage course pricing (₦ NGN), course titles, upload cover images and PDF syllabi, and control publishing.
           </p>
         </div>
 
@@ -359,7 +423,7 @@ export default function AdminCoursesPage() {
 
         <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
           <span className="text-xs text-slate-500 whitespace-nowrap pl-2">Filter:</span>
-          {['All', 'Programming', 'Artificial Intelligence', 'Mobile Development', 'Design'].map(cat => (
+          {['All', 'Business', 'Productivity', 'Programming', 'Artificial Intelligence', 'Mobile Development', 'Design'].map(cat => (
             <button
               key={cat}
               onClick={() => setCategoryFilter(cat)}
@@ -432,12 +496,25 @@ export default function AdminCoursesPage() {
                           )}
                           <div>
                             <div className="font-bold text-white text-base leading-snug">{course.title}</div>
-                            <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
+                            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400 mt-1">
                               <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-slate-300">
                                 {course.category || 'General'}
                               </span>
                               <span>·</span>
                               <span>{course.level || 'All Levels'}</span>
+
+                              {course.pdfUrl && (
+                                <a 
+                                  href={course.pdfUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 transition-colors"
+                                  title="View Syllabus / Course PDF"
+                                >
+                                  <FileText className="w-3 h-3" />
+                                  PDF
+                                </a>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -569,8 +646,8 @@ export default function AdminCoursesPage() {
       {/* Edit / Create Course Modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
-          <div className="w-full max-w-2xl bg-slate-900 rounded-3xl border border-indigo-500/20 shadow-2xl p-6 sm:p-8 my-8">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+          <div className="w-full max-w-2xl bg-slate-900 rounded-3xl border border-indigo-500/20 shadow-2xl p-6 sm:p-8 my-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-800 sticky top-0 bg-slate-900 z-10">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
                   <Pencil className="w-5 h-5" />
@@ -676,18 +753,152 @@ export default function AdminCoursesPage() {
                 </div>
               </div>
 
-              {/* Cover Image URL */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-                  Cover Image URL
-                </label>
-                <input
-                  type="url"
-                  value={formData.coverImage}
-                  onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                  placeholder="https://images.unsplash.com/photo-..."
-                  className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
-                />
+              {/* Cover Image Upload & URL */}
+              <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/80 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Course Cover Image
+                  </label>
+                  <span className="text-[11px] text-slate-500">Upload file or paste URL</span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  {formData.coverImage ? (
+                    <div className="relative group w-24 h-24 rounded-xl overflow-hidden border border-white/10 shrink-0">
+                      <img 
+                        src={formData.coverImage} 
+                        alt="Course cover preview" 
+                        className="w-full h-full object-cover" 
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, coverImage: '' })}
+                        className="absolute inset-0 bg-slate-950/70 opacity-0 group-hover:opacity-100 flex items-center justify-center text-rose-400 text-xs font-bold transition-opacity"
+                        title="Remove Image"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-24 h-24 rounded-xl bg-slate-900 border border-dashed border-slate-700 flex flex-col items-center justify-center text-slate-500 shrink-0">
+                      <ImageIcon className="w-7 h-7 mb-1 text-slate-600" />
+                      <span className="text-[10px]">No image</span>
+                    </div>
+                  )}
+
+                  <div className="flex-1 w-full space-y-2">
+                    <input
+                      type="file"
+                      ref={coverFileInputRef}
+                      onChange={handleCoverFileUpload}
+                      accept="image/*"
+                      className="hidden"
+                      id="course-cover-input"
+                    />
+
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => coverFileInputRef.current?.click()}
+                        disabled={uploadingCover}
+                        className="px-4 py-2 rounded-xl bg-indigo-600/20 border border-indigo-500/30 hover:bg-indigo-600/30 text-indigo-300 font-semibold text-xs flex items-center gap-2 transition-colors disabled:opacity-50"
+                      >
+                        {uploadingCover ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            Uploading Image...
+                          </>
+                        ) : (
+                          <>
+                            <UploadCloud className="w-3.5 h-3.5" />
+                            Upload Image File
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <input
+                      type="url"
+                      value={formData.coverImage}
+                      onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
+                      placeholder="Or paste image URL (https://images.unsplash.com/...)"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Course Syllabus / Material PDF Upload */}
+              <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/80 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Course Syllabus / Material PDF
+                  </label>
+                  <span className="text-[11px] text-slate-500">Upload PDF or paste URL</span>
+                </div>
+
+                <div className="space-y-3">
+                  <input
+                    type="file"
+                    ref={pdfFileInputRef}
+                    onChange={handlePdfFileUpload}
+                    accept="application/pdf,.pdf"
+                    className="hidden"
+                    id="course-pdf-input"
+                  />
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => pdfFileInputRef.current?.click()}
+                      disabled={uploadingPdf}
+                      className="px-4 py-2 rounded-xl bg-rose-500/20 border border-rose-500/30 hover:bg-rose-500/30 text-rose-300 font-semibold text-xs flex items-center gap-2 transition-colors disabled:opacity-50"
+                    >
+                      {uploadingPdf ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          Uploading PDF...
+                        </>
+                      ) : (
+                        <>
+                          <UploadCloud className="w-3.5 h-3.5" />
+                          Upload PDF Syllabus
+                        </>
+                      )}
+                    </button>
+
+                    {formData.pdfUrl && (
+                      <div className="flex items-center gap-2 bg-slate-900 border border-rose-500/30 px-3 py-1.5 rounded-xl">
+                        <FileText className="w-4 h-4 text-rose-400" />
+                        <a
+                          href={formData.pdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-bold text-rose-400 hover:text-rose-300 inline-flex items-center gap-1"
+                        >
+                          View / Download Attached PDF
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, pdfUrl: '' })}
+                          className="ml-2 text-slate-500 hover:text-rose-400 text-xs font-bold"
+                          title="Remove PDF"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <input
+                    type="url"
+                    value={formData.pdfUrl}
+                    onChange={(e) => setFormData({ ...formData, pdfUrl: e.target.value })}
+                    placeholder="Or paste PDF URL (https://...)"
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
               </div>
 
               {/* Short Summary */}
@@ -743,7 +954,7 @@ export default function AdminCoursesPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 pt-4 border-t border-slate-800">
+              <div className="flex gap-3 pt-4 border-t border-slate-800 sticky bottom-0 bg-slate-900 z-10">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
@@ -753,7 +964,7 @@ export default function AdminCoursesPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={formSaving}
+                  disabled={formSaving || uploadingCover || uploadingPdf}
                   className="flex-1 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 text-sm font-bold text-white transition-all disabled:opacity-60 flex items-center justify-center gap-2 shadow-[0_0_20px_-5px_rgba(99,102,241,0.5)]"
                 >
                   {formSaving && <Loader2 className="h-4 w-4 animate-spin" />}
