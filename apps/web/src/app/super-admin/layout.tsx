@@ -13,7 +13,8 @@ import {
   Menu,
   X,
   ShieldAlert,
-  BarChart3
+  BarChart3,
+  BookOpen
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -70,6 +71,7 @@ export default function SuperAdminLayout({
 
   const navItems = [
     { name: 'System Overview', href: '/super-admin/dashboard', icon: BarChart3 },
+    { name: 'Courses & Pricing', href: '/super-admin/courses', icon: BookOpen },
     { name: 'User Management', href: '/super-admin/users', icon: Users },
     { name: 'Instructor Payouts', href: '/super-admin/payouts', icon: DollarSign },
     { name: 'Global Settings', href: '/super-admin/settings', icon: Settings },

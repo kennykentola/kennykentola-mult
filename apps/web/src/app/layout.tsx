@@ -42,7 +42,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
+      <body className="bg-slate-950 text-slate-100 min-h-screen antialiased">
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-CR4LWR93DK"
           strategy="afterInteractive"
@@ -66,8 +66,6 @@ export default function RootLayout({
             strategy="afterInteractive"
           />
         )}
-      </head>
-      <body className="bg-slate-950 text-slate-100 min-h-screen antialiased">
         <PwaRegistration />
         <AuthProvider>
           <SocketProvider>

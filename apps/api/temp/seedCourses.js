@@ -15,7 +15,7 @@ const courses = [
     description: 'Master React, Node.js, Next.js, and Databases in this comprehensive 12-week bootcamp designed to get you hired as a Software Engineer.',
     category: 'Programming',
     level: 'Beginner to Advanced',
-    price: 35000,
+    price: 100000,
     isPublished: true,
     aiVideoEnabled: true,
     summary: 'Master the MERN stack and Next.js. Build real-world projects including an e-commerce platform and a dashboard.',

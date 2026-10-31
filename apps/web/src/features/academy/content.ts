@@ -87,6 +87,18 @@ export const catalogCourses: AcademyCourse[] = [
     lessons: 36,
     price: '$249',
     coverColor: 'from-amber-600 to-orange-600'
+  },
+  {
+    id: 'microsoft-office-suite',
+    title: 'Microsoft Office Productivity Suite (Word, Excel & PowerPoint)',
+    description:
+      'Master Microsoft Word, Excel, and PowerPoint for office and academic productivity, financial tracking, and presentation design.',
+    instructor: 'Kenny Kentola Academy',
+    category: 'Business',
+    lessons: 24,
+    price: '₦50,000',
+    coverColor: 'from-blue-600 to-indigo-600',
+    tag: 'Popular'
   }
 ];
 

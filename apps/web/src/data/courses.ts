@@ -143,4 +143,50 @@ export const COURSES: Course[] = [
     careers: ['Frontend Developer', 'Backend Developer', 'Full-Stack Engineer'],
     targetAudience: ['Aspiring Developers', 'Students', 'Tech Enthusiasts']
   },
+  {
+    slug: 'microsoft-office-suite',
+    title: 'Microsoft Office Productivity Suite (Word, Excel & PowerPoint)',
+    description: 'Master Microsoft Word, Excel, and PowerPoint from basics to advanced. Learn professional document formatting, powerful Excel formulas, financial tracking, Pivot Tables, and compelling PowerPoint presentation decks.',
+    category: 'Business',
+    level: 'Beginner to Intermediate',
+    duration: '6 weeks',
+    price: '₦50,000',
+    effort: '4-6 hrs / week',
+    format: 'Live Cohort & Practical Workshops',
+    cohortSize: '25-35 Students',
+    image: 'https://images.unsplash.com/photo-1542744094-3a31727221eb?auto=format&fit=crop&q=80&w=1200',
+    skills: [
+      'Microsoft Word Formatting & Styles',
+      'Advanced Excel Formulas (VLOOKUP, XLOOKUP, IF)',
+      'Excel Pivot Tables & Charts',
+      'Financial Budgeting & Data Tracking',
+      'Executive PowerPoint Presentation Design',
+      'Slide Master & Animations',
+      'Office Document Automation'
+    ],
+    modules: [
+      { 
+        title: 'Microsoft Word: Professional Layouts & Formatting', 
+        items: ['Document setup, margins and typography', 'Styles, themes and table of contents', 'Headers, footers, footnotes and citations', 'Mail merge for bulk automated letters'] 
+      },
+      { 
+        title: 'Microsoft Excel: Fundamentals & Essential Formulas', 
+        items: ['Spreadsheet navigation and data types', 'Mathematical functions (SUM, AVERAGE, COUNT)', 'Relative vs. Absolute cell references ($A$1)', 'Conditional formatting and data validation'] 
+      },
+      { 
+        title: 'Microsoft Excel: Advanced Functions & Data Analysis', 
+        items: ['Lookup functions (VLOOKUP, XLOOKUP, INDEX/MATCH)', 'Logical operations (IF, IFS, AND, OR)', 'Creating Pivot Tables and Pivot Charts', 'Building interactive financial summary dashboards'] 
+      },
+      { 
+        title: 'Microsoft PowerPoint: Visual Design & Animations', 
+        items: ['Slide Master hierarchy and consistent layouts', 'Data charts, SmartArt graphics and typography', 'Effective transitions and animation timing', 'Presenter view, notes, and audience delivery'] 
+      },
+      { 
+        title: 'Capstone Project: Integrated Business Portfolio', 
+        items: ['Prepare a formal corporate proposal in Word', 'Model an executive revenue & expense tracker in Excel', 'Present a winning pitch deck in PowerPoint'] 
+      }
+    ],
+    careers: ['Administrative Officer', 'Data & Operations Analyst', 'Executive Assistant', 'Project Coordinator', 'Business Operations Associate'],
+    targetAudience: ['Students & Undergraduates', 'Office Professionals & Administrators', 'Business Owners & Entrepreneurs', 'Job Seekers preparing for corporate roles']
+  },
 ];

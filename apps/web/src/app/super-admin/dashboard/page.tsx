@@ -1,13 +1,16 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { 
   BarChart3, 
   Users, 
   DollarSign, 
   Activity, 
   AlertCircle,
-  Loader2
+  Loader2,
+  BookOpen,
+  ArrowRight
 } from 'lucide-react';
 import { useAuth } from '../../../features/auth/AuthContext';
 import { getSessionJwt } from '../../../lib/sessionJwt';
@@ -148,6 +151,27 @@ export default function SuperAdminDashboard() {
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1">{item.label}</span>
           </div>
         ))}
+      </div>
+
+      {/* Academy Courses & Pricing Quick Access */}
+      <div className="rounded-3xl border border-indigo-500/20 bg-gradient-to-r from-indigo-950/40 via-purple-950/20 to-slate-900/60 p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+            <BookOpen className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-white">Academy Course Pricing & Catalog</h3>
+            <p className="text-sm text-slate-400 mt-0.5">
+              Edit all course prices (₦ NGN), titles, syllabi, and publishing status directly from the Superhero Admin console.
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/super-admin/courses"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-colors shrink-0 shadow-lg shadow-indigo-600/20"
+        >
+          Manage Course Pricing <ArrowRight className="w-4 h-4" />
+        </Link>
       </div>
 
       {/* Platform Directory */}

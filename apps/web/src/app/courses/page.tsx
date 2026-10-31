@@ -8,7 +8,7 @@ import { Search, ArrowRight } from 'lucide-react';
 
 import { COURSES } from '../../data/courses';
 
-const CATEGORIES = ['All', 'AI', 'Design', 'Development', 'Marketing', 'Business', 'Management', 'Cybersecurity', 'Data'];
+const CATEGORIES = ['All', 'Business', 'Productivity', 'AI', 'Design', 'Development', 'Marketing', 'Management', 'Cybersecurity', 'Data'];
 const LEVELS = ['All', 'Beginner', 'Intermediate', 'Advanced'];
 
 export default function CoursesPage() {
@@ -19,7 +19,9 @@ export default function CoursesPage() {
   const filteredCourses = COURSES.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           course.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = activeCategory === 'All' || course.category === activeCategory;
+    const matchesCategory = activeCategory === 'All' || 
+                            course.category === activeCategory ||
+                            (activeCategory === 'Productivity' && (course.category === 'Business' || course.title.toLowerCase().includes('office')));
     const matchesLevel = activeLevel === 'All' || course.level === activeLevel;
     
     return matchesSearch && matchesCategory && matchesLevel;

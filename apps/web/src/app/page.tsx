@@ -19,10 +19,6 @@ export default function Home() {
         {/* HERO SECTION */}
         <div className="pt-12 pb-24 grid lg:grid-cols-2 gap-12 items-center">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 backdrop-blur-md mb-8">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs font-semibold tracking-wider uppercase text-slate-200">The Ultimate Execution Engine</span>
-            </div>
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tighter text-white leading-[1.1] mb-6">
               Your Complete <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400">

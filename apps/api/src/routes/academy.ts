@@ -29,7 +29,7 @@ router.get('/seed-demo-courses', async (req, res) => {
         description: 'Master React, Node.js, Next.js, and Databases in this comprehensive bootcamp.',
         category: 'Programming',
         level: 'Advanced',
-        price: 35000,
+        price: 100000,
         isPublished: true,
         aiVideoEnabled: true,
         summary: 'Master the MERN stack and Next.js.',
@@ -1165,17 +1165,21 @@ router.get('/admin/certificates', authenticateJWT, async (req: AuthenticatedRequ
   }
 });
 
-// INSTRUCTOR: Get all courses managed/created by instructor
-router.get('/instructor/courses', authenticateJWT, async (req: AuthenticatedRequest, res) => {
-  if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
-    return res.status(403).json({ error: 'Instructor access required.' });
+// INSTRUCTOR & ADMIN: Get all courses managed/created by instructor or all courses for admin
+const handleGetInstructorOrAdminCourses = async (req: AuthenticatedRequest, res: any) => {
+  const role = (req.user?.role || '').toLowerCase();
+  const isAdminOrSuper = role === 'admin' || role === 'super admin' || role === 'superadmin';
+  const isInstructor = role === 'instructor';
+
+  if (!isAdminOrSuper && !isInstructor) {
+    return res.status(403).json({ error: 'Instructor or Admin access required.' });
   }
 
   try {
     const userId = req.user?.id;
-    // Admins can see all courses; Instructors see their own courses.
+    // Admins and Super Admins can see all courses; Instructors see their own courses.
     const queries: any[] = [Query.limit(100)];
-    if (req.user?.role === 'Instructor') {
+    if (isInstructor && !isAdminOrSuper) {
       queries.push(Query.equal('instructorId', userId || ''));
     }
 
@@ -1191,10 +1195,13 @@ router.get('/instructor/courses', authenticateJWT, async (req: AuthenticatedRequ
 
     res.status(200).json({ courses: mapped, total: mapped.length });
   } catch (err: any) {
-    console.error('[Academy Instructor] Error fetching course catalogs:', err.message);
+    console.error('[Academy] Error fetching course catalogs:', err.message);
     res.status(500).json({ error: err.message });
   }
-});
+};
+
+router.get('/instructor/courses', authenticateJWT, handleGetInstructorOrAdminCourses);
+router.get('/admin/courses', authenticateJWT, handleGetInstructorOrAdminCourses);
 
 // INSTRUCTOR: Get students enrolled in instructor's courses
 router.get('/instructor/students', authenticateJWT, async (req: AuthenticatedRequest, res) => {
@@ -1483,13 +1490,17 @@ router.get('/courses/:courseId/modules', authenticateJWT, async (req: Authentica
   }
 });
 
-// INSTRUCTOR: Create course
-router.post('/courses', authenticateJWT, async (req: AuthenticatedRequest, res) => {
-  if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
-    return res.status(403).json({ error: 'Instructor access required.' });
+// INSTRUCTOR & ADMIN: Create course
+const handleCreateCourse = async (req: AuthenticatedRequest, res: any) => {
+  const role = (req.user?.role || '').toLowerCase();
+  const isAdminOrSuper = role === 'admin' || role === 'super admin' || role === 'superadmin';
+  const isInstructor = role === 'instructor';
+
+  if (!isAdminOrSuper && !isInstructor) {
+    return res.status(403).json({ error: 'Instructor or Admin access required.' });
   }
 
-  const { title, description, category, level, summary, coverImage, price, isPublished, aiVideoEnabled } = req.body;
+  const { title, description, category, level, summary, coverImage, price, isPublished, aiVideoEnabled, instructorName } = req.body;
 
   if (!title || !description) {
     return res.status(400).json({ error: 'Title and description are required.' });
@@ -1500,8 +1511,8 @@ router.post('/courses', authenticateJWT, async (req: AuthenticatedRequest, res) 
     const course = await databases.createDocument(DATABASE_ID, COURSES_COLLECTION, ID.unique(), {
       title,
       description,
-      instructorId: req.user.id,
-      instructorName: req.user.name || 'Instructor',
+      instructorId: req.user?.id || 'admin',
+      instructorName: instructorName || req.user?.name || (isAdminOrSuper ? 'KennyKentola Admin' : 'Instructor'),
       slug,
       category: category || 'General',
       level: level || 'Beginner',
@@ -1515,14 +1526,21 @@ router.post('/courses', authenticateJWT, async (req: AuthenticatedRequest, res) 
 
     res.status(201).json({ message: 'Course created successfully', course });
   } catch (err: any) {
-    console.error('[Academy Instructor] Error creating course:', err.message);
+    console.error('[Academy] Error creating course:', err.message);
     res.status(400).json({ error: err.message });
   }
-});
+};
+
+router.post('/courses', authenticateJWT, handleCreateCourse);
+router.post('/admin/courses', authenticateJWT, handleCreateCourse);
 
 // INSTRUCTOR/ADMIN: Delete course (cascades: lessons, assignments, enrollments)
 router.delete('/courses/:courseId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
-  if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
+  const role = (req.user?.role || '').toLowerCase();
+  const isAdminOrSuper = role === 'admin' || role === 'super admin' || role === 'superadmin';
+  const isInstructor = role === 'instructor';
+
+  if (!isAdminOrSuper && !isInstructor) {
     return res.status(403).json({ error: 'Instructor or Admin access required.' });
   }
 
@@ -1531,7 +1549,7 @@ router.delete('/courses/:courseId', authenticateJWT, async (req: AuthenticatedRe
   try {
     // Check ownership
     const course = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION, courseId);
-    if (req.user.role === 'Instructor' && (course as any).instructorId !== req.user.id) {
+    if (isInstructor && !isAdminOrSuper && (course as any).instructorId !== req.user?.id) {
       return res.status(403).json({ error: 'You do not own this course.' });
     }
 
@@ -1570,24 +1588,27 @@ router.delete('/courses/:courseId', authenticateJWT, async (req: AuthenticatedRe
   }
 });
 
-// INSTRUCTOR: Update course
+// INSTRUCTOR & ADMIN: Update course
+const handleUpdateCourse = async (req: AuthenticatedRequest, res: any) => {
+  const role = (req.user?.role || '').toLowerCase();
+  const isAdminOrSuper = role === 'admin' || role === 'super admin' || role === 'superadmin';
+  const isInstructor = role === 'instructor';
 
-router.patch('/courses/:courseId', authenticateJWT, async (req: AuthenticatedRequest, res) => {
-  if (req.user?.role !== 'Instructor' && req.user?.role !== 'Admin' && req.user?.role !== 'Super Admin') {
-    return res.status(403).json({ error: 'Instructor access required.' });
+  if (!isAdminOrSuper && !isInstructor) {
+    return res.status(403).json({ error: 'Instructor or Admin access required.' });
   }
 
   const { courseId } = req.params;
   const updates = req.body;
 
   try {
-    // Check ownership
+    // Check ownership ONLY if pure Instructor (not Admin or Super Admin)
     const course = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION, courseId);
-    if (req.user.role === 'Instructor' && (course as any).instructorId !== req.user.id) {
+    if (isInstructor && !isAdminOrSuper && (course as any).instructorId !== req.user?.id) {
       return res.status(403).json({ error: 'You do not own this course.' });
     }
 
-    const allowedFields = ['title', 'description', 'category', 'level', 'summary', 'coverImage', 'price', 'isPublished', 'aiVideoEnabled'];
+    const allowedFields = ['title', 'description', 'category', 'level', 'summary', 'coverImage', 'price', 'isPublished', 'aiVideoEnabled', 'instructorName'];
     const updateData: Record<string, any> = {};
     for (const key of allowedFields) {
       if (updates[key] !== undefined) {
@@ -1605,10 +1626,13 @@ router.patch('/courses/:courseId', authenticateJWT, async (req: AuthenticatedReq
 
     res.status(200).json({ message: 'Course updated successfully', course: updated });
   } catch (err: any) {
-    console.error('[Academy Instructor] Error updating course:', err.message);
+    console.error('[Academy] Error updating course:', err.message);
     res.status(400).json({ error: err.message });
   }
-});
+};
+
+router.patch('/courses/:courseId', authenticateJWT, handleUpdateCourse);
+router.patch('/admin/courses/:courseId', authenticateJWT, handleUpdateCourse);
 
 // INSTRUCTOR: Create lesson
 router.post('/courses/:courseId/lessons', authenticateJWT, async (req: AuthenticatedRequest, res) => {
